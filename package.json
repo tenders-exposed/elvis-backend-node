@@ -1,0 +1,24 @@
+{
+  "name": "elvis-api",
+  "version": "1.0.0",
+  "description": "Search and visualize public procurements for EU countries http://elvis.tenders.exposed/",
+  "main": "server.js",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "dotenv": "^4.0.0",
+    "lodash": "^4.17.4",
+    "orientjs": "^2.2.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "migrate": "node ./scripts/migrate.js"
+  },
+  "keywords": [
+    "elvis"
+  ],
+  "author": "Tenders Exposed <tech@tenders.exposed>",
+  "contributors": [
+    "Georgiana Bere <bere.georgi@gmail.com>"
+  ],
+  "license": "MIT"
+}
