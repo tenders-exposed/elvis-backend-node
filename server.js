@@ -8,7 +8,7 @@ server.connection({ port: config.port, host: config.host });
 
 server.start((err) => {
   if (err) {
-      throw err;
+    throw err;
   }
-  console.log(`Server running at: ${server.info.uri}`);
+  console.info(`Server running at: ${server.info.uri}`); // eslint-disable-line no-console
 });

@@ -1,5 +1,6 @@
-"use strict";
-exports.name = "create cluster vertex";
+'use strict';
+
+exports.name = 'create cluster vertex';
 
 exports.up = (db) => (
   db.class.create('ActorCluster', 'NetworkActor')

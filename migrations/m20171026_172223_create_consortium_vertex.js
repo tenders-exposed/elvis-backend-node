@@ -1,5 +1,6 @@
-"use strict";
-exports.name = "create consortium vertex";
+'use strict';
+
+exports.name = 'create consortium vertex';
 
 exports.up = (db) => (
   db.class.create('ActorConsortium', 'NetworkActor')
