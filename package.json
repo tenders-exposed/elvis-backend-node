@@ -4,9 +4,12 @@
   "description": "Search and visualize public procurements for EU countries http://elvis.tenders.exposed/",
   "main": "server.js",
   "devDependencies": {
+    "coveralls": "^3.0.0",
     "eslint": "^4.9.0",
     "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.8.0"
+    "eslint-plugin-import": "^2.8.0",
+    "mocha": "^4.0.1",
+    "nyc": "^11.2.1"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
@@ -17,7 +20,9 @@
   },
   "scripts": {
     "migrate": "node ./scripts/migrate.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "nyc mocha",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "keywords": [
     "elvis"

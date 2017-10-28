@@ -4,7 +4,13 @@ const config = require('./config');
 const Hapi = require('hapi');
 
 const server = new Hapi.Server();
-server.connection({ port: config.port, host: config.host });
+server.connection({
+  port: config.port,
+  host: config.host,
+  routes: {
+    cors: true,
+  },
+});
 
 server.start((err) => {
   if (err) {
