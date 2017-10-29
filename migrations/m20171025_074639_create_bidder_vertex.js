@@ -1,5 +1,6 @@
-"use strict";
-exports.name = "create bidder vertex";
+'use strict';
+
+exports.name = 'create bidder vertex';
 
 exports.up = (db) => (
   db.class.create('Bidder', 'Actor')

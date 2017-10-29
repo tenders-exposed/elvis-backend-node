@@ -1,5 +1,6 @@
-"use strict";
-exports.name = "create buyer tender edge";
+'use strict';
+
+exports.name = 'create buyer tender edge';
 
 exports.up = (db) => (
   db.class.create('Creates', 'E')

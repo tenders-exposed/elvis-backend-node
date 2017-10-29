@@ -1,0 +1,12 @@
+language: node_js
+node_js:
+  - 8.0.0
+env:
+  global:
+    - NODE_ENV=test
+    - URL=http://localhost:10010
+script:
+  - npm run lint
+  - npm run test
+after_success:
+  - npm run coverage
