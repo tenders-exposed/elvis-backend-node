@@ -7,6 +7,11 @@ exports.up = (db) => (
     .then((Actor) => {
       Actor.property.create([
         {
+          name: 'id',
+          type: 'String',
+          mandatory: true,
+        },
+        {
           name: 'name',
           type: 'String',
           mandatory: true,
@@ -21,7 +26,17 @@ exports.up = (db) => (
           type: 'DateTime',
           mandatory: true,
         },
+        {
+          name: 'isPublic',
+          type: 'Boolean',
+        },
       ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'Actor.id',
+        type: 'unique',
+      });
     })
 );
 
