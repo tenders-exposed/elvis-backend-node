@@ -7,6 +7,11 @@ exports.up = (db) => (
     .then((Tender) => {
       Tender.property.create([
         {
+          name: 'id',
+          type: 'String',
+          mandatory: true,
+        },
+        {
           name: 'title',
           type: 'String',
         },
@@ -41,10 +46,8 @@ exports.up = (db) => (
           type: 'Boolean',
         },
         {
-          name: 'xDigiwhistPersistentID',
-          type: 'String',
-          unique: true,
-          mandatory: true,
+          name: 'isWholeTenderCancelled',
+          type: 'Boolean',
         },
         {
           name: 'xDigiwhistLastModified',
@@ -52,6 +55,12 @@ exports.up = (db) => (
           mandatory: true,
         },
       ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'Tender.id',
+        type: 'unique',
+      });
     })
 );
 

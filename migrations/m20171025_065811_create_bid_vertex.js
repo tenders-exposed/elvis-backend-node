@@ -7,6 +7,11 @@ exports.up = (db) => (
     .then((Bid) => {
       Bid.property.create([
         {
+          name: 'id',
+          type: 'String',
+          mandatory: true,
+        },
+        {
           name: 'isWinning',
           type: 'Boolean',
           mandatory: true,
@@ -16,7 +21,11 @@ exports.up = (db) => (
           type: 'Boolean',
         },
         {
-          name: 'isAwardedToGroupOfSuppliers',
+          name: 'isConsortium',
+          type: 'Boolean',
+        },
+        {
+          name: 'isDisqualified',
           type: 'Boolean',
         },
         {
@@ -24,7 +33,18 @@ exports.up = (db) => (
           type: 'Embedded',
           linkedClass: 'Price',
         },
+        {
+          name: 'robustPrice',
+          type: 'Embedded',
+          linkedClass: 'Price',
+        },
       ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'Bid.id',
+        type: 'unique',
+      });
     })
 );
 

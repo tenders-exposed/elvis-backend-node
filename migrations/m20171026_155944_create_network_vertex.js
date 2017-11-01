@@ -7,6 +7,11 @@ exports.up = (db) => (
     .then((Network) => {
       Network.property.create([
         {
+          name: 'id',
+          type: 'String',
+          mandatory: true,
+        },
+        {
           name: 'query',
           type: 'Embedded',
           linkedClass: 'TendersQuery',
@@ -25,6 +30,12 @@ exports.up = (db) => (
           type: 'String',
         },
       ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'Network.id',
+        type: 'unique',
+      });
     })
 );
 

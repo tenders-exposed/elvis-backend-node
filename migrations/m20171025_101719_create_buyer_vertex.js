@@ -11,8 +11,8 @@ exports.up = (db) => (
           type: 'String',
         },
         {
-          name: 'bodyIds',
-          type: 'EmbeddedList',
+          name: 'isSubsidized',
+          type: 'Boolean',
         },
       ]);
     })

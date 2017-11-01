@@ -7,12 +7,23 @@ exports.up = (db) => (
     .then((NetworkVertex) => {
       NetworkVertex.property.create([
         {
+          name: 'id',
+          type: 'String',
+          mandatory: true,
+        },
+        {
           name: 'visible',
           type: 'Boolean',
           mandatory: true,
           default: true,
         },
       ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'NetworkVertex.id',
+        type: 'unique',
+      });
     })
 );
 
