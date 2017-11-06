@@ -3,10 +3,7 @@
 'use strict';
 
 const assert = require('assert');
-const OrientDB = require('orientjs');
 const config = require('./../config');
-
-const migrationsDir = `${__dirname}/../migrations`;
 
 function migrationsToRun() {
   const args = process.argv;
@@ -20,12 +17,7 @@ function migrationsToRun() {
   return numberOfMigrations;
 }
 
-const manager = new OrientDB.Migration.Manager({
-  db: config.db,
-  dir: migrationsDir,
-});
-
-manager.up(migrationsToRun())
+config.migrationManager.up(migrationsToRun())
   .then((migrated) => {
     console.log(`Applied ${migrated.length} migrations:\n\t${migrated.join('\n\t')}`);
   })
