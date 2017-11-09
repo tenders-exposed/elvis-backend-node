@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const fs = require('fs');
+const Promise = require('bluebird');
 const readline = require('readline');
 const config = require('./../config');
 const tenderExtractor = require('./../extractors/tender');
@@ -11,86 +12,63 @@ function recordName(uuid, className) {
   return `${className.toLowerCase()}${uuid.replace(/-/g, '')}`;
 }
 
-function upsertBuyer(transaction, rawBuyer, rawTender) {
+async function upsertBuyer(transaction, rawBuyer, rawTender) {
   const buyer = buyerExtractor.extractBuyer(rawBuyer);
-  const buyerName = recordName(buyer.id, 'Buyer');
+  const buyerName = recordName(rawBuyer.id, 'Buyer');
   const tenderName = recordName(rawTender.id, 'Tender');
   const createsName = `${buyerName}creates${tenderName}`;
   const fromName = `$${buyerName}`;
   const toName = `$${tenderName}`;
 
-  return config.db.select().from('Buyer').where({ id: buyer.id }).one()
-    .then((existingBuyer) => {
-      transaction.let(buyerName, (t) => {
-        if (_.isUndefined(existingBuyer)) {
-          t.create('vertex', 'Buyer')
-            .set(buyer);
-        } else {
-          t.update('Buyer')
-            .set({ buyerType: 'Alabalaportocala' })
-            .where({ id: buyer.id })
-            .return('AFTER');
-          // trx.let(createsName, (t) => {
-          //   t.delete('edge', 'Creates')
-          //     .from(fromName)
-          //     .to(toName);
-          // });
-        }
-      }).let(createsName, (t) => {
-        t.create('edge', 'Creates')
-          .from(fromName)
-          .to(toName)
-          .set(buyerExtractor.extractCreates(rawBuyer, rawTender));
-      });
-      return transaction;
+  // TODO: Sometimes this returns undefined even though the buyer exists
+  const existingBuyer = await config.db.select().from('Buyer').where({ id: rawBuyer.id }).one();
+  if (_.isUndefined(existingBuyer)) {
+    transaction.let(buyerName, (t) => {
+      t.create('vertex', 'Buyer')
+        .set(buyer);
+    }).let(createsName, (t) => {
+      t.create('edge', 'Creates')
+        .from(fromName)
+        .to(toName)
+        .set(buyerExtractor.extractCreates(rawBuyer, rawTender));
     });
+  } else {
+    transaction.let(buyerName, (t) => {
+      t.update('Buyer')
+        .set(buyer)
+        .where({ id: buyer.id })
+        .return('AFTER');
+    });
+  }
+  return transaction;
 }
 
-function writeTender(rawTender) {
-  config.db.on("endQuery", function(obj) {
-    console.log("DEBUG QUERY:");
-    console.dir(obj.input);
-  });
+async function writeTender(rawTender) {
   const tender = tenderExtractor.extractTender(rawTender);
-  const tenderName = recordName(tender.id, 'Tender');
+  const tenderName = recordName(rawTender.id, 'Tender');
 
-  config.db.select().from('Tender').where({ id: tender.id }).one()
-    .then((existingTender) => {
-      let transaction = config.db.let(tenderName, (t) => {
-        if (_.isUndefined(existingTender)) {
-          t.create('vertex', 'Tender')
-            .set(tender);
-        } else {
-          t.update('Tender')
-            .set(tender)
-            .where({ id: tender.id })
-            .return('AFTER');
-        }
-      });
-      return transaction;
-    })
-    .then((transaction) => {
-      Promise.all([
-        // createBuyers
-        Promise.each(rawTender.buyers, (rawBuyer) => {
-          upsertBuyer(transaction, rawBuyer, rawTender);
-        }),
-        // createLots,
-        // createCPVs,
-      ])
-        // .then(() => {
-        //   createAwarded edge between bids and buyers
-        // })
-        .then(() => {
-          const returnName = `$${tenderName}`;          
-          transaction.commit().return(returnName).all()
-            .then((results) => { console.log(results); })
-            .catch((err) => {
-              console.log(transaction._state.let);
-              console.log(err);
-              process.exit(-1);
-            });
-        });
+  const existingTender = await config.db.select().from('Tender').where({ id: tender.id }).one();
+  let transaction = config.db.let(tenderName, (t) => {
+    if (_.isUndefined(existingTender)) {
+      t.create('vertex', 'Tender')
+        .set(tender);
+    } else {
+      t.update('Tender')
+        .set(tender)
+        .where({ id: tender.id })
+        .return('AFTER');
+    }
+  });
+  // TODO: Remove this filter by id after empty objects are excluded from the dumps
+  await Promise.map(rawTender.buyers.filter((buyer) => buyer.id), (rawBuyer) =>
+    upsertBuyer(transaction, rawBuyer, rawTender));
+
+  const returnName = `$${tenderName}`;
+  transaction.commit(5).return(returnName).one()
+    .then((result) => result)
+    .catch((err) => {
+      console.log(transaction._state.let);
+      console.error(err.message);
     });
 }
 
@@ -100,11 +78,8 @@ function importFileData(filePath) {
 
   handler.on('line', (line) => {
     const tenderAttrs = JSON.parse(line);
-    const awardedLots = _.compact((tenderAttrs.lots || []).map((lot) => {
-      if ((lot.bids || []).filter((bid) => bid.isWinning === true).length >= 1) {
-        return lot;
-      }
-    }));
+    const awardedLots = (tenderAttrs.lots || []).filter((lot) =>
+      (lot.bids || []).filter((bid) => bid.isWinning === true).length >= 1);
     if (_.isEmpty(awardedLots)) {
       return;
     }
@@ -122,3 +97,8 @@ function importDumpFiles() {
 }
 
 importDumpFiles();
+
+// For testing
+module.exports = {
+  upsertBuyer,
+};
