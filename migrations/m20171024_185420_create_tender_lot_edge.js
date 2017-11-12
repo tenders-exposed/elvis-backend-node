@@ -4,6 +4,28 @@ exports.name = 'create tender lot edge';
 
 exports.up = (db) => (
   db.class.create('Comprises', 'E')
+    .then((Comprises) => {
+      Comprises.property.create([
+        {
+          name: 'in',
+          type: 'Link',
+          mandatory: true,
+        },
+        {
+          name: 'out',
+          type: 'Link',
+          mandatory: true,
+        },
+      ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'Comprises.in.out',
+        type: 'unique',
+        class: 'Comprises',
+        properties: ['in', 'out'],
+      });
+    })
 );
 
 exports.down = (db) => (
