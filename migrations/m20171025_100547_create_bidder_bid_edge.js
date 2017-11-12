@@ -10,7 +10,25 @@ exports.up = (db) => (
           name: 'isLeader',
           type: 'Boolean',
         },
+        {
+          name: 'in',
+          type: 'Link',
+          mandatory: true,
+        },
+        {
+          name: 'out',
+          type: 'Link',
+          mandatory: true,
+        },
       ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'Participates.in.out',
+        type: 'unique',
+        class: 'Participates',
+        properties: ['in', 'out'],
+      });
     })
 );
 

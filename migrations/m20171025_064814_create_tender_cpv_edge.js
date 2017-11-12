@@ -10,7 +10,25 @@ exports.up = (db) => (
           name: 'isMain',
           type: 'Boolean',
         },
+        {
+          name: 'in',
+          type: 'Link',
+          mandatory: true,
+        },
+        {
+          name: 'out',
+          type: 'Link',
+          mandatory: true,
+        },
       ]);
+    })
+    .then(() => {
+      db.index.create({
+        name: 'HasCPV.in.out',
+        type: 'unique',
+        class: 'HasCPV',
+        properties: ['in', 'out'],
+      });
     })
 );
 
