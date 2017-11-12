@@ -7,11 +7,6 @@ exports.up = (db) => (
     .then((Lot) => {
       Lot.property.create([
         {
-          name: 'id',
-          type: 'String',
-          mandatory: true,
-        },
-        {
           name: 'title',
           type: 'String',
         },
@@ -39,7 +34,6 @@ exports.up = (db) => (
         {
           name: 'awardDecisionDate',
           type: 'Date',
-          mandatory: true,
         },
         {
           name: 'awardCriteria',
@@ -60,12 +54,6 @@ exports.up = (db) => (
           linkedClass: 'Price',
         },
       ]);
-    })
-    .then(() => {
-      db.index.create({
-        name: 'Lot.id',
-        type: 'unique',
-      });
     })
 );
 

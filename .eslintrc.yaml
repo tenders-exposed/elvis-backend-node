@@ -20,3 +20,9 @@ rules:
   arrow-parens:
     - error
     - always
+  prefer-destructuring:
+    - error
+    - object: false
+  no-param-reassign:
+    - error
+    - props: false

@@ -17,6 +17,12 @@ exports.up = (db) => (
         },
       ]);
     })
+    .then(() => {
+      db.index.create({
+        name: 'CPV.code',
+        type: 'unique',
+      });
+    })
 );
 
 exports.down = (db) => (
