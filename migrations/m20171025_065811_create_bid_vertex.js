@@ -7,11 +7,6 @@ exports.up = (db) => (
     .then((Bid) => {
       Bid.property.create([
         {
-          name: 'id',
-          type: 'String',
-          mandatory: true,
-        },
-        {
           name: 'isWinning',
           type: 'Boolean',
           mandatory: true,
@@ -39,12 +34,6 @@ exports.up = (db) => (
           linkedClass: 'Price',
         },
       ]);
-    })
-    .then(() => {
-      db.index.create({
-        name: 'Bid.id',
-        type: 'unique',
-      });
     })
 );
 

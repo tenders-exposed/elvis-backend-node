@@ -11,18 +11,18 @@ exports.up = (db) => (
           type: 'Double',
         },
         {
-          name: 'currencyNational',
+          name: 'currency',
           type: 'String',
+          mandatory: true,
+        },
+        {
+          name: 'netAmount',
+          type: 'Double',
+          mandatory: true,
         },
         {
           name: 'netAmountEur',
           type: 'Double',
-          mandatory: true,
-        },
-        {
-          name: 'netAmountNational',
-          type: 'Double',
-          mandatory: true,
         },
         {
           name: 'publicationDate',
