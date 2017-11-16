@@ -1,9 +1,9 @@
 'use strict';
 
-const config = require('../config');
 const Promise = require('bluebird');
+const config = require('../config');
 
-function truncateDB() {
+function dropDB() {
   // Order counts. Delete subclasses first
   const dbClasses = [
     'Contracts',
@@ -38,10 +38,15 @@ function truncateDB() {
     'Migration',
   ];
 
-  return Promise.each(dbClasses, (className) => config.db.exec(`DROP CLASS ${className} IF EXISTS UNSAFE`))
-    .then(() => config.migrationManager.up());
+  return Promise.map(dbClasses, (className) =>
+    config.db.exec(`DROP CLASS ${className} IF EXISTS UNSAFE`));
+}
+
+function createDB() {
+  return config.migrationManager.up();
 }
 
 module.exports = {
-  truncateDB,
+  dropDB,
+  createDB,
 };

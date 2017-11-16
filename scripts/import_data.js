@@ -250,5 +250,5 @@ importDumpFiles();
 
 // For testing
 module.exports = {
-  upsertBuyer,
+  writeTender,
 };

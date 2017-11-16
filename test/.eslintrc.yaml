@@ -2,3 +2,13 @@
 extends: ../.eslintrc.yaml
 env:
   mocha: true
+globals:
+  server: false
+  factory: false
+  config: false
+  truncateDB: false
+  fixtures: false
+rules:
+  import/no-extraneous-dependencies:
+    - error
+    - devDependencies: true

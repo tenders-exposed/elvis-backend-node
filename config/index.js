@@ -19,11 +19,17 @@ if (!config.url) {
 const orientDBConfig = {
   host: process.env.ORIENTDB_HOST,
   port: process.env.ORIENTDB_PORT,
-  name: process.env.ORIENTDB_DB,
   username: process.env.ORIENTDB_USER,
   password: process.env.ORIENTDB_PASS,
-  storage: (NODE_ENV === 'test') ? ('memory') : ('plocal'),
 };
+if (NODE_ENV === 'test') {
+  orientDBConfig.name = process.env.ORIENTDB_TEST_DB;
+  orientDBConfig.storage = 'memory';
+} else {
+  orientDBConfig.name = process.env.ORIENTDB_DB;
+  orientDBConfig.storage = 'plocal';
+}
+
 config.db = new OrientDB.ODatabase(orientDBConfig);
 
 // Migrations
