@@ -1,7 +1,7 @@
 'use strict';
 
-const moment = require('moment');
-
+const _ = require('lodash');
+const helpers = require('./helpers');
 
 function extractTender(tenderAttrs) {
   return {
@@ -14,9 +14,20 @@ function extractTender(tenderAttrs) {
     nationalProcedureType: tenderAttrs.nationalProcedureType,
     finalPrice: tenderAttrs.finalPrice,
     isWholeTenderCancelled: tenderAttrs.isWholeTenderCancelled,
-    xIsEuFunded: tenderAttrs.fundings.map((funding) => funding.isEuFund).includes(true),
-    xDigiwhistLastModified: moment(tenderAttrs.modified).format('YYYY-MM-DD HH:mm:ss'),
+    xIsEuFunded: assertIsEuFunded(tenderAttrs),
+    xDigiwhistLastModified: helpers.formatTimestamp(tenderAttrs.modified),
   };
+}
+
+
+function assertIsEuFunded(tenderAttrs) {
+  let isEuFunded;
+  const euFundings = _.compact((tenderAttrs.fundings || [])
+    .map((funding) => funding.isEuFund));
+  if (euFundings.length > 0) {
+    isEuFunded = euFundings.includes(true);
+  }
+  return isEuFunded;
 }
 
 module.exports = {

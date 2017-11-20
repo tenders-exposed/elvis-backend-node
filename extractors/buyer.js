@@ -1,8 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const moment = require('moment');
-
+const helpers = require('./helpers');
 
 function extractBuyer(buyerAttrs) {
   return {
@@ -12,17 +11,13 @@ function extractBuyer(buyerAttrs) {
     isPublic: buyerAttrs.isPublic,
     buyerType: buyerAttrs.buyerType,
     isSubsidized: buyerAttrs.isSubsidized,
-    xDigiwhistLastModified: moment(buyerAttrs.modified).format('YYYY-MM-DD HH:mm:ss'),
+    xDigiwhistLastModified: helpers.formatTimestamp(buyerAttrs.modified),
   };
 }
 
-function extractCreates(buyerAttrs, tenderAttrs) {
-  let isLeader = buyerAttrs.isLeader;
-  if (_.isUndefined(isLeader) && tenderAttrs.buyers.length === 1) {
-    isLeader = true;
-  }
+function extractCreates(buyerAttrs) {
   return {
-    isLeader,
+    isLeader: buyerAttrs.isLeader,
   };
 }
 

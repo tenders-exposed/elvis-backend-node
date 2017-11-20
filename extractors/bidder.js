@@ -1,8 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const moment = require('moment');
-
+const helpers = require('./helpers');
 
 function extractBidder(bidderAttrs) {
   return {
@@ -10,7 +9,7 @@ function extractBidder(bidderAttrs) {
     name: bidderAttrs.name,
     address: bidderAttrs.address,
     isPublic: bidderAttrs.isPublic,
-    xDigiwhistLastModified: moment(bidderAttrs.modified).format('YYYY-MM-DD HH:mm:ss'),
+    xDigiwhistLastModified: helpers.formatTimestamp(bidderAttrs.modified),
   };
 }
 
