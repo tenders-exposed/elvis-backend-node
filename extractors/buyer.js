@@ -1,7 +1,7 @@
 'use strict';
 
-const _ = require('lodash');
 const helpers = require('./helpers');
+const indicatorExtractor = require('./indicator')
 
 function extractBuyer(buyerAttrs) {
   return {
@@ -12,12 +12,14 @@ function extractBuyer(buyerAttrs) {
     buyerType: buyerAttrs.buyerType,
     isSubsidized: buyerAttrs.isSubsidized,
     xDigiwhistLastModified: helpers.formatTimestamp(buyerAttrs.modified),
+    indicators: (buyerAttrs.indicators || []).map((indicatorAttrs) =>
+      indicatorExtractor.extractIndicator(indicatorAttrs)),
   };
 }
 
 function extractCreates(buyerAttrs) {
   return {
-    isLeader: buyerAttrs.isLeader,
+    isLeader: buyerAttrs.isLeader || false,
   };
 }
 

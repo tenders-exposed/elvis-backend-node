@@ -14,7 +14,6 @@ exports.up = (db) => (
         {
           name: 'name',
           type: 'String',
-          mandatory: true,
         },
         {
           name: 'address',
@@ -35,7 +34,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'Actor.id',
-        type: 'unique',
+        type: 'DICTIONARY_HASH_INDEX',
       });
     })
 );

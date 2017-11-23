@@ -2,6 +2,8 @@
 
 const _ = require('lodash');
 const helpers = require('./helpers');
+const indicatorExtractor = require('./indicator');
+const priceExtractor = require('./price');
 
 function extractTender(tenderAttrs) {
   return {
@@ -12,13 +14,14 @@ function extractTender(tenderAttrs) {
     isFrameworkAgreement: tenderAttrs.isFrameworkAgreement,
     isCoveredByGpa: tenderAttrs.isCoveredByGpa,
     nationalProcedureType: tenderAttrs.nationalProcedureType,
-    finalPrice: tenderAttrs.finalPrice,
+    finalPrice: priceExtractor.extractPrice(tenderAttrs.finalPrice),
     isWholeTenderCancelled: tenderAttrs.isWholeTenderCancelled,
     xIsEuFunded: assertIsEuFunded(tenderAttrs),
     xDigiwhistLastModified: helpers.formatTimestamp(tenderAttrs.modified),
+    indicators: (tenderAttrs.indicators || []).map((indicatorAttrs) =>
+      indicatorExtractor.extractIndicator(indicatorAttrs)),
   };
 }
-
 
 function assertIsEuFunded(tenderAttrs) {
   let isEuFunded;

@@ -1,19 +1,19 @@
 'use strict';
 
-function extractCPV(cpvAttrs) {
+function extractCpv(cpvAttrs) {
   return {
     xName: cpvAttrs.name,
     code: cpvAttrs.code,
   };
 }
 
-function extractHasCPV(cpvAttrs) {
+function extractHasCpv(cpvAttrs) {
   return {
-    isMain: cpvAttrs.isMain,
+    isMain: cpvAttrs.isMain || false,
   };
 }
 
 module.exports = {
-  extractCPV,
-  extractHasCPV,
+  extractCpv,
+  extractHasCpv,
 };

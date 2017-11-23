@@ -1,7 +1,7 @@
 'use strict';
 
-const _ = require('lodash');
 const helpers = require('./helpers');
+const indicatorExtractor = require('./indicator');
 
 function extractBidder(bidderAttrs) {
   return {
@@ -10,16 +10,14 @@ function extractBidder(bidderAttrs) {
     address: bidderAttrs.address,
     isPublic: bidderAttrs.isPublic,
     xDigiwhistLastModified: helpers.formatTimestamp(bidderAttrs.modified),
+    indicators: (bidderAttrs.indicators || []).map((indicatorAttrs) =>
+      indicatorExtractor.extractIndicator(indicatorAttrs)),
   };
 }
 
-function extractParticipates(bidderAttrs, bidAttrs) {
-  let isLeader = bidderAttrs.isLeader;
-  if (_.isUndefined(isLeader) && bidAttrs.bidders.length === 1) {
-    isLeader = true;
-  }
+function extractParticipates(bidderAttrs) {
   return {
-    isLeader,
+    isLeader: bidderAttrs.isLeader || false,
   };
 }
 

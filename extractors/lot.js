@@ -1,5 +1,7 @@
 'use strict';
 
+const priceExtractor = require('./price');
+
 function extractLot(lotAttrs) {
   return {
     title: lotAttrs.title,
@@ -12,7 +14,7 @@ function extractLot(lotAttrs) {
     awardCriteria: lotAttrs.awardCriteria,
     addressOfImplementation: lotAttrs.addressOfImplementation,
     status: lotAttrs.status,
-    estimatedPrice: lotAttrs.estimatedPrice,
+    estimatedPrice: priceExtractor.extractPrice(lotAttrs.estimatedPrice),
   };
 }
 

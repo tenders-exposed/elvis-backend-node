@@ -21,7 +21,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'AppliedTo.in.out',
-        type: 'unique',
+        type: 'DICTIONARY_HASH_INDEX',
         class: 'AppliedTo',
         properties: ['in', 'out'],
       });
