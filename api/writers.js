@@ -2,18 +2,41 @@
 
 const _ = require('lodash');
 const Promise = require('bluebird');
+const uuidv4 = require('uuid/v4');
+
 const config = require('./../config');
 const tenderExtractor = require('./../extractors/tender');
 const buyerExtractor = require('./../extractors/buyer');
+const lotExtractor = require('./../extractors/lot');
+const bidExtractor = require('./../extractors/bid');
+const bidderExtractor = require('./../extractors/bidder');
+const cpvExtractor = require('./../extractors/cpv');
+
 function recordName(id, className) {
   return `${className.toLowerCase()}${id.replace(/-/g, '')}`;
 }
 
+function allocateIndicators(rawObject, indicators) {
+  return _.each(rawObject, (value, keindex, rawObj) => {
+    if (_.isArray(value) || _.isPlainObject(value)) {
+      rawObj[keindex] = allocateIndicators(value, indicators);
+    }
+    if (keindex === 'id') {
+      rawObj.indicators = _.filter(indicators, { relatedEntityId: value });
+    }
+  });
+}
+
 // Returns true
 // Raises OrientDBError if the writing failed
-async function writeTender(rawTender) {
+async function writeTender(fullTenderRecord) {
+  const indicators = fullTenderRecord.indicators || [];
+  const rawTender = allocateIndicators(
+    _.omit(fullTenderRecord, 'indicators'),
+    indicators,
+  );
   const tender = tenderExtractor.extractTender(rawTender);
-  const tenderName = recordName(rawTender.id, 'Tender');
+  const tenderName = recordName(tender.id, 'Tender');
 
   const existingTender = await config.db.select().from('Tender')
     .where({ id: tender.id }).one();
@@ -25,23 +48,107 @@ async function writeTender(rawTender) {
     } else {
       t.update('Tender')
         .set(tender)
-        .where({ id: tender.id })
+        .where({ '@rid': existingTenderID })
         .return('AFTER');
     }
   });
 
-  // TODO: Remove this filter after empty objects in Digiwhist dump are fixed
-  const buyerNames = await Promise.map(_.filter(rawTender.buyers, (buyer) => buyer.id),
-    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName));
+  // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
+  const buyerNames = await Promise.map(
+    _.filter(rawTender.buyers, (rawBuyer) => rawBuyer.id),
+    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName),
+  );
 
-  transaction.commit(5).return(`$${tenderName}`).one()
-    .then((result) => result)
+  if (_.isUndefined(existingTender) === false) {
+    const existingLotRel = await config.db.select("out('Comprises')").from('Tender')
+      .where({ '@rid': existingTenderID }).one();
+    const existingLotIDs = existingLotRel.out;
+    await Promise.map(existingLotIDs, (existingLotID) =>
+      deleteLot(transaction, existingLotID));
+  }
+
+  await Promise.map((rawTender.lots || []), (rawLot) =>
+    createLot(transaction, rawLot, tenderName, buyerNames));
+
+  await Promise.map((rawTender.cpvs || []), (rawCpv) =>
+    upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
+
+  return transaction.commit(2).return(`$${tenderName}`).one()
     .catch((err) => {
-      console.log(transaction._state.let);
-      console.error(err.message);
       throw err;
     });
-  return true;
+}
+
+async function deleteLot(transaction, lotID) {
+  const lotName = `delete${recordName(uuidv4(), 'Lot')}`;
+
+  transaction.let(lotName, (t) =>
+    t.delete('vertex', 'Lot')
+      .where({ '@rid': lotID }));
+
+  const existingBidRel = await config.db.select("in('AppliedTo')").from('Lot')
+    .where({ '@rid': lotID }).one();
+  const existingBidIDs = existingBidRel.in;
+  await Promise.map(existingBidIDs, (existingBidID) =>
+    deleteBid(transaction, existingBidID));
+  return lotName;
+}
+
+async function deleteBid(transaction, bidID) {
+  const bidName = `delete${recordName(uuidv4(), 'Bid')}`;
+
+  transaction.let(bidName, (t) =>
+    t.delete('vertex', 'Bid')
+      .where({ '@rid': bidID }));
+  return bidName;
+}
+
+async function createLot(transaction, rawLot, tenderName, buyerNames) {
+  const rawBids = (rawLot.bids || []);
+  rawLot.bidsCount = rawBids.length;
+  const lot = lotExtractor.extractLot(rawLot);
+  const lotName = recordName(uuidv4(), 'Lot');
+
+  transaction.let(lotName, (t) => {
+    t.create('vertex', 'Lot')
+      .set(lot);
+  }).let(`${tenderName}comprises${lotName}`, (t) => {
+    t.create('edge', 'Comprises')
+      .from(`$${tenderName}`)
+      .to(`$${lotName}`);
+  });
+
+  await Promise.map(rawBids, (rawBid) =>
+    createBid(transaction, rawBid, lotName, buyerNames));
+  return lotName;
+}
+
+async function createBid(transaction, rawBid, lotName, buyerNames) {
+  const bid = bidExtractor.extractBid(rawBid);
+  const bidName = recordName(uuidv4(), 'Bid');
+
+  transaction.let(bidName, (t) => {
+    t.create('vertex', 'Bid')
+      .set(bid);
+  }).let(`${bidName}appliedTo${lotName}`, (t) => {
+    t.create('edge', 'AppliedTo')
+      .from(`$${bidName}`)
+      .to(`$${lotName}`);
+  });
+
+  await Promise.map(_.flatten([buyerNames]), (buyerName) =>
+    transaction.let(`${buyerName}awards${bidName}`, (t) => {
+      t.create('edge', 'Awards')
+        .from(`$${buyerName}`)
+        .to(`$${bidName}`);
+    }));
+
+  // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
+  await Promise.map(
+    (rawBid.bidders || []).filter((rawBidder) => rawBidder.id),
+    (rawBidder) => upsertBidder(transaction, rawBidder, bidName),
+  );
+  return bidName;
 }
 
 async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName) {
@@ -49,7 +156,8 @@ async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName) 
   const buyerName = recordName(rawBuyer.id, 'Buyer');
 
   const existingBuyer = await config.db.select().from('Buyer')
-    .where({ id: rawBuyer.id }).one();
+    .where({ id: buyer.id }).one();
+  const existingBuyerID = (existingBuyer || {})['@rid'];
   if (_.isUndefined(existingBuyer)) {
     transaction.let(buyerName, (t) => {
       t.create('vertex', 'Buyer')
@@ -59,33 +167,112 @@ async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName) 
     transaction.let(buyerName, (t) => {
       t.update('Buyer')
         .set(buyer)
-        .where({ id: rawBuyer.id })
+        .where({ '@rid': existingBuyer['@rid'] })
         .return('AFTER');
     });
   }
 
-  const existingRelID = await config.db.select('@rid').from('Creates')
+  const existingRel = await config.db.select().from('Creates')
     .where({
-      in: existingTenderID,
-      out: (existingBuyer || {})['@rid'],
+      in: (existingTenderID || null),
+      out: (existingBuyerID || null),
     }).one();
   transaction.let(`${buyerName}creates${tenderName}`, (t) => {
-    if (_.isUndefined(existingRelID)) {
+    if (_.isUndefined(existingRel)) {
       t.create('edge', 'Creates')
         .from(`$${buyerName}`)
         .to(`$${tenderName}`)
         .set(buyerExtractor.extractCreates(rawBuyer));
     } else {
-      t.update('edge', 'Creates')
+      t.update('Creates')
         .set(buyerExtractor.extractCreates(rawBuyer))
-        .where({ '@rid': existingRelID })
+        .where({ '@rid': existingRel['@rid'] })
         .return('AFTER');
     }
   });
   return buyerName;
 }
 
+async function upsertBidder(transaction, rawBidder, bidName) {
+  const bidder = bidderExtractor.extractBidder(rawBidder);
+  const bidderName = recordName(rawBidder.id, 'Bidder');
+
+  const existingBidder = await config.db.select().from('Bidder')
+    .where({ id: bidder.id }).one();
+  if (_.isUndefined(existingBidder)) {
+    transaction.let(bidderName, (t) => {
+      t.create('vertex', 'Bidder')
+        .set(bidder);
+    });
+  } else {
+    transaction.let(bidderName, (t) => {
+      t.update('Bidder')
+        .set(bidder)
+        .where({ '@rid': existingBidder['@rid'] })
+        .return('AFTER');
+    });
+  }
+
+  transaction.let(`${bidderName}participates${bidName}`, (t) => {
+    t.create('edge', 'Participates')
+      .from(`$${bidderName}`)
+      .to(`$${bidName}`)
+      .set(bidderExtractor.extractParticipates(rawBidder));
+  });
+  return bidderName;
+}
+
+async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
+  const cpv = cpvExtractor.extractCpv(rawCpv);
+  const cpvName = recordName(rawCpv.code, 'CPV');
+
+  const existingCpv = await config.db.select().from('CPV')
+    .where({ code: cpv.code }).one();
+  const existingCpvID = (existingCpv || {})['@rid'];
+  if (_.isUndefined(existingCpv)) {
+    transaction.let(cpvName, (t) => {
+      t.create('vertex', 'CPV')
+        .set(cpv);
+    });
+  } else {
+    transaction.let(cpvName, (t) => {
+      t.update('CPV')
+        .set(cpv)
+        .where({ '@rid': existingCpv['@rid'] })
+        .return('AFTER');
+    });
+  }
+
+  const existingRel = await config.db.select().from('HasCPV')
+    .where({
+      // This is needed because undefined confuses OrientDB
+      in: (existingCpvID || null),
+      out: (existingTenderID || null),
+    }).one();
+  transaction.let(`${tenderName}has${cpvName}`, (t) => {
+    if (_.isUndefined(existingRel)) {
+      t.create('edge', 'HasCPV')
+        .from(`$${tenderName}`)
+        .to(`$${cpvName}`)
+        .set(cpvExtractor.extractHasCpv(rawCpv));
+    } else {
+      t.update('HasCPV')
+        .set(cpvExtractor.extractHasCpv(rawCpv))
+        .where({ '@rid': existingRel['@rid'] })
+        .return('AFTER');
+    }
+  });
+  return cpvName;
+}
+
 module.exports = {
   writeTender,
   upsertBuyer,
+  upsertBidder,
+  upsertCpv,
+  deleteLot,
+  deleteBid,
+  createLot,
+  createBid,
+  allocateIndicators,
 };

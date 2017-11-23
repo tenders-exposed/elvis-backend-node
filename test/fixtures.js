@@ -3,6 +3,12 @@
 const FactoryGirl = require('factory-girl');
 const uuidv4 = require('uuid/v4');
 const tenderExtractor = require('./../extractors/tender');
+const buyerExtractor = require('./../extractors/buyer');
+const lotExtractor = require('./../extractors/lot');
+const cpvExtractor = require('./../extractors/cpv');
+const bidExtractor = require('./../extractors/bid');
+const bidderExtractor = require('./../extractors/bidder');
+const indicatorExtractor = require('./../extractors/indicator');
 
 const factory = FactoryGirl.factory;
 factory.setAdapter(new FactoryGirl.ObjectAdapter());
@@ -16,29 +22,37 @@ const tenderAttrs = {
     netAmount: 1212121212,
   },
 };
-
 factory.define('rawTender', Object, tenderAttrs);
-
 factory.define('extractedTender', Object, tenderAttrs, {
-  afterBuild: (rawTender) => {
-    return tenderExtractor.extractTender(rawTender);
-  },
+  afterBuild: (rawTender) => tenderExtractor.extractTender(rawTender),
+});
+
+const cpvAttrs = {
+  code: '12021220-1',
+  name: 'Talkative ghosts',
+};
+factory.define('rawCpv', Object, cpvAttrs);
+factory.define('extractedCpv', Object, cpvAttrs, {
+  afterBuild: (rawCpv) => cpvExtractor.extractCpv(rawCpv),
 });
 
 const buyerAttrs = {
   id: () => uuidv4(),
   modified: '2017-06-08T11:55:43.525',
   name: 'Ministry of Magic',
+  isPublic: true,
 };
-
 factory.define('rawBuyer', Object, buyerAttrs);
+factory.define('extractedBuyer', Object, buyerAttrs, {
+  afterBuild: (rawBuyer) => buyerExtractor.extractBuyer(rawBuyer),
+});
 
-factory.define('rawLot', Object, {
+const lotAttrs = {
   lotNumber: factory.sequence((n) => n),
   awardDecisionDate: '2015-03-19',
   awardCriteria: [
     {
-      name: 'Sanest',
+      name: 'Does it sparkle',
       weight: 10,
     },
   ],
@@ -46,13 +60,61 @@ factory.define('rawLot', Object, {
   addressOfImplementation: {
     rawAddress: 'Klausenburger',
   },
+  bidsCount: 0,
+};
+factory.define('rawLot', Object, lotAttrs);
+factory.define('extractedLot', Object, lotAttrs, {
+  afterBuild: (rawLot) => lotExtractor.extractLot(rawLot),
 });
 
-factory.define('rawBid', Object, {});
+const bidAttrs = {
+  isWinning: true,
+  price: {
+    currency: 'EUR',
+    netAmount: 100011001.00,
+  },
+};
+factory.define('rawBid', Object, bidAttrs);
+factory.define('extractedBid', Object, bidAttrs, {
+  afterBuild: (rawBid) => bidExtractor.extractBid(rawBid),
+});
 
-factory.define('rawFullTender', Object, Object.assign(tenderAttrs, {
-  buyers: factory.assocAttrsMany('rawBuyer', 2),
-}));
+const bidderAttrs = {
+  id: () => uuidv4(),
+  modified: '2017-11-11T11:55:43.525',
+  name: "Ollivander's",
+  isPublic: false,
+};
+factory.define('rawBidder', Object, bidderAttrs);
+factory.define('extractedBidder', Object, bidderAttrs, {
+  afterBuild: (rawBidder) => bidderExtractor.extractBidder(rawBidder),
+});
+
+const indicatorAttrs = {
+  id: () => uuidv4(),
+  modified: '2017-11-11T11:55:43.525',
+  type: "Thunder scar on forehead",
+  value: 1,
+  relatedEntityId: undefined,
+};
+factory.define('rawIndicator', Object, indicatorAttrs);
+factory.define('extractedIndicator', Object, indicatorAttrs, {
+  afterBuild: (indicator) => indicatorExtractor.extractIndicator(indicator),
+});
+
+factory.extend('rawBid', 'rawBidWithBidder', {
+  bidders: factory.assocAttrsMany('rawBidder', 1),
+});
+
+factory.extend('rawLot', 'rawLotWithBid', {
+  bids: factory.assocAttrsMany('rawBidWithBidder', 1),
+});
+
+factory.extend('rawTender', 'rawFullTender', {
+  lots: factory.assocAttrsMany('rawLotWithBid', 1),
+  buyers: factory.assocAttrsMany('rawBuyer', 1),
+  cpvs: factory.assocAttrsMany('rawCpv', 1),
+});
+
 
 module.exports = factory;
-

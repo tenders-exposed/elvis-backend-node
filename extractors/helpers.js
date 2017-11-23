@@ -1,6 +1,6 @@
 'use strict';
 
-const _ = require('lodash')
+const _ = require('lodash');
 const moment = require('moment');
 
 // Format timestamp string so that OrientJS accepts it

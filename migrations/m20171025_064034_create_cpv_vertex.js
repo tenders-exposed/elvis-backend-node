@@ -20,7 +20,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'CPV.code',
-        type: 'unique',
+        type: 'DICTIONARY_HASH_INDEX',
       });
     })
 );

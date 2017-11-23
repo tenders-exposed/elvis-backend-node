@@ -22,7 +22,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'NetworkVertex.id',
-        type: 'unique',
+        type: 'DICTIONARY_HASH_INDEX',
       });
     })
 );

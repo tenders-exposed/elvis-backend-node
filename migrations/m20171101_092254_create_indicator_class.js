@@ -23,16 +23,12 @@ exports.up = (db) => (
           name: 'value',
           type: 'double',
         },
-        {
-          name: 'relatedEntityId',
-          type: 'String',
-        },
       ]);
     })
     .then(() => {
       db.index.create({
         name: 'Indicator.id',
-        type: 'unique',
+        type: 'DICTIONARY_HASH_INDEX',
       });
     })
 );
