@@ -59,7 +59,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'Tender.id',
-        type: 'DICTIONARY_HASH_INDEX',
+        type: 'UNIQUE_HASH_INDEX',
       });
     })
 );

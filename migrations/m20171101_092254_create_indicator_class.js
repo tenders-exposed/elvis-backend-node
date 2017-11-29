@@ -28,7 +28,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'Indicator.id',
-        type: 'DICTIONARY_HASH_INDEX',
+        type: 'UNIQUE_HASH_INDEX',
       });
     })
 );
