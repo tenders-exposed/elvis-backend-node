@@ -22,7 +22,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'NetworkEdge.id',
-        type: 'DICTIONARY_HASH_INDEX',
+        type: 'UNIQUE_HASH_INDEX',
       });
     })
 );

@@ -21,7 +21,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'Comprises.in.out',
-        type: 'DICTIONARY_HASH_INDEX',
+        type: 'UNIQUE_HASH_INDEX',
         class: 'Comprises',
         properties: ['in', 'out'],
       });

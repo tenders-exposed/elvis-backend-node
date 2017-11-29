@@ -25,7 +25,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'HasCPV.in.out',
-        type: 'DICTIONARY_HASH_INDEX',
+        type: 'UNIQUE_HASH_INDEX',
         class: 'HasCPV',
         properties: ['in', 'out'],
       });

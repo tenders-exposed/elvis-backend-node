@@ -7,13 +7,13 @@ const readline = require('readline');
 const PQueue = require('p-queue');
 
 const writers = require('./../api/writers');
-const queue = new PQueue({concurrency: 1});
 
 function importFileData(filePath) {
   return new Promise((resolve, reject) => {
     const instream = fs.createReadStream(filePath);
     const handler = readline.createInterface({ input: instream });
     let cursor = 0;
+    const queue = new PQueue();
 
     handler.on('line', (line) => {
       queue.add(() => writers.writeTender(JSON.parse(line)).then(() => {
@@ -28,7 +28,7 @@ function importFileData(filePath) {
 
     handler.on('close', () => {
       queue.onEmpty().then(() => {
-	      console.log('Queue is empty');
+        console.log('Queue is empty');
         console.log('Done processing the file', filePath);
         resolve(true);
       });

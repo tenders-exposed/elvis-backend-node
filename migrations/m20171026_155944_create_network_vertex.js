@@ -34,7 +34,7 @@ exports.up = (db) => (
     .then(() => {
       db.index.create({
         name: 'Network.id',
-        type: 'DICTIONARY_HASH_INDEX',
+        type: 'UNIQUE_HASH_INDEX',
       });
     })
 );
