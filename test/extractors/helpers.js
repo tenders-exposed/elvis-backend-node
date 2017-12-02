@@ -3,7 +3,6 @@
 const moment = require('moment');
 const test = require('ava').test;
 
-const fixtures = require('./../fixtures');
 const extractorHelpers = require('./../../extractors/helpers');
 
 test('formatTimestamp returns undefined for undefined strings', (t) => {

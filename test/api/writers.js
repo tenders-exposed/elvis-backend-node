@@ -3,13 +3,13 @@
 const _ = require('lodash');
 const test = require('ava').test;
 const OrientDBError = require('orientjs/lib/errors');
-const config = require('./../../config/index')
+const config = require('./../../config/index');
 const writers = require('./../../api/writers');
 const helpers = require('./../helpers');
 const fixtures = require('./../fixtures');
 
-test.before((t) => helpers.createDB());
-test.afterEach.always((t) => helpers.truncateDB());
+test.before(() => helpers.createDB());
+test.afterEach.always(() => helpers.truncateDB());
 
 test('allocateIndicators adds indicators to nested objects', async (t) => {
   const rawFullTender = await fixtures.build('rawFullTender');
@@ -23,8 +23,10 @@ test('allocateIndicators adds indicators to nested objects', async (t) => {
 test.serial('writeTender creates new tender', async (t) => {
   const rawTender = await fixtures.build('rawTender');
   const writtenTender = await writers.writeTender(rawTender)
-    .then(() => config.db.select().from('Tender')
-      .where({ id: rawTender.id }).one());
+    .then(() => config.db.select()
+      .from('Tender')
+      .where({ id: rawTender.id })
+      .one());
   t.false(_.isUndefined(writtenTender));
 });
 
@@ -43,8 +45,10 @@ test.serial('writeTender updates indicators', async (t) => {
   firstIndicator.value = newValue;
   rawTender.indicators = [firstIndicator, secondIndicator];
   const updatedTender = await writers.writeTender(rawTender)
-    .then(() => config.db.select().from('Tender')
-      .where({ id: rawTender.id }).one());
+    .then(() => config.db.select()
+      .from('Tender')
+      .where({ id: rawTender.id })
+      .one());
   t.is(updatedTender.indicators.length, 2);
   t.is(_.find(updatedTender.indicators, { id: firstIndicator.id }).value, newValue);
 });
@@ -56,19 +60,24 @@ test.serial('writeTender updates existing tender', async (t) => {
     id: tenderAttrs.id,
   });
   const existingTender = await config.db.create('vertex', 'Tender')
-    .set(tenderAttrs).commit().one();
+    .set(tenderAttrs)
+    .commit()
+    .one();
   const updatedTender = await writers.writeTender(updatedTenderAttrs)
     .then(() => config.db.select().from('Tender')
-      .where({ id: tenderAttrs.id }).one());
+      .where({ id: tenderAttrs.id })
+      .one());
   t.is(updatedTender['@rid'].toString(), existingTender['@rid'].toString());
   t.is(updatedTender.country, updatedTenderAttrs.country);
 });
 
 test.serial('writeTender rolls back transaction on error', async (t) => {
   const wrongTenderAttrs = await fixtures.build('rawTender', { isFrameworkAgreement: 'I should be a boolean' });
-  const writtenTender = await config.db.select().from('Tender')
-    .where({ id: wrongTenderAttrs.id }).one();
   await t.throws(writers.writeTender(wrongTenderAttrs), OrientDBError.RequestError);
+  const writtenTender = await config.db.select()
+    .from('Tender')
+    .where({ id: wrongTenderAttrs.id })
+    .one();
   t.is(writtenTender, undefined);
 });
 
@@ -76,11 +85,20 @@ test.serial('writeTender rolls back transaction on error', async (t) => {
 // because their purpose is to perform an update in the absence of a unique lot id
 test.serial('writeTender updates existing lots', async (t) => {
   const existingLot = await fixtures.build('extractedLot', { title: 'existing lot' })
-    .then((lotAttrs) => config.db.create('vertex', 'Lot').set(lotAttrs).commit().one());
+    .then((lotAttrs) => config.db.create('vertex', 'Lot')
+      .set(lotAttrs)
+      .commit()
+      .one());
   const existingTender = await fixtures.build('extractedTender')
-    .then((tenderAttrs) => config.db.create('vertex', 'Tender').set(tenderAttrs).commit().one());
+    .then((tenderAttrs) => config.db.create('vertex', 'Tender')
+      .set(tenderAttrs)
+      .commit()
+      .one());
   await config.db.create('edge', 'Comprises')
-    .from(existingTender['@rid']).to(existingLot['@rid']).commit().one();
+    .from(existingTender['@rid'])
+    .to(existingLot['@rid'])
+    .commit()
+    .one();
   const updatedLotAttrs = await fixtures.build('rawLot', { title: 'replacement lot' });
   const updatedTenderAttrs = await fixtures.build('rawTender', {
     lots: [updatedLotAttrs],
@@ -90,7 +108,8 @@ test.serial('writeTender updates existing lots', async (t) => {
   await writers.writeTender(updatedTenderAttrs);
   const updatedTenderLots = await config.db.select()
     .from(config.db.traverse('out("Comprises")')
-      .from(existingTender['@rid']).while('$depth < 2'))
+      .from(existingTender['@rid'])
+      .while('$depth < 2'))
     .where('$depth = 1').all();
   t.is(updatedTenderLots.length, 1);
   t.is(updatedTenderLots[0].title, updatedLotAttrs.title);
@@ -100,15 +119,30 @@ test.serial('writeTender updates existing lots', async (t) => {
 // because their purpose is to perform an update in the absence of a unique bid id
 test.serial('writeTender updates existing bids', async (t) => {
   const existingBid = await fixtures.build('extractedBid', { isWinning: false })
-    .then((bidAttrs) => config.db.create('vertex', 'Bid').set(bidAttrs).commit().one());
+    .then((bidAttrs) => config.db.create('vertex', 'Bid')
+      .set(bidAttrs)
+      .commit()
+      .one());
   const existingLot = await fixtures.build('extractedLot')
-    .then((lotAttrs) => config.db.create('vertex', 'Lot').set(lotAttrs).commit().one());
+    .then((lotAttrs) => config.db.create('vertex', 'Lot')
+      .set(lotAttrs)
+      .commit()
+      .one());
   const existingTender = await fixtures.build('extractedTender')
-    .then((tenderAttrs) => config.db.create('vertex', 'Tender').set(tenderAttrs).commit().one());
+    .then((tenderAttrs) => config.db.create('vertex', 'Tender')
+      .set(tenderAttrs)
+      .commit()
+      .one());
   await config.db.create('edge', 'AppliedTo')
-    .from(existingBid['@rid']).to(existingLot['@rid']).commit().one();
+    .from(existingBid['@rid'])
+    .to(existingLot['@rid'])
+    .commit()
+    .one();
   await config.db.create('edge', 'Comprises')
-    .from(existingTender['@rid']).to(existingLot['@rid']).commit().one();
+    .from(existingTender['@rid'])
+    .to(existingLot['@rid'])
+    .commit()
+    .one();
 
   const updatedBidAttrs = await fixtures.build('rawBid', { isWinning: true });
   const updatedLotAttrs = await fixtures.build('rawLot', { bids: [updatedBidAttrs] });
@@ -119,7 +153,8 @@ test.serial('writeTender updates existing bids', async (t) => {
   await writers.writeTender(updatedTenderAttrs);
   const tenderBids = await config.db.select()
     .from(config.db.traverse('out("Comprises"), in("AppliedTo")')
-      .from(existingTender['@rid']).while('$depth < 3'))
+      .from(existingTender['@rid'])
+      .while('$depth < 3'))
     .where('$depth = 2').all();
   t.is(tenderBids.length, 1);
   t.is(tenderBids[0].isWinning, updatedBidAttrs.isWinning);
@@ -129,9 +164,13 @@ test.serial('upsertBuyer creates a new buyer', async (t) => {
   const rawBuyer = await fixtures.build('rawBuyer');
   const tenderName = 'tender';
   const transaction = await fixtures.build('extractedTender').then((tender) =>
-    config.db.let(tenderName, (tr) => tr.create('vertex', 'Tender').set(tender)));
+    config.db.let(tenderName, (tr) =>
+      tr.create('vertex', 'Tender')
+        .set(tender)));
   const writtenBuyer = await writers.upsertBuyer(transaction, rawBuyer, undefined, tenderName)
-    .then((buyerName) => transaction.commit().return(`$${buyerName}`).one());
+    .then((buyerName) => transaction.commit()
+      .return(`$${buyerName}`)
+      .one());
   t.false(_.isUndefined(writtenBuyer));
 });
 
@@ -139,14 +178,17 @@ test.serial('upsertBuyer creates an edge between tender and buyer', async (t) =>
   const rawBuyer = await fixtures.build('rawBuyer');
   const rawTender = await fixtures.build('extractedTender');
   const tenderName = 'tender';
-  const transaction = config.db.let(tenderName, (tr) => 
+  const transaction = config.db.let(tenderName, (tr) =>
     tr.create('vertex', 'Tender').set(rawTender));
   const writtenBuyer = await writers.upsertBuyer(transaction, rawBuyer, undefined, tenderName)
     .then((buyerName) => transaction.commit().return(`$${buyerName}`).one());
   const writtenTender = await config.db.select().from('Tender')
-    .where({ id: rawTender.id }).one();
-  const writtenEdges = await config.db.select().from('Creates')
-    .where({ out: writtenBuyer['@rid'], in: writtenTender['@rid'] }).all();
+    .where({ id: rawTender.id })
+    .one();
+  const writtenEdges = await config.db.select()
+    .from('Creates')
+    .where({ out: writtenBuyer['@rid'], in: writtenTender['@rid'] })
+    .all();
   t.is(writtenEdges.length, 1);
 });
 
@@ -157,12 +199,18 @@ test.serial('upsertBuyer updates an existing buyer', async (t) => {
     id: buyerAttrs.id,
   });
   const existingBuyer = await config.db.create('vertex', 'Buyer')
-    .set(buyerAttrs).commit().one();
+    .set(buyerAttrs)
+    .commit()
+    .one();
   const tenderName = 'tender';
   const transaction = await fixtures.build('extractedTender').then((tender) =>
-    config.db.let(tenderName, (tr) => tr.create('vertex', 'Tender').set(tender)));
+    config.db.let(tenderName, (tr) =>
+      tr.create('vertex', 'Tender')
+        .set(tender)));
   const updatedBuyer = await writers.upsertBuyer(transaction, updatedAttrs, undefined, tenderName)
-    .then((buyerName) => transaction.commit().return(`$${buyerName}`).one());
+    .then((buyerName) => transaction.commit()
+      .return(`$${buyerName}`)
+      .one());
   t.is(updatedBuyer['@rid'].toString(), existingBuyer['@rid'].toString());
   t.is(updatedBuyer.isPublic, updatedAttrs.isPublic);
 });
@@ -177,7 +225,9 @@ test.serial('upsertBuyer updates the edge between existing buyer and existing te
     .set(tenderAttrs).commit().one();
   const existingEdge = await config.db.create('edge', 'Creates')
     .from(existingBuyer['@rid']).to(existingTender['@rid'])
-    .set(edgeAttrs).commit().one();
+    .set(edgeAttrs)
+    .commit()
+    .one();
   const updatedBuyerAttrs = await fixtures.build('rawBuyer', {
     isLeader: false,
     id: existingBuyer.id,
@@ -186,9 +236,13 @@ test.serial('upsertBuyer updates the edge between existing buyer and existing te
   const transaction = await config.db.let(tenderName, (tr) =>
     tr.update(existingTender['@rid']).set(tenderAttrs));
   await writers.upsertBuyer(transaction, updatedBuyerAttrs, existingTender['@rid'], tenderName)
-    .then(() => transaction.commit().return(`$${tenderName}`).one());
-  const writtenEdges = await config.db.select().from('Creates')
-    .where({ out: existingBuyer['@rid'], in: existingTender['@rid'] }).all();
+    .then(() => transaction.commit()
+      .return(`$${tenderName}`)
+      .one());
+  const writtenEdges = await config.db.select()
+    .from('Creates')
+    .where({ out: existingBuyer['@rid'], in: existingTender['@rid'] })
+    .all();
   t.is(writtenEdges.length, 1);
   t.is(writtenEdges[0]['@rid'].toString(), existingEdge['@rid'].toString());
   t.is(writtenEdges[0].isLeader, updatedBuyerAttrs.isLeader);
@@ -205,11 +259,17 @@ test.serial('createBid creates an edge between bid and buyers', async (t) => {
   transaction.let(lotName, (tr) =>
     tr.create('vertex', 'Lot').set(rawLot));
   const writtenBid = await writers.createBid(transaction, rawBid, lotName, buyerName)
-    .then((bidName) => transaction.commit().return(`$${bidName}`).one());
-  const writtenBuyer = await config.db.select().from('Buyer')
-    .where({ id: rawBuyer.id }).one();
-  const writtenEdges = await config.db.select().from('Awards')
-    .where({ out: writtenBuyer['@rid'], in: writtenBid['@rid'] }).all();
+    .then((bidName) => transaction.commit()
+      .return(`$${bidName}`)
+      .one());
+  const writtenBuyer = await config.db.select()
+    .from('Buyer')
+    .where({ id: rawBuyer.id })
+    .one();
+  const writtenEdges = await config.db.select()
+    .from('Awards')
+    .where({ out: writtenBuyer['@rid'], in: writtenBid['@rid'] })
+    .all();
   t.is(writtenEdges.length, 1);
 });
 
@@ -217,24 +277,35 @@ test.serial('upsertBidder creates a new bidder', async (t) => {
   const rawBidder = await fixtures.build('rawBidder');
   const bidName = 'bid';
   const transaction = await fixtures.build('extractedBid').then((bid) =>
-    config.db.let(bidName, (tr) => tr.create('vertex', 'Bid').set(bid)));
+    config.db.let(bidName, (tr) =>
+      tr.create('vertex', 'Bid')
+        .set(bid)));
   const writtenBidder = await writers.upsertBidder(transaction, rawBidder, bidName)
-    .then((bidderName) => transaction.commit().return(`$${bidderName}`).one());
+    .then((bidderName) => transaction.commit()
+      .return(`$${bidderName}`)
+      .one());
   t.false(_.isUndefined(writtenBidder));
 });
 
 test.serial('upsertBidder creates an edge between bidder and bid', async (t) => {
   const rawBidder = await fixtures.build('rawBidder');
-  const bidName = 'bid';  
+  const bidName = 'bid';
   const transaction = await fixtures.build('extractedBid')
     .then((extractedBid) => config.db.let(bidName, (tr) =>
-      tr.create('vertex', 'Bid').set(extractedBid)));
+      tr.create('vertex', 'Bid')
+        .set(extractedBid)));
   await writers.upsertBidder(transaction, rawBidder, bidName);
-  const writtenBid = await transaction.commit().return(`$${bidName}`).one();
-  const writtenBidder = await config.db.select().from('Bidder')
-    .where({ id: rawBidder.id }).one();
-  const writtenEdges = await config.db.select().from('Participates')
-    .where({ out: writtenBidder['@rid'], in: writtenBid['@rid'] }).all();
+  const writtenBid = await transaction.commit()
+    .return(`$${bidName}`)
+    .one();
+  const writtenBidder = await config.db.select()
+    .from('Bidder')
+    .where({ id: rawBidder.id })
+    .one();
+  const writtenEdges = await config.db.select()
+    .from('Participates')
+    .where({ out: writtenBidder['@rid'], in: writtenBid['@rid'] })
+    .all();
   t.is(writtenEdges.length, 1);
 });
 
@@ -245,13 +316,18 @@ test.serial('upsertBidder updates an existing bidder', async (t) => {
     id: bidderAttrs.id,
   });
   const existingBidder = await config.db.create('vertex', 'Bidder')
-    .set(bidderAttrs).commit().one();
+    .set(bidderAttrs)
+    .commit()
+    .one();
   const bidName = 'bid';
   const transaction = await fixtures.build('extractedBid')
     .then((extractedBid) => config.db.let(bidName, (tr) =>
-      tr.create('vertex', 'Bid').set(extractedBid)));
+      tr.create('vertex', 'Bid')
+        .set(extractedBid)));
   const updatedBidder = await writers.upsertBidder(transaction, updatedAttrs, bidName)
-    .then((bidderName) => transaction.commit().return(`$${bidderName}`).one());
+    .then((bidderName) => transaction.commit()
+      .return(`$${bidderName}`)
+      .one());
   t.is(updatedBidder['@rid'].toString(), existingBidder['@rid'].toString());
   t.is(updatedBidder.isPublic, updatedAttrs.isPublic);
 });
@@ -260,9 +336,13 @@ test.serial('upsertCpv creates a new CPV', async (t) => {
   const rawCpv = await fixtures.build('rawCpv');
   const tenderName = 'tender';
   const transaction = await fixtures.build('extractedTender').then((tender) =>
-    config.db.let(tenderName, (tr) => tr.create('vertex', 'Tender').set(tender)));
+    config.db.let(tenderName, (tr) =>
+      tr.create('vertex', 'Tender')
+        .set(tender)));
   const writtenCpv = await writers.upsertCpv(transaction, rawCpv, undefined, tenderName)
-    .then((cpvName) => transaction.commit().return(`$${cpvName}`).one());
+    .then((cpvName) => transaction.commit()
+      .return(`$${cpvName}`)
+      .one());
   t.false(_.isUndefined(writtenCpv));
 });
 
@@ -270,14 +350,21 @@ test.serial('upsertCpv creates an edge between CPV and tender', async (t) => {
   const rawCpv = await fixtures.build('rawCpv');
   const rawTender = await fixtures.build('extractedTender');
   const tenderName = 'tender';
-  const transaction = config.db.let(tenderName, (tr) => 
-    tr.create('vertex', 'Tender').set(rawTender));
+  const transaction = config.db.let(tenderName, (tr) =>
+    tr.create('vertex', 'Tender')
+      .set(rawTender));
   const writtenCpv = await writers.upsertCpv(transaction, rawCpv, undefined, tenderName)
-    .then((cpvName) => transaction.commit().return(`$${cpvName}`).one());
-  const writtenTender = await config.db.select().from('Tender')
-    .where({ id: rawTender.id }).one();
-  const writtenEdges = await config.db.select().from('HasCPV')
-    .where({ out: writtenTender['@rid'], in: writtenCpv['@rid'] }).all();
+    .then((cpvName) => transaction.commit()
+      .return(`$${cpvName}`)
+      .one());
+  const writtenTender = await config.db.select()
+    .from('Tender')
+    .where({ id: rawTender.id })
+    .one();
+  const writtenEdges = await config.db.select()
+    .from('HasCPV')
+    .where({ out: writtenTender['@rid'], in: writtenCpv['@rid'] })
+    .all();
   t.is(writtenEdges.length, 1);
 });
 
@@ -285,48 +372,70 @@ test.serial('upsertCpv updates the edge between existing CPV and existing tender
   const tenderAttrs = await fixtures.build('extractedTender');
   const edgeAttrs = { isMain: true };
   const existingCpv = await fixtures.build('extractedCpv')
-    .then((extractedCpv) => config.db.create('vertex', 'CPV')
-      .set(extractedCpv).commit().one());
+    .then((extractedCpv) =>
+      config.db.create('vertex', 'CPV')
+        .set(extractedCpv)
+        .commit()
+        .one());
   const existingTender = await config.db.create('vertex', 'Tender')
-    .set(tenderAttrs).commit().one();
+    .set(tenderAttrs)
+    .commit()
+    .one();
   const existingEdge = await config.db.create('edge', 'HasCPV')
-    .from(existingTender['@rid']).to(existingCpv['@rid'])
-    .set(edgeAttrs).commit().one();
+    .from(existingTender['@rid'])
+    .to(existingCpv['@rid'])
+    .set(edgeAttrs)
+    .commit()
+    .one();
   const updatedCpvAttrs = await fixtures.build('rawCpv', {
     isMain: false,
     code: existingCpv.code,
   });
   const tenderName = 'tender';
-  const transaction = await config.db.let(tenderName, (tr) => 
+  const transaction = await config.db.let(tenderName, (tr) =>
     tr.update(existingTender['@rid']).set(tenderAttrs));
   await writers.upsertCpv(transaction, updatedCpvAttrs, existingTender['@rid'], tenderName)
-    .then(() => transaction.commit().return(`$${tenderName}`).one());
-  const writtenEdges = await config.db.select().from('HasCPV')
-    .where({ out: existingTender['@rid'], in: existingCpv['@rid'] }).all();
+    .then(() => transaction.commit()
+      .return(`$${tenderName}`)
+      .one());
+  const writtenEdges = await config.db.select()
+    .from('HasCPV')
+    .where({ out: existingTender['@rid'], in: existingCpv['@rid'] })
+    .all();
   t.is(writtenEdges.length, 1);
   t.is(writtenEdges[0]['@rid'].toString(), existingEdge['@rid'].toString());
   t.is(writtenEdges[0].isMain, updatedCpvAttrs.isMain);
 });
 
-test.serial('upsertCpv allows cpv to have edges to more than one tender', async(t) => {
+test.serial('upsertCpv allows cpv to have edges to more than one tender', async (t) => {
   const rawCpv = await fixtures.build('rawCpv');
+  const firstTenderName = 'tender1';
+  const secondTenderName = 'tender2';
   const firstTender = await fixtures.build('extractedTender')
-    .then((rawTender) => config.db.let('tender1', (tr) =>
-      tr.create('vertex', 'Tender').set(rawTender)))
-    .then((transaction) => writers.upsertCpv(transaction, rawCpv, undefined, 'tender1')
-      .then((cpvName) => transaction.commit().return(`$tender1`).one()));
+    .then((rawTender) => config.db.let(firstTenderName, (tr) =>
+      tr.create('vertex', 'Tender')
+        .set(rawTender)))
+    .then((transaction) => writers.upsertCpv(transaction, rawCpv, undefined, firstTenderName)
+      .then(() => transaction.commit()
+        .return(`$${firstTenderName}`)
+        .one()));
   const secondTender = await fixtures.build('extractedTender')
-    .then((rawTender) => config.db.let('tender2', (tr) =>
-      tr.create('vertex', 'Tender').set(rawTender)))
-    .then((transaction) => writers.upsertCpv(transaction, rawCpv, undefined, 'tender2')
-      .then((cpvName) => transaction.commit().return(`$tender2`).one()));
+    .then((rawTender) => config.db.let(secondTenderName, (tr) =>
+      tr.create('vertex', 'Tender')
+        .set(rawTender)))
+    .then((transaction) => writers.upsertCpv(transaction, rawCpv, undefined, secondTenderName)
+      .then(() => transaction.commit()
+        .return(`$${secondTenderName}`)
+        .one()));
   const writtenCpv = await config.db.select().from('CPV')
-    .where({ code: rawCpv.code }).one();
+    .where({ code: rawCpv.code })
+    .one();
   const writtenEdges = await config.db.select().from('HasCPV')
-    .where({ in: writtenCpv['@rid'] }).all();
+    .where({ in: writtenCpv['@rid'] })
+    .all();
   t.is(writtenEdges.length, 2);
   t.deepEqual(
     _.sortBy([firstTender['@rid'].toString(), secondTender['@rid'].toString()]),
-    _.sortBy(_.map(writtenEdges, (edge) => edge.out.toString()))
+    _.sortBy(_.map(writtenEdges, (edge) => edge.out.toString())),
   );
 });
