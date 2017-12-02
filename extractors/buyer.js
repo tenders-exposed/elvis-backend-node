@@ -1,7 +1,7 @@
 'use strict';
 
 const helpers = require('./helpers');
-const indicatorExtractor = require('./indicator')
+const indicatorExtractor = require('./indicator');
 
 function extractBuyer(buyerAttrs) {
   return {

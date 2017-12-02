@@ -93,7 +93,7 @@ factory.define('extractedBidder', Object, bidderAttrs, {
 const indicatorAttrs = {
   id: () => uuidv4(),
   modified: '2017-11-11T11:55:43.525',
-  type: "Thunder scar on forehead",
+  type: 'Thunder scar on forehead',
   value: 1,
   relatedEntityId: undefined,
 };
