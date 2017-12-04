@@ -1,0 +1,17 @@
+elvis_api:
+  build: .
+  dockerfile: Dockerfile
+  ports:
+    - "1010:1010"
+  env_file: .env
+  restart: always
+  links:
+    - orientdb
+  volumes:
+    - /var/lib/elvis/rawdata:/rawdata:ro
+orientdb:
+  image: orientdb:2.2.30
+  restart: always
+  volumes:
+    - odb_data:/orientdb/databases
+    - odb_backup:/orientdb/backup

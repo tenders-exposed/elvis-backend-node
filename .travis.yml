@@ -15,7 +15,7 @@ env:
     - ORIENTDB_USER=admin
     - ORIENTDB_PASS=admin
 before_install:
-  - docker run -d --name orientdb -p 2424:2424 -e ORIENTDB_ROOT_PASSWORD=root orientdb:latest
+  - docker run -d --name orientdb -p 2424:2424 -e ORIENTDB_ROOT_PASSWORD=root orientdb:2.2.30
   - docker start orientdb
 before_script:
   - npm install -g orientjs
