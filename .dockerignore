@@ -1,0 +1,8 @@
+*
+!api/
+!config/
+!migrations/
+!extractors/
+!scripts/
+!*.json
+!*.js
