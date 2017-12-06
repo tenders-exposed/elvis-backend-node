@@ -57,24 +57,28 @@ We chose Node.js because:
     ORIENTDB_TEST_DB={yourTestingDBName}
     ```
 
-5. Create the database schema for the dev db:
+5. Install dependencies:
+
+    `npm install`
+
+6. Create the database schema for the dev db:
 
     The test db is migrated automatically before every test.
 
     `npm run migrate`
 
-6. Open OrientDB Studio in a browser at `http://localhost:2480/studio/index.html` to see if the database contains the schema we migrated
+7. Open OrientDB Studio in a browser at `http://localhost:2480/studio/index.html` to see if the database contains the schema we migrated
 
-7. Run the tests with:
+8. Run the tests with:
 
     `npm run test`
 
-8. Run the linter with:
+9. Run the linter with:
 
     `npm run lint`
 
 
-9. Install [OrientJS](https://github.com/orientechnologies/orientjs) globally to get access to their CLI. For example to create a new migration:
+10. Install [OrientJS](https://github.com/orientechnologies/orientjs) globally to get access to their CLI. For example to create a new migration:
 
     `orientjs -h localhost -p 2424 -n elvis -U admin -P admin migrate create {newMigrationName}`
 
