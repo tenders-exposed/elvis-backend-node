@@ -9,11 +9,7 @@ const NODE_ENV = process.env.NODE_ENV;
 const config = {
   host: process.env.HOST || '0.0.0.0',
   port: process.env.PORT || 10010,
-  url: process.env.URL,
 };
-if (!config.url) {
-  throw Error('Please set the URL environment variable to a URL like "http://www.foo.com:10010".');
-}
 
 // OrientDB
 const orientDBConfig = {

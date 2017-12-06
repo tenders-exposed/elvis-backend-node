@@ -1,20 +1,8 @@
 'use strict';
 
 const config = require('./config');
-const Hapi = require('hapi');
+const express = require('express');
 
-const server = new Hapi.Server();
-server.connection({
-  port: config.port,
-  host: config.host,
-  routes: {
-    cors: true,
-  },
-});
+const app = express();
 
-server.start((err) => {
-  if (err) {
-    throw err;
-  }
-  console.info(`Server running at: ${server.info.uri}`); // eslint-disable-line no-console
-});
+app.listen(config.port, config.host, () => console.log(`App listening on port ${config.port}`)); // eslint-disable-line no-console
