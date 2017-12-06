@@ -40,5 +40,18 @@ config.migrationManager = new OrientDB.Migration.Manager({
 // Swagger
 const swaggerConfigPath = `${__dirname}/swagger.yaml`;
 Object.assign(config, YAML.load(swaggerConfigPath));
+// Passport
+config.passport = {
+  github: {
+    clientId: 'be1b9eaa54f2e13626fc',
+    clientSecret: '82c1f213555de6154cd435f5c8e479f036bfef14',
+    callbackUrl: `http://localhost:${config.port}/auth/login/github/callback`,
+  },
+  twitter: {
+    apiKey: '01r9gu9YFPP6PLYwuTxMSRqUv',
+    apiSecret: '8HzX2VERNE8Y3vpskad0QPBVFWC1FF2RptPrjtWuC9jMju3BM8',
+    callbackUrl: `http://localhost:${config.port}/auth/login/twitter/callback`,
+  },
+};
 
 module.exports = config;

@@ -60,8 +60,12 @@ typings/
 # VSCode folder
 .vscode/*
 
+<<<<<<< HEAD
 # Users Environment Variables
 .lock-wscript
 
 # Runtime configuration for swagger app
 config/runtime.yaml
+=======
+.idea/
+>>>>>>> add auth routes for local, github and twitter login, passport strategies configuration, other necessary modules
