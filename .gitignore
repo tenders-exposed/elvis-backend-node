@@ -66,6 +66,11 @@ typings/
 
 # Runtime configuration for swagger app
 config/runtime.yaml
+<<<<<<< HEAD
 =======
+.idea/
+>>>>>>> add auth routes for local, github and twitter login, passport strategies configuration, other necessary modules
+=======
+
 .idea/
 >>>>>>> add auth routes for local, github and twitter login, passport strategies configuration, other necessary modules
