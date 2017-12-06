@@ -37,9 +37,6 @@ config.migrationManager = new OrientDB.Migration.Manager({
   dir: migrationsDir,
 });
 
-// Swagger
-const swaggerConfigPath = `${__dirname}/swagger.yaml`;
-Object.assign(config, YAML.load(swaggerConfigPath));
 // Passport
 config.passport = {
   github: {
@@ -54,6 +51,9 @@ config.passport = {
   },
 };
 
+// Swagger
+const swaggerConfigPath = `${__dirname}/swagger.yaml`;
+Object.assign(config, YAML.load(swaggerConfigPath));
 config.jwt = {
   secret: 'fgWi6sHirxNul86gqBmWiCFcnud9iNz6YCsqALHlCMhn9Zjawx7785',
 };
