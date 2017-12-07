@@ -10,6 +10,7 @@ const https = require('https');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const passport = require('passport');
+const session = require('express-session');
 const initRoutes = require('./api/routes');
 const config = require('./config/default');
 
@@ -61,7 +62,7 @@ app.all('/*', (req, res, next) => {
   // cors
   res.header('Access-Control-Allow-Origin', '*'); // TODO restrict to specified domain if necessary
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-type,Accept,X-Access-Token,X-Refresh-Token,X-Key, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-type,Accept,X-Refresh-Token,Authorization');
   res.header('Access-Control-Allow-Credentials', true);
 
   if (req.method === 'OPTIONS') {
@@ -70,7 +71,14 @@ app.all('/*', (req, res, next) => {
 
   return next();
 });
+app.use(session({
+  secret: '0$jdh-YsdnA3fiiH^5$w',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false },
+}));
 app.use(passport.initialize());
+app.use(passport.session());
 
 let credentials;
 

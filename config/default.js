@@ -50,8 +50,21 @@ config.passport = {
   twitter: {
     apiKey: '01r9gu9YFPP6PLYwuTxMSRqUv',
     apiSecret: '8HzX2VERNE8Y3vpskad0QPBVFWC1FF2RptPrjtWuC9jMju3BM8',
-    callbackUrl: `http://localhost:${config.port}/auth/login/twitter/callback`,
+    callbackUrl: `http://127.0.0.1:${config.port}/auth/login/twitter/callback`,
   },
+};
+
+config.jwt = {
+  secret: 'fgWi6sHirxNul86gqBmWiCFcnud9iNz6YCsqALHlCMhn9Zjawx7785',
+};
+
+config.expire = {
+  accessToken: 3600, // 1 hour
+  refreshToken: 2592000, // 30 days
+};
+
+config.bcrypt = {
+  salt: 10,
 };
 
 module.exports = config;
