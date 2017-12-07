@@ -1,6 +1,9 @@
 'use strict';
 
+const JWT = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const codes = require('../helpers/codes');
+const config = require('../../config');
 
 class AuthController {
   static logout(req) {
@@ -30,22 +33,66 @@ class AuthController {
 
   static createSession(req) {
     return new Promise((resolve, reject) => {
-      // TODO create tokens and save in db with expirations
-      resolve({
-        accessToken: AuthController.createToken(),
-        refreshToken: AuthController.createToken(),
+      console.log('Create session: ', req.user);
+
+      const session = {};
+      AuthController.createToken({ userId: req.user['@rid'], type: 'access_token' }, config.expire.accessToken)
+        .then((accessToken) => {
+          session.accessToken = accessToken;
+          return AuthController.createToken({ userId: req.user['@rid'], type: 'refresh_token' }, config.expire.refreshToken);
+        })
+        .then((refreshToken) => {
+          session.refreshToken = refreshToken;
+
+          return config.db.query(
+            'UPDATE Users ADD accessTokens = :accessToken, refreshTokens = :refreshToken WHERE @rid = rid',
+            {
+              params: {
+                rid: req.user['@rid'],
+                accessToken: session.accessToken,
+                refreshToken: session.refreshToken,
+              },
+            },
+          );
+        })
+        .then(() => resolve(session))
+        .catch(reject);
+    });
+  }
+
+  static createToken(data, expire) {
+    return new Promise((resolve, reject) => {
+      const options = {};
+      if (expire) {
+        options.expiresIn = expire;
+      }
+      JWT.sign(data, config.jwt.secret, options, (err, token) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(token);
       });
     });
   }
 
-  static createToken() {
-    let j;
-    let t = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYabcdefghijklmnopqrstuvwxyz0123456789';
-    for (j = 0; j < 55; j += 1) {
-      t += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return `${t}Z${new Date().getTime().toString(36)}`;
+  static createPasswordHash(password) {
+    return new Promise((resolve, reject) => {
+      bcrypt.genSalt(config.bcrypt.salt, (err, salt) => {
+        if (err) {
+          return reject(err);
+        }
+        return bcrypt.hash(password, salt, (err1, hash) => {
+          if (err1) {
+            return reject(err1);
+          }
+          return resolve(hash);
+        });
+      });
+    });
+  }
+
+  static verifyPassword(password, hash) {
+    return bcrypt.compare(password, hash);
   }
 }
 
