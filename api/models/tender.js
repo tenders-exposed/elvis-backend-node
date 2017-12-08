@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const config = require('./../../config');
+const config = require('config');
 
 // Suit a tender as it comes from Digiwhist data to our db
 class Tender {

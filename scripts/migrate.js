@@ -3,7 +3,7 @@
 'use strict';
 
 const assert = require('assert');
-const config = require('./../config');
+const config = require('config');
 
 function migrationsToRun() {
   const args = process.argv;

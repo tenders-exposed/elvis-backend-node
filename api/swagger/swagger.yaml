@@ -1,0 +1,57 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: Elvis API
+basePath: /
+
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /swagger:
+    x-swagger-pipe: swagger_raw
+  /cpvs:
+    x-swagger-router-controller: cpvs
+    get:
+      tags:
+        - cpvs
+      description: Returns a list of all cpvs in the db
+      operationId: listCpvs
+      parameters:
+        - name: countries
+          in: query
+          description: Get only Cpvs from contracts from a certain country
+          required: false
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Cpv"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  Cpv:
+    required:
+      - code
+    properties:
+      code:
+        type: string
+        description: CPV code
+  ErrorResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
