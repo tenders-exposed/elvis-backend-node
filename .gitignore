@@ -59,3 +59,9 @@ typings/
 
 # VSCode folder
 .vscode/*
+
+# Users Environment Variables
+.lock-wscript
+
+# Runtime configuration for swagger app
+config/runtime.yaml

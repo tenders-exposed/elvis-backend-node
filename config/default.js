@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 const OrientDB = require('orientjs');
+const YAML = require('yamljs');
 
 const NODE_ENV = process.env.NODE_ENV;
 
@@ -35,5 +36,9 @@ config.migrationManager = new OrientDB.Migration.Manager({
   db: config.db,
   dir: migrationsDir,
 });
+
+// Swagger
+const swaggerConfigPath = `${__dirname}/swagger.yaml`;
+Object.assign(config, YAML.load(swaggerConfigPath));
 
 module.exports = config;
