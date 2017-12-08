@@ -1,28 +1,27 @@
 'use strict';
 
+const _ = require('lodash');
 const JWT = require('jsonwebtoken');
 const config = require('../../config');
 const sendResponse = require('../helpers/response');
 const codes = require('../helpers/codes');
 
 module.exports = (req, res, next) => {
-  if (req.headers.Authorization && req.headers.Authorization.startsWith('Bearer ')) {
-    const token = req.headers.Authorization.split('Bearer ')[1];
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    const token = req.headers.authorization.split('Bearer ')[1];
 
     if (token) {
-      JWT.verify(token, config.jwt.secret, (err, decoded) => {
+      return JWT.verify(token, config.jwt.secret, (err, decoded) => {
         if (err) {
           if (err.name === 'TokenExpiredError') {
-            const errObj = codes.Unauthorized('Access token expired.');
-            errObj.code = 'NO_SESSION';
-            return sendResponse(errObj, req, res);
+            return sendResponse(codes.Unauthorized('Access token expired.'), req, res);
           }
 
           if (err.name === 'JsonWebTokenError') {
             return sendResponse(codes.BadRequest(err.message), req, res);
           }
 
-          return sendResponse(codes.InternalServerError('The problem with access token check occured.'), req, res);
+          return sendResponse(codes.InternalServerError('The problem with access token check occurred.'), req, res);
         }
 
         if (!decoded.userId || decoded.type !== 'access_token') {
@@ -35,10 +34,11 @@ module.exports = (req, res, next) => {
           })
           .one()
           .then((user) => {
-            console.log(user);
             if (user && user.accessTokens && user.accessTokens.includes(token)) {
-              // TODO fill the sesion
-              req.session = {};
+              req.session = {
+                userId: user.rid || user['@rid'],
+                data: _.pick(user, ['email', 'accessTokens', 'refreshTokens']),
+              };
               return next();
             }
 
