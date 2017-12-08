@@ -13,42 +13,81 @@ class AuthController {
     });
   }
 
-  static refreshToken(req, res) {
+  static refreshToken(req) {
     return new Promise((resolve, reject) => {
-      const accessToken = req.headers['x-access-token'];
       const refreshToken = req.headers['x-refresh-token'];
 
-      if (!accessToken) {
-        return reject(codes.BadRequest('Access token is not provided.'), res);
-      }
-
       if (!refreshToken) {
-        return reject(codes.BadRequest('Refresh token is not provided.'), res);
+        return reject(codes.BadRequest('Refresh token is not provided.'));
       }
+      JWT.verify(refreshToken, config.jwt.secret, (err, decoded) => {
+        if (err) {
+          if (err.name === 'TokenExpiredError') {
+            return reject(codes.Unauthorized('Refresh token expired.'));
+          }
 
-      // TODO check refresh token and create new Pair
-      return resolve();
+          if (err.name === 'JsonWebTokenError') {
+            return reject(codes.BadRequest(err.message));
+          }
+
+          return reject(codes.InternalServerError('The problem with refresh token check occurred.'));
+        }
+
+        if (!decoded.userId || decoded.type !== 'refresh_token') {
+          return reject(codes.BadRequest('Wrong refresh token.'));
+        }
+
+        let newPair = {};
+        let foundUser;
+        config.db.select().from('Users')
+          .where({
+            '@rid': decoded.userId,
+          })
+          .one()
+          .then((user) => {
+            if (!user) {
+              throw codes.Unauthorized('No User.');
+            }
+
+            user.accessTokens = user.accessTokens || [];
+            user.refreshTokens = user.refreshTokens || [];
+            if (!user.refreshTokens.includes(refreshToken)) {
+              throw codes.BadRequest('Wrong refresh token.');
+            }
+            foundUser = user;
+            return AuthController.createTokenPair({ userId: decoded.userId });
+          })
+          .then((pair) => {
+            const ind = foundUser.refreshTokens.indexOf(refreshToken);
+            foundUser.refreshTokens.splice(ind, 1);
+            foundUser.refreshTokens.push(pair.refreshToken);
+            foundUser.accessTokens.push(pair.accessToken);
+
+            newPair = pair;
+            return config.db.update(decoded.userId)
+              .set({ refreshTokens: foundUser.refreshTokens, accessTokens: foundUser.accessTokens })
+              .one();
+          })
+          .then(() => resolve(newPair))
+          .catch(reject);
+      });
     });
   }
 
   static createSession(req) {
     return new Promise((resolve, reject) => {
-      console.log('Create session: ', req.user);
-
-      const session = {};
-      AuthController.createToken({ userId: req.user['@rid'], type: 'access_token' }, config.expire.accessToken)
-        .then((accessToken) => {
-          session.accessToken = accessToken;
-          return AuthController.createToken({ userId: req.user['@rid'], type: 'refresh_token' }, config.expire.refreshToken);
-        })
-        .then((refreshToken) => {
-          session.refreshToken = refreshToken;
+      // console.log('Create session: ', req.user);
+      const recordId = req.user.rid || req.user['@rid'];
+      let session;
+      AuthController.createTokenPair({ userId: recordId })
+        .then((pair) => {
+          session = pair;
 
           return config.db.query(
-            'UPDATE Users ADD accessTokens = :accessToken, refreshTokens = :refreshToken WHERE @rid = rid',
+            'UPDATE Users ADD accessTokens = :accessToken, refreshTokens = :refreshToken WHERE @rid = :rid',
             {
               params: {
-                rid: req.user['@rid'],
+                rid: recordId,
                 accessToken: session.accessToken,
                 refreshToken: session.refreshToken,
               },
@@ -56,6 +95,23 @@ class AuthController {
           );
         })
         .then(() => resolve(session))
+        .catch(reject);
+    });
+  }
+  static createTokenPair(data) {
+    return new Promise((resolve, reject) => {
+      const session = {};
+      data.type = 'access_token';
+      AuthController.createToken(data, config.expire.accessToken)
+        .then((accessToken) => {
+          session.accessToken = accessToken;
+          data.type = 'refresh_token';
+          return AuthController.createToken(data, config.expire.refreshToken);
+        })
+        .then((refreshToken) => {
+          session.refreshToken = refreshToken;
+          resolve(session);
+        })
         .catch(reject);
     });
   }
