@@ -12,7 +12,7 @@ consumes:
 produces:
   - application/json
 paths:
-  /swagger:
+  /swagger.yaml:
     x-swagger-pipe: swagger_raw
   /cpvs:
     x-swagger-router-controller: cpvs
