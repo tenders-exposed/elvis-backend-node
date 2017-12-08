@@ -4,7 +4,7 @@ const _ = require('lodash');
 const Promise = require('bluebird');
 const uuidv4 = require('uuid/v4');
 
-const config = require('./../config');
+const config = require('config');
 const tenderExtractor = require('./../extractors/tender');
 const buyerExtractor = require('./../extractors/buyer');
 const lotExtractor = require('./../extractors/lot');
