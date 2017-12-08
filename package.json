@@ -25,6 +25,7 @@
     "p-queue": "^2.3.0",
     "p-retry": "^1.0.0",
     "swagger-express-mw": "^0.1.0",
+    "swagger-ui-express": "^2.0.11",
     "uuid": "^3.1.0",
     "yamljs": "^0.3.0"
   },

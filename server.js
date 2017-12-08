@@ -2,6 +2,8 @@
 
 const config = require('config');
 const SwaggerExpress = require('swagger-express-mw');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
 const app = require('express')();
 
 const swaggerConfig = {
@@ -16,5 +18,8 @@ SwaggerExpress.create(swaggerConfig, (err, swaggerExpress) => {
 
   app.listen(config.port, config.host, () => console.log(`App listening on port ${config.port}`)); // eslint-disable-line no-console
 });
+
+const swaggerDocument = YAML.load('./api/swagger/swagger.yaml');
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 module.exports = app; // for testing
