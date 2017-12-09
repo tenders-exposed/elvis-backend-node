@@ -82,7 +82,7 @@ factory.define('extractedBid', Object, bidAttrs, {
 const bidderAttrs = {
   id: () => uuidv4(),
   modified: '2017-11-11T11:55:43.525',
-  name: "Ollivander's",
+  name: 'Ollivander\'s',
   isPublic: false,
 };
 factory.define('rawBidder', Object, bidderAttrs);
@@ -95,7 +95,7 @@ const indicatorAttrs = {
   modified: '2017-11-11T11:55:43.525',
   type: 'Thunder scar on forehead',
   value: 1,
-  relatedEntityId: undefined,
+  relatedEntityId: 'Harrry',
 };
 factory.define('rawIndicator', Object, indicatorAttrs);
 factory.define('extractedIndicator', Object, indicatorAttrs, {
@@ -116,5 +116,14 @@ factory.extend('rawTender', 'rawFullTender', {
   cpvs: factory.assocAttrsMany('rawCpv', 1),
 });
 
+factory.define('rawContractNotice', Object, {
+  sourceId: '2015/S 006-hocuspocus',
+  formType: 'CONTRACT_NOTICE',
+});
+
+factory.define('rawContractAwardNotice', Object, {
+  sourceId: '2015/S 006-preparatus',
+  formType: 'CONTRACT_AWARD',
+});
 
 module.exports = factory;

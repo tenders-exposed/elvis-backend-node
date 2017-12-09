@@ -1,17 +1,20 @@
 'use strict';
 
+
+const _ = require('lodash');
 const helpers = require('./helpers');
 const indicatorExtractor = require('./indicator');
 
-function extractBidder(bidderAttrs) {
+function extractBidder(bidderAttrs, indicators = []) {
   return {
     id: bidderAttrs.id,
     name: bidderAttrs.name,
     address: bidderAttrs.address,
     isPublic: bidderAttrs.isPublic,
     xDigiwhistLastModified: helpers.formatTimestamp(bidderAttrs.modified),
-    indicators: (bidderAttrs.indicators || []).map((indicatorAttrs) =>
-      indicatorExtractor.extractIndicator(indicatorAttrs)),
+    indicators: _
+      .filter(indicators, { relatedEntityId: bidderAttrs.id })
+      .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
   };
 }
 

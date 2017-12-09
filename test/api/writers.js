@@ -11,15 +11,6 @@ const fixtures = require('./../fixtures');
 test.before(() => helpers.createDB());
 test.afterEach.always(() => helpers.truncateDB());
 
-test('allocateIndicators adds indicators to nested objects', async (t) => {
-  const rawFullTender = await fixtures.build('rawFullTender');
-  const indicator = await fixtures.build('rawIndicator', {
-    relatedEntityId: rawFullTender.lots[0].bids[0].bidders[0].id,
-  });
-  const tenderWithIndicators = writers.allocateIndicators(rawFullTender, [indicator]);
-  t.deepEqual(tenderWithIndicators.lots[0].bids[0].bidders[0].indicators, [indicator]);
-});
-
 test.serial('writeTender creates new tender', async (t) => {
   const rawTender = await fixtures.build('rawTender');
   const writtenTender = await writers.writeTender(rawTender)

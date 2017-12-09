@@ -1,9 +1,10 @@
 'use strict';
 
+const _ = require('lodash');
 const helpers = require('./helpers');
 const indicatorExtractor = require('./indicator');
 
-function extractBuyer(buyerAttrs) {
+function extractBuyer(buyerAttrs, indicators = []) {
   return {
     id: buyerAttrs.id,
     name: buyerAttrs.name,
@@ -12,8 +13,9 @@ function extractBuyer(buyerAttrs) {
     buyerType: buyerAttrs.buyerType,
     isSubsidized: buyerAttrs.isSubsidized,
     xDigiwhistLastModified: helpers.formatTimestamp(buyerAttrs.modified),
-    indicators: (buyerAttrs.indicators || []).map((indicatorAttrs) =>
-      indicatorExtractor.extractIndicator(indicatorAttrs)),
+    indicators: _
+      .filter(indicators, { relatedEntityId: buyerAttrs.id })
+      .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
   };
 }
 

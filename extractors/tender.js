@@ -2,13 +2,14 @@
 
 const _ = require('lodash');
 const helpers = require('./helpers');
-const indicatorExtractor = require('./indicator');
 const priceExtractor = require('./price');
+const indicatorExtractor = require('./indicator');
 
-function extractTender(tenderAttrs) {
+function extractTender(tenderAttrs, indicators = [], publications = []) {
   return {
     id: tenderAttrs.id,
     title: tenderAttrs.title,
+    titleEnglish: tenderAttrs.titleEnglish,
     description: tenderAttrs.description,
     country: tenderAttrs.country,
     isFrameworkAgreement: tenderAttrs.isFrameworkAgreement,
@@ -18,8 +19,14 @@ function extractTender(tenderAttrs) {
     isWholeTenderCancelled: tenderAttrs.isWholeTenderCancelled,
     xIsEuFunded: assertIsEuFunded(tenderAttrs),
     xDigiwhistLastModified: helpers.formatTimestamp(tenderAttrs.modified),
-    indicators: (tenderAttrs.indicators || []).map((indicatorAttrs) =>
-      indicatorExtractor.extractIndicator(indicatorAttrs)),
+    indicators: _
+      .filter(indicators, { relatedEntityId: tenderAttrs.id })
+      .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
+    xTEDCNID: _.chain(publications)
+      .filter({ formType: 'CONTRACT_NOTICE' })
+      .head()
+      .get('sourceId')
+      .value(),
   };
 }
 
