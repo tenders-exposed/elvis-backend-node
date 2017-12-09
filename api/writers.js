@@ -16,26 +16,16 @@ function recordName(id, className) {
   return `${className.toLowerCase()}${id.replace(/-/g, '')}`;
 }
 
-function allocateIndicators(rawObject, indicators) {
-  return _.each(rawObject, (value, keindex, rawObj) => {
-    if (_.isArray(value) || _.isPlainObject(value)) {
-      rawObj[keindex] = allocateIndicators(value, indicators);
-    }
-    if (keindex === 'id') {
-      rawObj.indicators = _.filter(indicators, { relatedEntityId: value });
-    }
-  });
-}
-
 // Returns true
 // Raises OrientDBError if the writing failed
 async function writeTender(fullTenderRecord) {
-  const indicators = fullTenderRecord.indicators || [];
-  const rawTender = allocateIndicators(
-    _.omit(fullTenderRecord, 'indicators'),
+  const indicators = fullTenderRecord.indicators;
+  const publications = fullTenderRecord.publications;
+  const tender = tenderExtractor.extractTender(
+    _.omit(fullTenderRecord, ['indicators', 'publications']),
     indicators,
+    publications,
   );
-  const tender = tenderExtractor.extractTender(rawTender);
   const tenderName = recordName(tender.id, 'Tender');
 
   const existingTender = await config.db.select().from('Tender')
@@ -55,8 +45,8 @@ async function writeTender(fullTenderRecord) {
 
   // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
   const buyerNames = await Promise.map(
-    _.filter(rawTender.buyers, (rawBuyer) => rawBuyer.id),
-    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName),
+    _.filter(fullTenderRecord.buyers, (rawBuyer) => rawBuyer.id),
+    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, indicators),
   );
 
   if (_.isUndefined(existingTender) === false) {
@@ -67,10 +57,12 @@ async function writeTender(fullTenderRecord) {
       deleteLot(transaction, existingLotID));
   }
 
-  await Promise.map((rawTender.lots || []), (rawLot) =>
-    createLot(transaction, rawLot, tenderName, buyerNames));
+  await Promise.map((fullTenderRecord.lots || []), (rawLot) => {
+    rawLot.awardCriteria = rawLot.awardCriteria || fullTenderRecord.awardCriteria;
+    return createLot(transaction, rawLot, tenderName, buyerNames, indicators, publications);
+  });
 
-  await Promise.map((rawTender.cpvs || []), (rawCpv) =>
+  await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
     upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
 
   return transaction.commit(2).return(`$${tenderName}`).one();
@@ -100,7 +92,7 @@ async function deleteBid(transaction, bidID) {
   return bidName;
 }
 
-async function createLot(transaction, rawLot, tenderName, buyerNames) {
+async function createLot(transaction, rawLot, tenderName, buyerNames, indicators = [], publications = []) { // eslint-disable-line max-len
   const rawBids = (rawLot.bids || []);
   rawLot.bidsCount = rawBids.length;
   const lot = lotExtractor.extractLot(rawLot);
@@ -116,12 +108,12 @@ async function createLot(transaction, rawLot, tenderName, buyerNames) {
   });
 
   await Promise.map(rawBids, (rawBid) =>
-    createBid(transaction, rawBid, lotName, buyerNames));
+    createBid(transaction, rawBid, lotName, buyerNames, indicators, publications));
   return lotName;
 }
 
-async function createBid(transaction, rawBid, lotName, buyerNames) {
-  const bid = bidExtractor.extractBid(rawBid);
+async function createBid(transaction, rawBid, lotName, buyerNames, indicators = [], publications = []) { // eslint-disable-line max-len
+  const bid = bidExtractor.extractBid(rawBid, publications);
   const bidName = recordName(uuidv4(), 'Bid');
 
   transaction.let(bidName, (t) => {
@@ -143,13 +135,13 @@ async function createBid(transaction, rawBid, lotName, buyerNames) {
   // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
   await Promise.map(
     (rawBid.bidders || []).filter((rawBidder) => rawBidder.id),
-    (rawBidder) => upsertBidder(transaction, rawBidder, bidName),
+    (rawBidder) => upsertBidder(transaction, rawBidder, bidName, indicators),
   );
   return bidName;
 }
 
-async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName) {
-  const buyer = buyerExtractor.extractBuyer(rawBuyer);
+async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, indicators = []) {
+  const buyer = buyerExtractor.extractBuyer(rawBuyer, indicators);
   const buyerName = recordName(rawBuyer.id, 'Buyer');
 
   const existingBuyer = await config.db.select().from('Buyer')
@@ -190,8 +182,8 @@ async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName) 
   return buyerName;
 }
 
-async function upsertBidder(transaction, rawBidder, bidName) {
-  const bidder = bidderExtractor.extractBidder(rawBidder);
+async function upsertBidder(transaction, rawBidder, bidName, indicators = []) {
+  const bidder = bidderExtractor.extractBidder(rawBidder, indicators);
   const bidderName = recordName(rawBidder.id, 'Bidder');
 
   const existingBidder = await config.db.select().from('Bidder')
@@ -271,5 +263,4 @@ module.exports = {
   deleteBid,
   createLot,
   createBid,
-  allocateIndicators,
 };
