@@ -81,3 +81,22 @@ We chose Node.js because:
 10. Install [OrientJS](https://github.com/orientechnologies/orientjs) globally to get access to their CLI. For example to create a new migration:
 
     `orientjs -h localhost -p 2424 -n elvis -U admin -P admin migrate create {newMigrationName}`
+
+#### Import data
+The amount of data we have is overwhelming for a single Node process. Not only
+does the import take long but it reaches [Heap out of memory error](https://stackoverflow.com/questions/38558989/node-js-heap-out-of-memory) even with up to 15GB of RAM.
+To speed things up and avoid overwhelming an individual process we are now running a Node process for each
+file instead of passing multile files to the same process.
+To achieve this we make a docker container to import each file and we orchestrate the containers with [GNU parallel](https://www.gnu.org/software/parallel/man.html#DESCRIPTION):
+
+```
+find /folder/with/data/files -iname '*.json' -printf "%f\n" | \
+parallel --progress -I"{}" -j5 \
+docker-compose run --name="elvis_import_"{} --rm elvis_api \
+node --max-old-space-size=4096 ./scripts/import_data.js -c 1000 -r 1 /rawdata/data/exported_by_country/{}
+```
+
+With `-j5` we are telling `parallel` to process 5 containers at once. We also
+use `--max-old-space-size=4096` to allow each node process up to 4GB of RAM. We also set
+number of retries for import data sript with `-r` and how many concurrent lines should
+be processed with `-c`.
