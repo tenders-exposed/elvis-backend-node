@@ -73,11 +73,7 @@ async function writeTender(fullTenderRecord) {
   await Promise.map((rawTender.cpvs || []), (rawCpv) =>
     upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
 
-  return transaction.commit(2).return(`$${tenderName}`).one()
-    .catch((err) => {
-      console.error(err, 'TenderID:', tender.id); // eslint-disable-line no-console
-      throw err;
-    });
+  return transaction.commit(2).return(`$${tenderName}`).one();
 }
 
 async function deleteLot(transaction, lotID) {

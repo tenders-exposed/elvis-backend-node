@@ -1,17 +1,32 @@
-elvis_api:
-  build: .
-  dockerfile: Dockerfile
-  ports:
-    - "1010:1010"
-  env_file: .env
-  restart: always
-  links:
-    - orientdb
-  volumes:
-    - /var/lib/elvis/rawdata:/rawdata:ro
-orientdb:
-  image: orientdb:2.2.30
-  restart: always
-  volumes:
-    - odb_data:/orientdb/databases
-    - odb_backup:/orientdb/backup
+version: '3'
+services:
+  elvis_api:
+    build: .
+    ports:
+      - "1010:1010"
+    env_file: .env
+    restart: always
+    links:
+      - orientdb
+    volumes:
+      - /var/lib/elvis/rawdata:/rawdata:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "3"
+  orientdb:
+    image: orientdb:2.2.30
+    restart: always
+    ports:
+      - 2424:2424
+      - 2480:2480
+    volumes:
+      - odb_data:/orientdb/databases
+      - odb_backup:/orientdb/backup
+    environment:
+      - ORIENTDB_ROOT_PASSWORD=$ORIENTDB_ROOT_PASSWORD
+volumes:
+  odb_data:
+  odb_backup:
+
