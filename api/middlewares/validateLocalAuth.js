@@ -4,8 +4,8 @@ const sendResponse = require('../helpers/response');
 const codes = require('../helpers/codes');
 
 module.exports = (req, res, next) => {
-  if (!req.body.username) {
-    return sendResponse(codes.BadRequest('Username is required.'), req, res);
+  if (!req.body.email) {
+    return sendResponse(codes.BadRequest('Email is required.'), req, res);
   }
 
   if (!req.body.password) {

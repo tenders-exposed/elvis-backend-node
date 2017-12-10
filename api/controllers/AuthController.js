@@ -2,10 +2,85 @@
 
 const JWT = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const _ = require('lodash');
 const codes = require('../helpers/codes');
-const config = require('../../config');
+const config = require('../../config/default');
+const authValidator = require('../validators/auth');
+const MailGun = require('../classes/MailGun');
 
 class AuthController {
+  static register(req) {
+    return new Promise((resolve, reject) => {
+      let validRequestObject;
+      authValidator.registerValidator(req.body)
+        .then((validBody) => {
+          validRequestObject = validBody;
+          return config.db.select().from('Users')
+            .where({
+              email: validRequestObject.email,
+            })
+            .one();
+        })
+        .then((user) => {
+          if (user) {
+            throw codes.BadRequest('The email address is already taken.');
+          }
+
+          return AuthController.createPasswordHash(validRequestObject.password);
+        })
+        .then((passwordHash) => {
+          validRequestObject.password = passwordHash;
+          validRequestObject.regProvider = 'local';
+          return config.db.class.get('Users');
+        })
+        .then((Users) => Users.create(validRequestObject))
+        .then((user) => {
+          validRequestObject.userId = user.rid || user['@rid'];
+          return AuthController.createToken({
+            userId: validRequestObject.userId,
+          }, config.activation.expire);
+        })
+        .then((token) => MailGun.sendEmail({
+          to: validRequestObject.email,
+          subject: 'Registration',
+          text: `Thanks for registration. To activate your email please follow the link: \n ${config.activation.link}?t=${token}`,
+        }))
+        .then(() => resolve(_.pick(validRequestObject, ['userId', 'email', 'regProvider'])))
+        .catch(reject);
+    });
+  }
+  static userActivation(req) {
+    return new Promise((resolve, reject) => {
+      const token = req.query.t;
+      if (!token) {
+        return reject(codes.BadRequest('Token is not provided.'));
+      }
+      return AuthController.verifyToken(token)
+        .then((decoded) => {
+          if (!decoded.userId) {
+            throw codes.BadRequest('Wrong token.');
+          }
+          return config.db.select('@rid', 'active').from('Users')
+            .where({
+              '@rid': decoded.userId,
+            })
+            .one();
+        })
+        .then((user) => {
+          if (!user) {
+            throw codes.NotFound('User not found.');
+          }
+          if (user.active) {
+            throw codes.BadRequest('User is already active.');
+          }
+
+          return config.db.update(user.rid).set({ active: true }).one();
+        })
+        .then(() => resolve())
+        .catch(reject);
+    });
+  }
+
   static logout(req) {
     return new Promise((resolve, reject) => {
       // TODO remove tokens
@@ -129,6 +204,26 @@ class AuthController {
         return resolve(token);
       });
     });
+  }
+
+  static verifyToken(token) {
+    return new Promise((resolve, reject) => {
+      return JWT.verify(token, config.jwt.secret, (err, decoded) => {
+        if (err) {
+          if (err.name === 'TokenExpiredError') {
+            return reject(codes.Unauthorized('Token expired.'));
+          }
+
+          if (err.name === 'JsonWebTokenError') {
+            return reject(codes.BadRequest(err.message));
+          }
+
+          return reject(codes.InternalServerError('The problem with token check occurred.'));
+        }
+
+        resolve(decoded);
+      });
+    })
   }
 
   static createPasswordHash(password) {

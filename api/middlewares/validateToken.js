@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const JWT = require('jsonwebtoken');
-const config = require('../../config');
+const config = require('../../config/default');
 const sendResponse = require('../helpers/response');
 const codes = require('../helpers/codes');
 

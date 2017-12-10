@@ -1,6 +1,6 @@
 'use strict';
 
-const config = require('../config');
+const config = require('../config/default');
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
@@ -8,7 +8,7 @@ const TwitterStrategy = require('passport-twitter').Strategy;
 const LocalStrategy = require('passport-local').Strategy;
 
 module.exports.configureStrategies = () => {
-  passport.use(new LocalStrategy(((email, password, done) => {
+  passport.use(new LocalStrategy({ usernameField: 'email' }, ((email, password, done) => {
     config.db.select().from('Users')
       .where({
         email,
@@ -16,7 +16,7 @@ module.exports.configureStrategies = () => {
       .one()
       .then((user) => {
         if (!user) {
-          return done(null, false, { message: 'Incorrect username.' });
+          return done(null, false, { message: 'Incorrect email.' });
         }
 
         if (!bcrypt.compareSync(password, user.password)) {
@@ -42,6 +42,7 @@ module.exports.configureStrategies = () => {
       let query = 'SELECT @rid, email, githubId, twitterId FROM Users WHERE githubId = :githubId';
       const params = {
         githubId: profile.id,
+        regProvider: 'github',
       };
       if (profile.emails && profile.emails.length) {
         profile.emails.forEach((item) => {
@@ -101,6 +102,7 @@ module.exports.configureStrategies = () => {
       let query = 'SELECT @rid, email, githubId, twitterId FROM Users WHERE twitterId = :twitterId';
       const params = {
         twitterId: profile.id,
+        regProvider: 'twitter',
       };
       if (profile.emails && profile.emails.length) {
         email = profile.emails[0].value;
