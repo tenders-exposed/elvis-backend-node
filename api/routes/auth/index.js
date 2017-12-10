@@ -7,8 +7,27 @@ const validateLocalAuthMiddleware = require('../../middlewares/validateLocalAuth
 const AuthController = require('../../controllers/AuthController');
 const sendResponse = require('../../helpers/response');
 const codes = require('../../helpers/codes');
+const config = require('../../../config/default');
 
 const router = express.Router();
+
+router.post('/register', (req, res) => {
+  AuthController.register(req)
+    .then((data) => sendResponse(codes.Success(data), req, res))
+    .catch((err) => sendResponse(err, req, res));
+});
+
+router.get('/register/activate', (req, res) => {
+  AuthController.userActivation(req)
+    .then((data) => {
+      // sendResponse(codes.Success(data), req, res)
+      res.redirect(config.activation.redirectUrl);
+    })
+    .catch((err) => {
+      // sendResponse(err, req, res)
+      res.redirect(`${config.activation.redirectUrl}?err${err.message || 'Something went wrong'}`);
+    });
+});
 
 router.post('/login', validateLocalAuthMiddleware, passport.authenticate('local'), (req, res) => {
   AuthController.createSession(req)

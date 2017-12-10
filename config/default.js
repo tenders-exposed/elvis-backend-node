@@ -67,4 +67,21 @@ config.bcrypt = {
   salt: 10,
 };
 
+config.password = {
+  minLength: 6,
+};
+
+config.mailgun = {
+  apiKey: 'key-be6a7add272edc498139d7ab4564cd35',
+  domain: 'mg.tenders.exposed',
+  from: 'Company name <info@company.com>',
+};
+
+config.activation = {
+  link: `http://localhost:${config.port}/auth/register/activate/`,
+  expire: 3600, // 1 hour
+  redirectUrl: 'http://tenders.exposed/',
+};
+
+
 module.exports = config;

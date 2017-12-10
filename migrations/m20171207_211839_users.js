@@ -24,6 +24,16 @@ exports.up = (db) => {
           type: 'String',
         },
         {
+          name: 'regProvider',
+          type: 'String',
+        },
+        {
+          name: 'active',
+          type: 'Boolean',
+          mandatory: true,
+          default: false,
+        },
+        {
           name: 'accessTokens',
           type: 'EmbeddedSet',
         },
