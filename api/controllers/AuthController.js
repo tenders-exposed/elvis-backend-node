@@ -95,16 +95,14 @@ class AuthController {
       if (!refreshToken) {
         return reject(codes.BadRequest('Refresh token is not provided.'));
       }
-      JWT.verify(refreshToken, config.jwt.secret, (err, decoded) => {
+      return JWT.verify(refreshToken, config.jwt.secret, (err, decoded) => {
         if (err) {
           if (err.name === 'TokenExpiredError') {
             return reject(codes.Unauthorized('Refresh token expired.'));
           }
-
           if (err.name === 'JsonWebTokenError') {
             return reject(codes.BadRequest(err.message));
           }
-
           return reject(codes.InternalServerError('The problem with refresh token check occurred.'));
         }
 
@@ -114,7 +112,7 @@ class AuthController {
 
         let newPair = {};
         let foundUser;
-        config.db.select().from('Users')
+        return config.db.select().from('Users')
           .where({
             '@rid': decoded.userId,
           })

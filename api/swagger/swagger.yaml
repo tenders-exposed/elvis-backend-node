@@ -14,6 +14,7 @@ produces:
 paths:
   /swagger.yaml:
     x-swagger-pipe: swagger_raw
+
   /cpvs:
     x-swagger-router-controller: cpvs
     get:
@@ -41,6 +42,137 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
 
+  /auth/register:
+    x-swagger-router-controller: auth
+    post:
+      tags:
+        - auth
+      description: Register user in db with sending activation email
+      operationId: register
+      parameters:
+        - name: body
+          in: body
+          description: Body params
+          required: true
+          schema:
+            $ref: "#/definitions/RegisterModel"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/RegisterSuccessModel"
+        "400":
+          description: Bad request ['Validation error.', 'The email address is already taken.']
+          schema:
+            $ref: "#/definitions/BadRequestModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /auth/register/activate:
+    x-swagger-router-controller: auth
+    get:
+      tags:
+        - auth
+      description: Activate user using token sent to email and redirect to success url
+      operationId: activate
+      parameters:
+        - name: t
+          type: string
+          in: query
+          description: Activation token
+          required: true
+      responses:
+        "200":
+          description: Redirect
+          schema:
+            $ref: "#/definitions/RedirectModel"
+        "400":
+          description: Bad request ['Token is not provided.', 'User is already active.', 'jwt malformed', 'jwt expired']
+          schema:
+            $ref: "#/definitions/BadRequestModel"
+        "404":
+          description: Not found ['User not found.']
+          schema:
+            $ref: "#/definitions/NotFoundModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /auth/login:
+    x-swagger-router-controller: auth
+    post:
+      tags:
+        - auth
+      description: User login using email and password
+      operationId: login
+      parameters:
+        - name: body
+          in: body
+          description: Body params
+          required: true
+          schema:
+            $ref: "#/definitions/RegisterModel"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/LoginSuccessModel"
+        "400":
+          description: Bad request ['Email is required.', 'Password is required.', 'Validation error.']
+          schema:
+            $ref: "#/definitions/BadRequestModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /auth/token/refresh:
+    x-swagger-router-controller: auth
+    post:
+      tags:
+        - auth
+      description: Get new tokens pair using refresh token
+      operationId: refreshToken
+      parameters:
+        - name: x-refresh-token
+          type: string
+          in: header
+          description: Refresh Token
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/LoginSuccessModel"
+        "400":
+          description: Bad request ['Refresh token is not provided.', 'Wrong refresh token.']
+          schema:
+            $ref: "#/definitions/BadRequestModel"
+        "401":
+          description: Unauthorized ['Refresh token expired.']
+          schema:
+            $ref: "#/definitions/UnauthorizedModel"
+        "500":
+          description: Internal Server Error ['The problem with refresh token check occurred.']
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
 definitions:
   Cpv:
     required:
@@ -49,6 +181,73 @@ definitions:
       code:
         type: string
         description: CPV code
+  RegisterModel:
+    required:
+      - email
+      - password
+    properties:
+      email:
+        type: string
+        description: Valid email address
+      password:
+        type: string
+        description: Password string
+  RegisterSuccessModel:
+    properties:
+      userId:
+        type: string
+        description: Created user ID
+      email:
+        type: string
+        description: Email address
+      regProvider:
+        type: string
+        description: Registration provider is 'local'
+  LoginSuccessModel:
+    properties:
+      accessToken:
+        type: string
+        description: Access token with short life
+      refreshToken:
+        type: string
+        description: Refresh token with long life
+
+  RedirectModel:
+    properties:
+      status:
+        type: number
+        description: Status number is 302
+      location:
+        type: string
+        description: Redirect url
+  BadRequestModel:
+    properties:
+      status:
+        type: number
+        description: Status number is 400
+      message:
+        type: string
+  UnauthorizedModel:
+    properties:
+      status:
+        type: number
+        description: Status number is 401
+      message:
+        type: string
+  NotFoundModel:
+    properties:
+      status:
+        type: number
+        description: Status number is 404
+      message:
+        type: string
+  InternalErrorModel:
+    properties:
+      status:
+        type: number
+        description: Status number is 500
+      message:
+        type: string
   ErrorResponse:
     required:
       - message
