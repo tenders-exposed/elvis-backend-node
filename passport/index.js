@@ -1,6 +1,7 @@
 'use strict';
 
 const config = require('../config/default');
+const codes = require('../api/helpers/codes');
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
@@ -16,11 +17,11 @@ module.exports.configureStrategies = () => {
       .one()
       .then((user) => {
         if (!user) {
-          return done(null, false, { message: 'Incorrect email.' });
+          return done(codes.BadRequest('Incorrect email.'), false);
         }
 
         if (!bcrypt.compareSync(password, user.password)) {
-          return done(null, false, { message: 'Incorrect password.' });
+          return done(codes.BadRequest('Incorrect password.'), false);
         }
 
         return done(null, user);
