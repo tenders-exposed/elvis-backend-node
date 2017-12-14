@@ -11,6 +11,22 @@ consumes:
   - application/json
 produces:
   - application/json
+securityDefinitions :
+  twitterOauth:    # <---- arbitrary name
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: https://api.twitter.com/oauth/authorize
+    tokenUrl: https://api.twitter.com/oauth/access_token
+    scopes:
+      read: Grants read access
+  githubOauth:    # <---- arbitrary name
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: https://github.com/login/oauth/authorize
+    tokenUrl: https://github.com/login/oauth/access_token
+    scopes:
+      read: Grants read access
+      user:email: Grants read-only access to user email
 paths:
   /swagger.yaml:
     x-swagger-pipe: swagger_raw
@@ -130,6 +146,50 @@ paths:
           description: Bad request ['Email is required.', 'Password is required.', 'Validation error.']
           schema:
             $ref: "#/definitions/BadRequestModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /auth/login/twitter:
+      x-swagger-router-controller: auth
+      get:
+        tags:
+          - auth
+        description: User login with twitter
+        operationId: loginWithTwitter
+        security:
+          - twitterOauth: [read]
+        responses:
+          "200":
+            description: Success
+            schema:
+              $ref: "#/definitions/LoginSuccessModel"
+          "500":
+            description: Internal Server Error
+            schema:
+              $ref: "#/definitions/InternalErrorModel"
+          default:
+            description: Error
+            schema:
+              $ref: "#/definitions/ErrorResponse"
+  /auth/login/github:
+    x-swagger-router-controller: auth
+    get:
+      tags:
+        - auth
+      description: User login with github
+      operationId: loginWithGithub
+      security:
+        - githubOauth: [read, user:email]
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/LoginSuccessModel"
         "500":
           description: Internal Server Error
           schema:
