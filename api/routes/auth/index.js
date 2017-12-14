@@ -3,7 +3,6 @@
 const express = require('express');
 const passport = require('passport');
 const validateToken = require('../../middlewares/validateToken');
-const validateLocalAuthMiddleware = require('../../middlewares/validateLocalAuth');
 const AuthController = require('../../controllers/AuthController');
 const sendResponse = require('../../helpers/response');
 const codes = require('../../helpers/codes');
@@ -27,12 +26,6 @@ router.get('/register/activate', (req, res) => {
       // sendResponse(err, req, res)
       res.redirect(`${config.activation.redirectUrl}?err${err.message || 'Something went wrong'}`);
     });
-});
-
-router.post('/login', validateLocalAuthMiddleware, passport.authenticate('local'), (req, res) => {
-  AuthController.createSession(req)
-    .then((data) => sendResponse(codes.Success(data), req, res))
-    .catch((err) => sendResponse(err, req, res));
 });
 
 router.get('/login/twitter', passport.authenticate('twitter'), (req, res) => {

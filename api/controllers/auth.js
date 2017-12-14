@@ -3,13 +3,14 @@
 const passport = require('passport');
 const config = require('../../config/default');
 const codes = require('../helpers/codes');
+const sendResponse = require('../helpers/response');
 const AuthController = require('./AuthController');
 const validateLocalAuthMiddleware = require('../middlewares/validateLocalAuth');
 
 const register = (req, res) => {
   AuthController.register(req)
-    .then((data) => res.json(data))
-    .catch((data) => res.json(data));
+    .then((data) => sendResponse(codes.Success(data), req, res))
+    .catch((err) => sendResponse(err, req, res));
 };
 
 const activate = (req, res) => {
@@ -21,58 +22,65 @@ const activate = (req, res) => {
 const login = (req, res) => {
   validateLocalAuthMiddleware(req, res, (err1) => {
     if (err1) {
-      return res.json(err1);
+      return sendResponse(codes.InternalServerError(err1), req, res);
     }
-    return passport.authenticate('local')(req, res, (err2) => {
-      if (err2) {
-        return res.json(err2);
+    return passport.authenticate('local', (err, user) => {
+      if (err) {
+        return sendResponse(err, req, res);
       }
+
+      if (!user) {
+        return sendResponse(codes.NotFound('User not found.'), req, res);
+      }
+
+      req.user = user;
+
       return AuthController.createSession(req)
-        .then((data) => res.json(data))
-        .catch((err) => res.json(err));
-    });
+        .then((data) => sendResponse(codes.Success(data), req, res))
+        .catch((err2) => sendResponse(err2, req, res));
+    })(req, res);
   });
 };
 
 const refreshToken = (req, res) => {
   AuthController.refreshToken(req)
-    .then((data) => res.json(data))
-    .catch((data) => res.json(data));
+    .then((data) => sendResponse(codes.Success(data), req, res))
+    .catch((err) => sendResponse(err, req, res));
 };
 
 const loginWithGithub = (req, res) => {
   passport.authenticate('github', (err, user) => {
     if (err) {
-      return res.json(codes.InternalServerError('Error in passport authenticate'));
+      return sendResponse(err, req, res);
     }
 
     if (!user) {
-      return res.json(codes.InternalServerError('Failed to authenticate oAuth token'));
+      return sendResponse(codes.NotFound('User not found.'), req, res);
     }
 
     req.user = user;
 
     return AuthController.createSession(req)
-      .then((data) => res.json(data))
-      .catch((data) => res.json(data));
+      .then((data) => sendResponse(codes.Success(data), req, res))
+      .catch((err1) => sendResponse(err1, req, res));
   })(req, res);
 };
 
 const loginWithTwitter = (req, res) => {
   passport.authenticate('twitter', (err, user) => {
     if (err) {
-      return res.json(codes.InternalServerError('Error in passport authenticate'));
+      return sendResponse(err, req, res);
     }
 
     if (!user) {
-      return res.json(codes.InternalServerError('Failed to authenticate oAuth token'));
+      return sendResponse(codes.NotFound('User not found.'), req, res);
     }
 
     req.user = user;
 
     return AuthController.createSession(req)
-      .then((data) => res.json(data))
-      .catch((data) => res.json(data));
+      .then((data) => sendResponse(codes.Success(data), req, res))
+      .catch((err1) => sendResponse(err1, req, res));
   })(req, res);
 };
 
