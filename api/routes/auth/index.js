@@ -28,22 +28,6 @@ router.get('/register/activate', (req, res) => {
     });
 });
 
-router.get('/login/twitter', passport.authenticate('twitter'), (req, res) => {
-  if (req.user) {
-    return sendResponse(codes.Success(req.user), req, res);
-  }
-
-  return sendResponse(codes.BadRequest('Wrong user.'), req, res);
-});
-
-router.get('/login/github', passport.authenticate('github'), (req, res) => {
-  if (req.user) {
-    return sendResponse(codes.Success(req.user), req, res);
-  }
-
-  return sendResponse(codes.BadRequest('Wrong user.'), req, res);
-});
-
 router.get('/login/twitter/callback', passport.authenticate('twitter'), (req, res) => {
   AuthController.createSession(req)
     .then((data) => sendResponse(codes.Success(data), req, res))
