@@ -2,6 +2,7 @@
 
 const passport = require('passport');
 const config = require('../../config/default');
+const codes = require('../helpers/codes');
 const AuthController = require('./AuthController');
 const validateLocalAuthMiddleware = require('../middlewares/validateLocalAuth');
 
@@ -39,9 +40,47 @@ const refreshToken = (req, res) => {
     .catch((data) => res.json(data));
 };
 
+const loginWithGithub = (req, res) => {
+  passport.authenticate('github', (err, user) => {
+    if (err) {
+      return res.json(codes.InternalServerError('Error in passport authenticate'));
+    }
+
+    if (!user) {
+      return res.json(codes.InternalServerError('Failed to authenticate oAuth token'));
+    }
+
+    req.user = user;
+
+    return AuthController.createSession(req)
+      .then((data) => res.json(data))
+      .catch((data) => res.json(data));
+  })(req, res);
+};
+
+const loginWithTwitter = (req, res) => {
+  passport.authenticate('twitter', (err, user) => {
+    if (err) {
+      return res.json(codes.InternalServerError('Error in passport authenticate'));
+    }
+
+    if (!user) {
+      return res.json(codes.InternalServerError('Failed to authenticate oAuth token'));
+    }
+
+    req.user = user;
+
+    return AuthController.createSession(req)
+      .then((data) => res.json(data))
+      .catch((data) => res.json(data));
+  })(req, res);
+};
+
 module.exports = {
   register,
   activate,
   login,
   refreshToken,
+  loginWithGithub,
+  loginWithTwitter,
 };
