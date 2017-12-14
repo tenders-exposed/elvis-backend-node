@@ -14,16 +14,14 @@ produces:
 securityDefinitions :
   twitterOauth:    # <---- arbitrary name
     type: oauth2
-    flow: accessCode
-    authorizationUrl: https://api.twitter.com/oauth/authorize
-    tokenUrl: https://api.twitter.com/oauth/access_token
+    flow: implicit
+    authorizationUrl: http://127.0.0.1:10010/auth/login/twitter/callback
     scopes:
       read: Grants read access
   githubOauth:    # <---- arbitrary name
     type: oauth2
-    flow: accessCode
-    authorizationUrl: https://github.com/login/oauth/authorize
-    tokenUrl: https://github.com/login/oauth/access_token
+    flow: implicit
+    authorizationUrl: http://localhost:10010/auth/login/github/callback
     scopes:
       read: Grants read access
       user:email: Grants read-only access to user email

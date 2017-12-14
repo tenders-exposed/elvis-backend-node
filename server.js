@@ -41,7 +41,7 @@ const swaggerConfig = {
 
         req.user = user;
         return callback();
-      })(req, null, callback);
+      })(req, req.res, callback);
     },
     githubOauth: (req, def, scopes, callback) => {
       passport.authenticate('github', (err, user, info) => {
@@ -55,7 +55,7 @@ const swaggerConfig = {
 
         req.user = user;
         return callback();
-      })(req, null, callback);
+      })(req, req.res, callback);
     },
   },
 };
