@@ -28,7 +28,38 @@ const config = require('./config/default');
 const app = express();
 const swaggerConfig = {
   appRoot: __dirname,
+  swaggerSecurityHandlers: {
+    twitterOauth: (req, def, scopes, callback) => {
+      passport.authenticate('twitter', (err, user, info) => {
+        if (err) {
+          return callback(new Error('Error in passport authenticate'));
+        }
+
+        if (!user) {
+          return callback(new Error('Failed to authenticate oAuth token'));
+        }
+
+        req.user = user;
+        return callback();
+      })(req, null, callback);
+    },
+    githubOauth: (req, def, scopes, callback) => {
+      passport.authenticate('github', (err, user, info) => {
+        if (err) {
+          return callback(new Error('Error in passport authenticate'));
+        }
+
+        if (!user) {
+          return callback(new Error('Failed to authenticate oAuth token'));
+        }
+
+        req.user = user;
+        return callback();
+      })(req, null, callback);
+    },
+  },
 };
+
 const swaggerDocument = YAML.load('./api/swagger/swagger.yaml');
 
 // Event listener for HTTP server "error" event.
