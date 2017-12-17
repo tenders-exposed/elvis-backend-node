@@ -87,40 +87,6 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /auth/register/activate:
-    x-swagger-router-controller: auth
-    get:
-      tags:
-        - auth
-      description: Activate user using token sent to email and redirect to success url
-      operationId: activate
-      parameters:
-        - name: t
-          type: string
-          in: query
-          description: Activation token
-          required: true
-      responses:
-        "200":
-          description: Redirect
-          schema:
-            $ref: "#/definitions/RedirectModel"
-        "400":
-          description: Bad request ['Token is not provided.', 'User is already active.', 'jwt malformed', 'jwt expired']
-          schema:
-            $ref: "#/definitions/BadRequestModel"
-        "404":
-          description: Not found ['User not found.']
-          schema:
-            $ref: "#/definitions/NotFoundModel"
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: "#/definitions/InternalErrorModel"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
   /auth/login:
     x-swagger-router-controller: auth
     post:
