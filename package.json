@@ -10,7 +10,8 @@
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.8.0",
     "factory-girl": "^5.0.1",
-    "nyc": "^11.2.1"
+    "nyc": "^11.2.1",
+    "supertest": "^3.0.0"
   },
   "dependencies": {
     "ajv": "^5.3.0",
