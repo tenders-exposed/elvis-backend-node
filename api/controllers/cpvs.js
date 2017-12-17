@@ -1,6 +1,6 @@
 'use strict';
 
-const config = require('config');
+const config = require('../../config/default');
 
 function listCpvs(req, res) {
   const countries = req.swagger.params.countries.value;

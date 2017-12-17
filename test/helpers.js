@@ -1,7 +1,7 @@
 'use strict';
 
 const Promise = require('bluebird');
-const config = require('config');
+const config = require('../config/default');
 
 function truncateDB() {
   // Order counts. Delete subclasses first
@@ -35,6 +35,7 @@ function truncateDB() {
     'Indicator',
     'Price',
     'Address',
+    'Users',
   ];
 
   return Promise.map(dbClasses, (className) =>

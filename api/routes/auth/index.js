@@ -6,27 +6,8 @@ const validateToken = require('../../middlewares/validateToken');
 const AuthController = require('../../controllers/AuthController');
 const sendResponse = require('../../helpers/response');
 const codes = require('../../helpers/codes');
-const config = require('../../../config/default');
 
 const router = express.Router();
-
-router.post('/register', (req, res) => {
-  AuthController.register(req)
-    .then((data) => sendResponse(codes.Success(data), req, res))
-    .catch((err) => sendResponse(err, req, res));
-});
-
-router.get('/register/activate', (req, res) => {
-  AuthController.userActivation(req)
-    .then((data) => {
-      // sendResponse(codes.Success(data), req, res)
-      res.redirect(config.activation.redirectUrl);
-    })
-    .catch((err) => {
-      // sendResponse(err, req, res)
-      res.redirect(`${config.activation.redirectUrl}?err${err.message || 'Something went wrong'}`);
-    });
-});
 
 router.get('/login/twitter/callback', passport.authenticate('twitter'), (req, res) => {
   AuthController.createSession(req)
@@ -42,12 +23,6 @@ router.get('/login/github/callback', passport.authenticate('github'), (req, res)
 
 router.post('/logout', validateToken, (req, res) => {
   AuthController.logout(req)
-    .then((data) => sendResponse(codes.Success(data), req, res))
-    .catch((err) => sendResponse(err, req, res));
-});
-
-router.post('/token/refresh', (req, res) => {
-  AuthController.refreshToken(req)
     .then((data) => sendResponse(codes.Success(data), req, res))
     .catch((err) => sendResponse(err, req, res));
 });

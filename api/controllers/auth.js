@@ -15,8 +15,12 @@ const register = (req, res) => {
 
 const activate = (req, res) => {
   AuthController.userActivation(req)
-    .then(() => res.redirect(config.activation.redirectUrl))
-    .catch((data) => res.json(data));
+    .then(() => {
+      res.redirect(config.activation.redirectUrl);
+    })
+    .catch((err) => {
+      res.redirect(`${config.activation.redirectUrl}?err${err.message || 'Something went wrong'}`);
+    });
 };
 
 const login = (req, res) => {
