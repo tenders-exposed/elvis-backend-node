@@ -13,16 +13,6 @@ const register = (req, res) => {
     .catch((err) => sendResponse(err, req, res));
 };
 
-const activate = (req, res) => {
-  AuthController.userActivation(req)
-    .then(() => {
-      res.redirect(config.activation.redirectUrl);
-    })
-    .catch((err) => {
-      res.redirect(`${config.activation.redirectUrl}?err${err.message || 'Something went wrong'}`);
-    });
-};
-
 const login = (req, res) => {
   validateLocalAuthMiddleware(req, res, (err1) => {
     if (err1) {
@@ -90,7 +80,6 @@ const loginWithTwitter = (req, res) => {
 
 module.exports = {
   register,
-  activate,
   login,
   refreshToken,
   loginWithGithub,
