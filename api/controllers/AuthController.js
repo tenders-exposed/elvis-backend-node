@@ -40,11 +40,16 @@ class AuthController {
             userId: validRequestObject.userId,
           }, config.activation.expire);
         })
-        .then((token) => MailGun.sendEmail({
-          to: validRequestObject.email,
-          subject: 'Registration',
-          text: `Thanks for registration. To activate your email please follow the link: \n ${config.activation.link}?t=${token}`,
-        }))
+        .then((token) => {
+          if (process.env.NODE_ENV !== 'test') {
+            return MailGun.sendEmail({
+              to: validRequestObject.email,
+              subject: 'Registration',
+              text: `Thanks for registration. To activate your email please follow the link: \n ${config.activation.link}?t=${token}`,
+            });
+          }
+          return null;
+        })
         .then(() => resolve(_.pick(validRequestObject, ['userId', 'email', 'regProvider'])))
         .catch(reject);
     });
@@ -112,6 +117,7 @@ class AuthController {
 
         let newPair = {};
         let foundUser;
+
         return config.db.select().from('Users')
           .where({
             '@rid': decoded.userId,
@@ -205,23 +211,21 @@ class AuthController {
   }
 
   static verifyToken(token) {
-    return new Promise((resolve, reject) => {
-      return JWT.verify(token, config.jwt.secret, (err, decoded) => {
-        if (err) {
-          if (err.name === 'TokenExpiredError') {
-            return reject(codes.Unauthorized('Token expired.'));
-          }
-
-          if (err.name === 'JsonWebTokenError') {
-            return reject(codes.BadRequest(err.message));
-          }
-
-          return reject(codes.InternalServerError('The problem with token check occurred.'));
+    return new Promise((resolve, reject) => JWT.verify(token, config.jwt.secret, (err, decoded) => {
+      if (err) {
+        if (err.name === 'TokenExpiredError') {
+          return reject(codes.Unauthorized('Token expired.'));
         }
 
-        resolve(decoded);
-      });
-    })
+        if (err.name === 'JsonWebTokenError') {
+          return reject(codes.BadRequest(err.message));
+        }
+
+        return reject(codes.InternalServerError('The problem with token check occurred.'));
+      }
+
+      resolve(decoded);
+    }));
   }
 
   static createPasswordHash(password) {
