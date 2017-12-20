@@ -1,0 +1,312 @@
+{
+	"variables": [],
+	"info": {
+		"name": "elvis-backend-auth",
+		"_postman_id": "122e2cde-00ed-ebeb-6856-ae2a33db08b9",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get new tokens pair using refresh token",
+			"request": {
+				"url": "http://localhost:10010/auth/token/refresh",
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-refresh-token",
+						"value": "{refresh_token}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {}
+			},
+			"response": []
+		},
+		{
+			"name": "Twitter callback url",
+			"request": {
+				"url": "http://localhost:10010/auth/login/twitter/callback",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}"
+				},
+				"description": "Twitter will redirect to this url after authorization"
+			},
+			"response": []
+		},
+		{
+			"name": "Github callback url",
+			"request": {
+				"url": "http://localhost:10010/auth/login/github/callback",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}"
+				},
+				"description": "Github will redirect to this url after authorization"
+			},
+			"response": []
+		},
+		{
+			"name": "Registration Activation",
+			"request": {
+				"url": {
+					"raw": "http://localhost:10010/auth/register/activate?t={activation_token}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "10010",
+					"path": [
+						"auth",
+						"register",
+						"activate"
+					],
+					"query": [
+						{
+							"key": "t",
+							"value": "{activation_token}",
+							"equals": true
+						}
+					],
+					"variable": []
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}"
+				},
+				"description": "This route will redirect response to the url from the config"
+			},
+			"response": []
+		},
+		{
+			"name": "Login with Twitter",
+			"request": {
+				"url": "http://localhost:10010/auth/login/twitter",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}"
+				},
+				"description": "This route will redirect to the twitter for authorization"
+			},
+			"response": []
+		},
+		{
+			"name": "Register User",
+			"request": {
+				"url": "http://localhost:10010/auth/register",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "User Login",
+			"request": {
+				"url": "http://localhost:10010/auth/login",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login with Github",
+			"request": {
+				"url": "http://localhost:10010/auth/login/github",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}"
+				},
+				"description": "This route will redirect to the github for authorization"
+			},
+			"response": []
+		},
+		{
+			"name": "Get user account info",
+			"request": {
+				"url": "http://localhost:10010/account",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {access_token}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\": \"edgar.markosov@gmail.com\",\n\t\"password\": \"testtesttest\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Delete user account",
+			"request": {
+				"url": "http://localhost:10010/account",
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {access_token}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\": \"edgar.markosov@gmail.com\",\n\t\"password\": \"testtesttest\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Forgot password",
+			"request": {
+				"url": "http://localhost:10010/auth/password/forgot",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\": \"\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Reset password",
+			"request": {
+				"url": "http://localhost:10010/auth/password/reset",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"t\": \"\",\n\t\"newPassword\": \"\",\n\t\"confirmPassword\": \"\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Verify reset password",
+			"request": {
+				"url": {
+					"raw": "http://localhost:10010/auth/password/reset?t={reset_token}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "10010",
+					"path": [
+						"auth",
+						"password",
+						"reset"
+					],
+					"query": [
+						{
+							"key": "t",
+							"value": "{reset_token}",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"t\": \"\",\n\t\"newPassword\": \"\",\n\t\"confirmPassword\": \"\"\n}"
+				},
+				"description": "Verify token and redirect to reset password form"
+			},
+			"response": []
+		}
+	]
+}
