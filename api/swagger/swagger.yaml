@@ -196,6 +196,94 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /auth/password/forgot:
+      x-swagger-router-controller: auth
+      post:
+        tags:
+          - auth
+        description: Get password reset link on email
+        operationId: forgotPassword
+        parameters:
+          - name: body
+            in: body
+            description: Body params
+            required: true
+            schema:
+              $ref: "#/definitions/ForgotPasswordModel"
+        responses:
+          "200":
+            description: Success
+            schema:
+              $ref: "#/definitions/SuccessModel"
+          "400":
+            description: Bad request ['Email is not provided.', 'User is not active.']
+            schema:
+              $ref: "#/definitions/BadRequestModel"
+          "404":
+            description: Not found ['User not found.']
+            schema:
+              $ref: "#/definitions/NotFoundModel"
+          "500":
+            description: Internal Server Error
+            schema:
+              $ref: "#/definitions/InternalErrorModel"
+          default:
+            description: Error
+            schema:
+              $ref: "#/definitions/ErrorResponse"
+  /auth/password/reset:
+    x-swagger-router-controller: auth
+    get:
+      tags:
+        - auth
+      description: Verify token and redirect to reset password form
+      operationId: getPasswordReset
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/RedirectModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      tags:
+        - auth
+      description: Reset password
+      operationId: passwordReset
+      parameters:
+        - name: body
+          in: body
+          description: Body params
+          required: true
+          schema:
+            $ref: "#/definitions/PasswordResetModel"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessModel"
+        "400":
+          description: Bad request ['Token is not provided.', 'Wrong token.', 'User is not active.', 'Passwords do not match.']
+          schema:
+            $ref: "#/definitions/BadRequestModel"
+        "404":
+          description: Not found ['User not found.']
+          schema:
+            $ref: "#/definitions/NotFoundModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 
   /account:
     x-swagger-router-controller: account
@@ -325,6 +413,21 @@ definitions:
             type: string
           active:
             type: string
+  ForgotPasswordModel:
+    properties:
+      email:
+        type: string
+        format: email
+  PasswordResetModel:
+    properties:
+      newPassword:
+        type: string
+      confirmPassword:
+        type: string
+        description: Same as new password
+      t:
+        type: string
+        description: Reset token
 
   SuccessModel:
     properties:

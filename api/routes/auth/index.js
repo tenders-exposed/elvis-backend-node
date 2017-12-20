@@ -15,7 +15,7 @@ router.get('/register/activate', (req, res) => {
       res.redirect(config.activation.redirectUrl);
     })
     .catch((err) => {
-      res.redirect(`${config.activation.redirectUrl}?err${err.message || 'Something went wrong'}`);
+      res.redirect(`${config.activation.redirectUrl}?err=${err.message || 'Something went wrong'}`);
     });
 });
 

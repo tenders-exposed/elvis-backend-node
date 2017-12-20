@@ -36,6 +36,7 @@ class AuthController {
         .then((Users) => Users.create(validRequestObject))
         .then((user) => {
           validRequestObject.userId = user.rid || user['@rid'];
+          validRequestObject.userId = validRequestObject.userId.toString();
           return AuthController.createToken({
             userId: validRequestObject.userId,
           }, config.activation.expire);
@@ -144,7 +145,100 @@ class AuthController {
       });
     });
   }
+  static forgotPassword(req) {
+    return new Promise((resolve, reject) => {
+      const email = req.body.email;
 
+      if (!email) {
+        return reject(codes.BadRequest('Email is not provided.'));
+      }
+      return authValidator.emailValidator(email)
+        .then(() => config.db.select('@rid', 'active').from('Users')
+          .where({
+            email,
+          })
+          .one())
+        .then((user) => {
+          if (!user) {
+            throw codes.NotFound('User not found.');
+          }
+          if (!user.active) {
+            throw codes.BadRequest('User is not active.');
+          }
+
+          return AuthController.createToken({
+            email,
+          }, config.password.forgotToken.expire);
+        })
+        .then((token) => MailGun.sendEmail({
+          to: email,
+          subject: 'Forgot password',
+          text: `To reset your password please follow the link: \n ${config.password.resetLink}?t=${token}`,
+        }))
+        .then(() => resolve())
+        .catch(reject);
+    });
+  }
+  static getPasswordReset(query) {
+    return new Promise((resolve, reject) => {
+      const token = query.t;
+      let email;
+      if (!token) {
+        return reject(codes.BadRequest('Token is not provided.'));
+      }
+      return AuthController.verifyToken(token)
+        .then((decoded) => {
+          if (!decoded.email) {
+            throw codes.BadRequest('Wrong token.');
+          }
+          email = decoded.email;
+          return config.db.select('@rid').from('Users')
+            .where({
+              email,
+            })
+            .one();
+        })
+        .then((user) => {
+          if (!user) {
+            throw codes.NotFound('User not found.');
+          }
+          resolve({
+            token,
+            email,
+          });
+        })
+        .catch(reject);
+    });
+  }
+  static passwordReset(req) {
+    return new Promise((resolve, reject) => {
+      let requestObject;
+      return authValidator.resetPasswordValidator(req.body)
+        .then((validRequestObject) => {
+          requestObject = validRequestObject;
+          return AuthController.getPasswordReset(validRequestObject);
+        })
+        .then((data) => {
+          requestObject.email = data.email;
+          if (requestObject.newPassword !== requestObject.confirmPassword) {
+            throw codes.BadRequest('Passwords do not match.');
+          }
+
+          return AuthController.createPasswordHash(requestObject.newPassword);
+        })
+        .then((passwordHash) => config.db.query(
+          'UPDATE Users SET password = :passwordHash WHERE email = :email',
+          {
+            params: {
+              passwordHash,
+              email: requestObject.email,
+            },
+          },
+        ))
+        .then(() => resolve())
+        .catch(reject);
+    });
+  }
   static createSession(req) {
     return new Promise((resolve, reject) => {
       // console.log('Create session: ', req.user);
@@ -186,7 +280,6 @@ class AuthController {
         .catch(reject);
     });
   }
-
   static createToken(data, expire) {
     return new Promise((resolve, reject) => {
       const options = {};
@@ -201,7 +294,6 @@ class AuthController {
       });
     });
   }
-
   static verifyToken(token) {
     return new Promise((resolve, reject) => JWT.verify(token, config.jwt.secret, (err, decoded) => {
       if (err) {
@@ -219,7 +311,6 @@ class AuthController {
       return resolve(decoded);
     }));
   }
-
   static createPasswordHash(password) {
     return new Promise((resolve, reject) => {
       bcrypt.genSalt(config.bcrypt.salt, (err, salt) => {
@@ -235,7 +326,6 @@ class AuthController {
       });
     });
   }
-
   static verifyPassword(password, hash) {
     return bcrypt.compare(password, hash);
   }
