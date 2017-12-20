@@ -69,6 +69,11 @@ config.bcrypt = {
 
 config.password = {
   minLength: 6,
+  forgotToken: {
+    expire: 3600, // 1 hour
+  },
+  resetLink: `http://localhost:${config.port}/auth/password/reset/`,
+  resetRedirectUrl: 'http://tenders.exposed/?reset=true',
 };
 
 config.mailgun = {
