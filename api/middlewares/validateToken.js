@@ -28,17 +28,17 @@ module.exports = (req, res, next) => {
           return sendResponse(codes.BadRequest('Wrong access token.'), req, res);
         }
 
-        config.db.select().from('Users')
+        return config.db.select().from('Users')
           .where({
             '@rid': decoded.userId,
           })
           .one()
           .then((user) => {
             if (user && user.accessTokens && user.accessTokens.includes(token)) {
-              req.session = {
-                userId: user.rid || user['@rid'],
-                data: _.pick(user, ['email', 'accessTokens', 'refreshTokens']),
-              };
+              req.user = _.pick(user, ['email', 'accessTokens', 'refreshTokens', 'twitterId', 'githubId', 'regProvider', 'active']);
+              req.user.userId = user.rid || user['@rid'];
+              req.user.userId = req.user.userId.toString();
+
               return next();
             }
 
@@ -49,5 +49,5 @@ module.exports = (req, res, next) => {
     }
   }
 
-  sendResponse(codes.Unauthorized('No Access Token.'), req, res);
+  return sendResponse(codes.Unauthorized('No Access Token.'), req, res);
 };

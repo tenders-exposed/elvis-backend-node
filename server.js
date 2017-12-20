@@ -30,7 +30,7 @@ const swaggerConfig = {
   appRoot: __dirname,
   swaggerSecurityHandlers: {
     twitterOauth: (req, def, scopes, callback) => {
-      passport.authenticate('twitter', (err, user, info) => {
+      passport.authenticate('twitter', (err, user) => {
         if (err) {
           return callback(new Error('Error in passport authenticate'));
         }
@@ -44,7 +44,7 @@ const swaggerConfig = {
       })(req, req.res, callback);
     },
     githubOauth: (req, def, scopes, callback) => {
-      passport.authenticate('github', (err, user, info) => {
+      passport.authenticate('github', (err, user) => {
         if (err) {
           return callback(new Error('Error in passport authenticate'));
         }
