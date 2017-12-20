@@ -26,9 +26,7 @@ test.beforeEach(async (t) => {
   t.is(res.body.data.regProvider, 'local');
   t.truthy(res.body.data.userId);
 });
-test.afterEach.always(() => {
-  return helpers.truncateDB();
-});
+test.afterEach.always(() => helpers.truncateDB());
 
 test('register: Validation error, email pattern', async (t) => {
   t.plan(2);

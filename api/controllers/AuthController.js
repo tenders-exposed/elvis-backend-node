@@ -85,14 +85,6 @@ class AuthController {
         .catch(reject);
     });
   }
-
-  static logout(req) {
-    return new Promise((resolve, reject) => {
-      // TODO remove tokens
-      resolve();
-    });
-  }
-
   static refreshToken(req) {
     return new Promise((resolve, reject) => {
       const refreshToken = req.headers['x-refresh-token'];
@@ -224,7 +216,7 @@ class AuthController {
         return reject(codes.InternalServerError('The problem with token check occurred.'));
       }
 
-      resolve(decoded);
+      return resolve(decoded);
     }));
   }
 

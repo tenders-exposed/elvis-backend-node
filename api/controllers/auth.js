@@ -1,7 +1,6 @@
 'use strict';
 
 const passport = require('passport');
-const config = require('../../config/default');
 const codes = require('../helpers/codes');
 const sendResponse = require('../helpers/response');
 const AuthController = require('./AuthController');

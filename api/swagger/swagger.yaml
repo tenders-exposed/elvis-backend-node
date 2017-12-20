@@ -197,6 +197,73 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
 
+  /account:
+    x-swagger-router-controller: account
+    get:
+      tags:
+        - account
+      description: Get user account
+      operationId: getAccount
+      parameters:
+        - name: authorization
+          type: string
+          in: header
+          description: Bearer access token of the user
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/AccountSuccessModel"
+        "400":
+          description: Bad request ['Wrong access token.']
+          schema:
+            $ref: "#/definitions/BadRequestModel"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/UnauthorizedModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    delete:
+      tags:
+        - account
+      description: Delete user account
+      operationId: deleteAccount
+      parameters:
+        - name: authorization
+          type: string
+          in: header
+          description: Bearer access token of the user
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessModel"
+        "400":
+          description: Bad request ['Wrong access token.']
+          schema:
+            $ref: "#/definitions/BadRequestModel"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/UnauthorizedModel"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/InternalErrorModel"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
 definitions:
   Cpv:
     required:
@@ -235,7 +302,38 @@ definitions:
       refreshToken:
         type: string
         description: Refresh token with long life
+  AccountSuccessModel:
+    properties:
+      status:
+        type: number
+        description: "200"
+      message:
+        type: string
+        description: Success
+      data:
+        type: object
+        properties:
+          userId:
+            type: string
+          email:
+            type: string
+          regProvider:
+            type: string
+          twitterId:
+            type: string
+          githubId:
+            type: string
+          active:
+            type: string
 
+  SuccessModel:
+    properties:
+      status:
+        type: number
+        description: Status number is 200
+      message:
+        type: string
+        description: Success
   RedirectModel:
     properties:
       status:
