@@ -24,21 +24,18 @@ module.exports = (req, res, next) => {
           return sendResponse(codes.InternalServerError('The problem with access token check occurred.'), req, res);
         }
 
-        if (!decoded.userId || decoded.type !== 'access_token') {
+        if (!decoded.id || decoded.type !== 'access_token') {
           return sendResponse(codes.BadRequest('Wrong access token.'), req, res);
         }
 
-        return config.db.select().from('Users')
+        return config.db.select().from('User')
           .where({
-            '@rid': decoded.userId,
+            id: decoded.id,
           })
           .one()
           .then((user) => {
             if (user && user.accessTokens && user.accessTokens.includes(token)) {
-              req.user = _.pick(user, ['email', 'accessTokens', 'refreshTokens', 'twitterId', 'githubId', 'regProvider', 'active']);
-              req.user.userId = user.rid || user['@rid'];
-              req.user.userId = req.user.userId.toString();
-
+              req.user = _.pick(user, ['id', 'email', 'accessTokens', 'refreshTokens', 'twitterId', 'githubId', 'active']);
               return next();
             }
 

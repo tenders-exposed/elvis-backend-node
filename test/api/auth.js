@@ -14,7 +14,7 @@ const REFRESH_TOKEN_ROUTE = '/auth/token/refresh';
 
 test.before('Create DB', () => helpers.createDB());
 test.beforeEach(async (t) => {
-  t.plan(5);
+  t.plan(4);
 
   const res = await request(app)
     .post(REGISTER_ROUTE)
@@ -23,8 +23,7 @@ test.beforeEach(async (t) => {
   t.is(res.status, SUCCESS);
   t.truthy(res.body.data);
   t.is(res.body.data.email, 'testemail123456@mailinator.com');
-  t.is(res.body.data.regProvider, 'local');
-  t.truthy(res.body.data.userId);
+  t.truthy(res.body.data.id);
 });
 test.afterEach.always(() => helpers.truncateDB());
 

@@ -71,10 +71,10 @@ paths:
           schema:
             $ref: "#/definitions/RegisterModel"
       responses:
-        "200":
+        "201":
           description: Success
           schema:
-            $ref: "#/definitions/RegisterSuccessModel"
+            $ref: "#/definitions/User"
         "400":
           description: Bad request ['Validation error.', 'The email address is already taken.']
           schema:
@@ -360,6 +360,17 @@ definitions:
       code:
         type: string
         description: CPV code
+  User:
+    required:
+      - id
+      - email
+    properties:
+      email:
+        type: string
+        description: Valid email address
+      id:
+        type: string
+        description: User's UUID
   RegisterModel:
     required:
       - email
@@ -371,17 +382,6 @@ definitions:
       password:
         type: string
         description: Password string
-  RegisterSuccessModel:
-    properties:
-      userId:
-        type: string
-        description: Created user ID
-      email:
-        type: string
-        description: Email address
-      regProvider:
-        type: string
-        description: Registration provider is 'local'
   LoginSuccessModel:
     properties:
       accessToken:
@@ -401,11 +401,9 @@ definitions:
       data:
         type: object
         properties:
-          userId:
+          id:
             type: string
           email:
-            type: string
-          regProvider:
             type: string
           twitterId:
             type: string

@@ -35,7 +35,7 @@ function truncateDB() {
     'Indicator',
     'Price',
     'Address',
-    'Users',
+    'User',
   ];
 
   return Promise.map(dbClasses, (className) =>
