@@ -8,7 +8,7 @@ const AccountController = require('./AccountController');
 
 const getAccount = (req, res) => {
   validateToken(req, res, () => {
-    sendResponse(codes.Success(_.pick(req.user, ['userId', 'email', 'twitterId', 'githubId', 'regProvider', 'active'])), req, res);
+    sendResponse(codes.Success(_.pick(req.user, ['id', 'email', 'twitterId', 'githubId', 'active'])), req, res);
   });
 };
 

@@ -4,8 +4,8 @@ const config = require('../../config/default');
 
 class AccountController {
   static deleteAccount(req) {
-    return config.db.delete().from('Users')
-      .where(`@rid = ${req.user.userId}`).one();
+    return config.db.delete().from('User')
+      .where({ id: req.user.id }).one();
   }
 }
 

@@ -2,10 +2,15 @@
 
 exports.name = 'users';
 
-exports.up = (db) => {
-  db.class.create('Users')
-    .then((Users) => {
-      Users.property.create([
+exports.up = (db) => (
+  db.class.create('User')
+    .then((User) => {
+      User.property.create([
+        {
+          name: 'id',
+          type: 'String',
+          mandatory: true,
+        },
         {
           name: 'email',
           type: 'String',
@@ -24,10 +29,6 @@ exports.up = (db) => {
           type: 'String',
         },
         {
-          name: 'regProvider',
-          type: 'String',
-        },
-        {
           name: 'active',
           type: 'Boolean',
           mandatory: true,
@@ -42,9 +43,15 @@ exports.up = (db) => {
           type: 'EmbeddedSet',
         },
       ]);
-    });
-};
+    })
+    .then(() => {
+      db.index.create({
+        name: 'User.id',
+        type: 'UNIQUE_HASH_INDEX',
+      });
+    })
+);
 
-exports.down = (db) => {
-  db.class.drop('Users');
-};
+exports.down = (db) => (
+  db.class.drop('Users')
+);

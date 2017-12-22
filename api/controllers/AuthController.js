@@ -2,6 +2,7 @@
 
 const JWT = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const uuidv4 = require('uuid/v4');
 const _ = require('lodash');
 const codes = require('../helpers/codes');
 const config = require('../../config/default');
@@ -15,7 +16,7 @@ class AuthController {
       authValidator.registerValidator(req.body)
         .then((validBody) => {
           validRequestObject = validBody;
-          return config.db.select().from('Users')
+          return config.db.select().from('User')
             .where({
               email: validRequestObject.email,
             })
@@ -30,17 +31,16 @@ class AuthController {
         })
         .then((passwordHash) => {
           validRequestObject.password = passwordHash;
-          validRequestObject.regProvider = 'local';
-          return config.db.class.get('Users');
+          return config.db.class.get('User');
         })
-        .then((Users) => Users.create(validRequestObject))
-        .then((user) => {
-          validRequestObject.userId = user.rid || user['@rid'];
-          validRequestObject.userId = validRequestObject.userId.toString();
-          return AuthController.createToken({
-            userId: validRequestObject.userId,
-          }, config.activation.expire);
+        .then((User) => {
+          validRequestObject.id = uuidv4();
+          return User.create(validRequestObject);
         })
+        .then((user) => AuthController.createToken(
+          { id: user.id },
+          config.activation.expire,
+        ))
         .then((token) => {
           if (process.env.NODE_ENV !== 'test') {
             return MailGun.sendEmail({
@@ -51,7 +51,7 @@ class AuthController {
           }
           return null;
         })
-        .then(() => resolve(_.pick(validRequestObject, ['userId', 'email', 'regProvider'])))
+        .then(() => resolve(_.pick(validRequestObject, ['id', 'email'])))
         .catch(reject);
     });
   }
@@ -63,12 +63,12 @@ class AuthController {
       }
       return AuthController.verifyToken(token)
         .then((decoded) => {
-          if (!decoded.userId) {
+          if (!decoded.id) {
             throw codes.BadRequest('Wrong token.');
           }
-          return config.db.select('@rid', 'active').from('Users')
+          return config.db.select('@rid', 'active').from('User')
             .where({
-              '@rid': decoded.userId,
+              id: decoded.id,
             })
             .one();
         })
@@ -80,7 +80,7 @@ class AuthController {
             throw codes.BadRequest('User is already active.');
           }
 
-          return config.db.update(user.rid).set({ active: true }).one();
+          return config.db.update(user['@rid']).set({ active: true }).one();
         })
         .then(() => resolve())
         .catch(reject);
@@ -104,16 +104,16 @@ class AuthController {
           return reject(codes.InternalServerError('The problem with refresh token check occurred.'));
         }
 
-        if (!decoded.userId || decoded.type !== 'refresh_token') {
+        if (!decoded.id || decoded.type !== 'refresh_token') {
           return reject(codes.BadRequest('Wrong refresh token.'));
         }
 
         let newPair = {};
         let foundUser;
 
-        return config.db.select().from('Users')
+        return config.db.select().from('User')
           .where({
-            '@rid': decoded.userId,
+            id: decoded.id,
           })
           .one()
           .then((user) => {
@@ -127,7 +127,7 @@ class AuthController {
               throw codes.BadRequest('Wrong refresh token.');
             }
             foundUser = user;
-            return AuthController.createTokenPair({ userId: decoded.userId });
+            return AuthController.createTokenPair({ id: decoded.id });
           })
           .then((pair) => {
             const ind = foundUser.refreshTokens.indexOf(refreshToken);
@@ -136,7 +136,7 @@ class AuthController {
             foundUser.accessTokens.push(pair.accessToken);
 
             newPair = pair;
-            return config.db.update(decoded.userId)
+            return config.db.update(foundUser.id)
               .set({ refreshTokens: foundUser.refreshTokens, accessTokens: foundUser.accessTokens })
               .one();
           })
@@ -153,7 +153,7 @@ class AuthController {
         return reject(codes.BadRequest('Email is not provided.'));
       }
       return authValidator.emailValidator(email)
-        .then(() => config.db.select('@rid', 'active').from('Users')
+        .then(() => config.db.select('@rid', 'active').from('User')
           .where({
             email,
           })
@@ -192,7 +192,7 @@ class AuthController {
             throw codes.BadRequest('Wrong token.');
           }
           email = decoded.email;
-          return config.db.select('@rid').from('Users')
+          return config.db.select('@rid').from('User')
             .where({
               email,
             })
@@ -227,7 +227,7 @@ class AuthController {
           return AuthController.createPasswordHash(requestObject.newPassword);
         })
         .then((passwordHash) => config.db.query(
-          'UPDATE Users SET password = :passwordHash WHERE email = :email',
+          'UPDATE User SET password = :passwordHash WHERE email = :email',
           {
             params: {
               passwordHash,
@@ -241,18 +241,16 @@ class AuthController {
   }
   static createSession(req) {
     return new Promise((resolve, reject) => {
-      // console.log('Create session: ', req.user);
-      const recordId = req.user.rid || req.user['@rid'];
       let session;
-      AuthController.createTokenPair({ userId: recordId })
+      AuthController.createTokenPair({ id: req.user.id })
         .then((pair) => {
           session = pair;
 
           return config.db.query(
-            'UPDATE Users ADD accessTokens = :accessToken, refreshTokens = :refreshToken WHERE @rid = :rid',
+            'UPDATE User ADD accessTokens = :accessToken, refreshTokens = :refreshToken WHERE @rid = :rid',
             {
               params: {
-                rid: recordId,
+                rid: req.user['@rid'],
                 accessToken: session.accessToken,
                 refreshToken: session.refreshToken,
               },

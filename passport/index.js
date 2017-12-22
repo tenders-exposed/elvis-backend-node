@@ -9,7 +9,7 @@ const TwitterStrategy = require('passport-twitter').Strategy;
 const LocalStrategy = require('passport-local').Strategy;
 
 module.exports.localStrategyCallback = (email, password, done) => {
-  config.db.select().from('Users')
+  config.db.select().from('User')
     .where({
       email,
     })
@@ -29,13 +29,11 @@ module.exports.localStrategyCallback = (email, password, done) => {
 };
 
 module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb) => {
-  // console.log('Github profile: ', profile);
   let email;
   let foundUser;
-  let query = 'SELECT @rid, email, githubId, twitterId FROM Users WHERE githubId = :githubId';
+  let query = 'SELECT @rid, id, email, githubId, twitterId FROM User WHERE githubId = :githubId';
   const params = {
     githubId: profile.id,
-    regProvider: 'github',
   };
   if (profile.emails && profile.emails.length) {
     profile.emails.forEach((item) => {
@@ -59,9 +57,9 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
         foundUser = user[0];
         return user[0];
       }
-      return config.db.class.get('Users');
+      return config.db.class.get('User');
     })
-    .then((Users) => {
+    .then((User) => {
       if (foundUser) {
         if (!foundUser.githubId) {
           foundUser.githubId = profile.id;
@@ -70,10 +68,9 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
         return foundUser;
       }
 
-      return Users.create(params);
+      return User.create(params);
     })
     .then((user) => {
-      // console.log(user);
       foundUser = foundUser || user;
       cb(null, foundUser);
     })
@@ -81,13 +78,11 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
 };
 
 module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
-  // console.log('Twitter profile: ', profile);
   let email;
   let foundUser;
-  let query = 'SELECT @rid, email, githubId, twitterId FROM Users WHERE twitterId = :twitterId';
+  let query = 'SELECT @rid, email, githubId, twitterId FROM User WHERE twitterId = :twitterId';
   const params = {
     twitterId: profile.id,
-    regProvider: 'twitter',
   };
   if (profile.emails && profile.emails.length) {
     email = profile.emails[0].value;
@@ -107,9 +102,9 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
         foundUser = user[0];
         return user[0];
       }
-      return config.db.class.get('Users');
+      return config.db.class.get('User');
     })
-    .then((Users) => {
+    .then((User) => {
       if (foundUser) {
         if (!foundUser.twitterId) {
           foundUser.twitterId = profile.id;
@@ -118,10 +113,9 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
         return foundUser;
       }
 
-      return Users.create(params);
+      return User.create(params);
     })
     .then((user) => {
-      // console.log(user);
       foundUser = foundUser || user;
       cb(null, foundUser);
     })
@@ -152,14 +146,12 @@ module.exports.configureStrategies = () => {
   ));
 
   passport.serializeUser((user, done) => {
-    done(null, user.rid || user['@rid']);
+    done(null, user.id);
   });
 
   passport.deserializeUser((id, done) => {
-    config.db.select().from('Users')
-      .where({
-        '@rid': id,
-      })
+    config.db.select().from('User')
+      .where({ id })
       .one()
       .then((user) => done(null, user))
       .catch((err) => done(err));
