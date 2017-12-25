@@ -1,7 +1,6 @@
 'use strict';
 
 const config = require('../../config/default');
-const passport = require('passport');
 const codes = require('../helpers/codes');
 const sendResponse = require('../helpers/errorFormatter');
 const AuthController = require('./AuthController');
@@ -34,46 +33,8 @@ const passwordReset = (req, res) => {
     .catch((err) => sendResponse(err, req, res));
 };
 
-const loginWithGithub = (req, res) => {
-  passport.authenticate('github', (err, user) => {
-    if (err) {
-      return sendResponse(err, req, res);
-    }
-
-    if (!user) {
-      return sendResponse(codes.NotFound('User not found.'), req, res);
-    }
-
-    req.user = user;
-
-    return AuthController.createSession(req)
-      .then((data) => sendResponse(codes.Success(data), req, res))
-      .catch((err1) => sendResponse(err1, req, res));
-  })(req, res);
-};
-
-const loginWithTwitter = (req, res) => {
-  passport.authenticate('twitter', (err, user) => {
-    if (err) {
-      return sendResponse(err, req, res);
-    }
-
-    if (!user) {
-      return sendResponse(codes.NotFound('User not found.'), req, res);
-    }
-
-    req.user = user;
-
-    return AuthController.createSession(req)
-      .then((data) => sendResponse(codes.Success(data), req, res))
-      .catch((err1) => sendResponse(err1, req, res));
-  })(req, res);
-};
-
 module.exports = {
   refreshToken,
-  loginWithGithub,
-  loginWithTwitter,
   forgotPassword,
   getPasswordReset,
   passwordReset,

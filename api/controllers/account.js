@@ -81,9 +81,19 @@ function login(req, res) {
   })(req, res);
 }
 
+function loginWithGithub(req, res) {
+  return passport.authenticate('github')(req, res);
+}
+
+function loginWithTwitter(req, res) {
+  return passport.authenticate('twitter')(req, res);
+}
+
 module.exports = {
-  login,
   getAccount,
   deleteAccount,
   createAccount,
+  login,
+  loginWithGithub,
+  loginWithTwitter,
 };

@@ -4,6 +4,7 @@ const config = require('../config/default');
 const codes = require('../api/helpers/codes');
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
+const uuidv4 = require('uuid/v4');
 const GitHubStrategy = require('passport-github').Strategy;
 const TwitterStrategy = require('passport-twitter').Strategy;
 const LocalStrategy = require('passport-local').Strategy;
@@ -70,7 +71,7 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
         }
         return foundUser;
       }
-
+      params.id = uuidv4();
       return User.create(params);
     })
     .then((user) => {
@@ -115,7 +116,7 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
         }
         return foundUser;
       }
-
+      params.id = uuidv4();
       return User.create(params);
     })
     .then((user) => {

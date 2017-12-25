@@ -15,13 +15,15 @@ securityDefinitions :
   twitterOauth:    # <---- arbitrary name
     type: oauth2
     flow: implicit
-    authorizationUrl: http://127.0.0.1:10010/auth/login/twitter/callback
+    # The callbackURL registered in Twitter
+    authorizationUrl: http://localhost:10010/account/login/twitter/callback
     scopes:
       read: Grants read access
   githubOauth:    # <---- arbitrary name
     type: oauth2
     flow: implicit
-    authorizationUrl: http://localhost:10010/auth/login/github/callback
+    # The callbackURL registered in Github
+    authorizationUrl: http://localhost:10010/account/login/github/callback
     scopes:
       read: Grants read access
       user:email: Grants read-only access to user email
@@ -180,7 +182,6 @@ paths:
     post:
       tags:
         - account
-        - register
       description: Create a user account and send activation email
       operationId: createAccount
       parameters:
@@ -301,11 +302,11 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/login/twitter:
-      x-swagger-router-controller: auth
+      x-swagger-router-controller: account
       get:
         tags:
-          - auth
-        description: User login with twitter
+          - login
+        description: User login with twitter. If the user doesn't exist it will be created
         operationId: loginWithTwitter
         security:
           - twitterOauth: [read]
@@ -322,12 +323,12 @@ paths:
             description: Error
             schema:
               $ref: "#/definitions/ErrorResponse"
-  /login/github:
-    x-swagger-router-controller: auth
+  /account/login/github:
+    x-swagger-router-controller: account
     get:
       tags:
-        - auth
-      description: User login with github
+        - login
+      description: User login with github. If the user doesn't exist it will be created
       operationId: loginWithGithub
       security:
         - githubOauth: [read, user:email]
