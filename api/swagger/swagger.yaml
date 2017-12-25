@@ -90,7 +90,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /auth/password/forgot:
+  /account/password/forgot:
       x-swagger-router-controller: auth
       post:
         tags:
@@ -123,7 +123,7 @@ paths:
             description: Error
             schema:
               $ref: "#/definitions/ErrorResponse"
-  /auth/password/reset:
+  /account/password/reset:
     x-swagger-router-controller: auth
     get:
       tags:

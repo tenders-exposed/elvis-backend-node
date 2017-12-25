@@ -8,9 +8,14 @@ const NODE_ENV = process.env.NODE_ENV;
 
 // API
 const config = {
-  host: process.env.HOST || '0.0.0.0',
+  protocol: process.env.PROTOCOL || 'http',
+  host: process.env.HOST || '127.0.0.1',
   port: process.env.PORT || 10010,
+  session: {
+    secret: process.env.SESSION_SECRET,
+  },
 };
+config.baseUrl = `${config.protocol}://${config.host}:${config.port}`;
 
 // OrientDB
 const orientDBConfig = {
@@ -55,8 +60,9 @@ config.passport = {
 const swaggerConfigPath = `${__dirname}/swagger.yaml`;
 Object.assign(config, YAML.load(swaggerConfigPath));
 
+// Security
 config.jwt = {
-  secret: 'fgWi6sHirxNul86gqBmWiCFcnud9iNz6YCsqALHlCMhn9Zjawx7785',
+  secret: process.env.JWT_SECRET,
 };
 
 config.expire = {
@@ -73,21 +79,28 @@ config.password = {
   forgotToken: {
     expire: 3600, // 1 hour
   },
-  resetLink: `http://localhost:${config.port}/auth/password/reset/`,
-  resetRedirectUrl: 'http://tenders.exposed/?reset=true',
+  // Password reset
+  reset: {
+    route: 'account/password/reset/',
+    redirectUrl: 'http://tenders.exposed/?reset=true',
+  },
 };
+config.password.reset.link = `${config.baseUrl}${config.password.reset.route}`;
 
+// Mail
 config.mailgun = {
-  apiKey: 'key-be6a7add272edc498139d7ab4564cd35',
-  domain: 'mg.tenders.exposed',
-  from: 'Company name <info@company.com>',
+  apiKey: process.env.API_KEY,
+  domain: process.env.DOMAIN,
+  from: process.env.FROM || 'tech@tenders.exposed',
 };
 
+// Account activation
 config.activation = {
-  link: `http://localhost:${config.port}/account/activate`,
+  route: '/account/activate',
   expire: 3600, // 1 hour
   redirectUrl: 'http://tenders.exposed/',
 };
+config.activation.link = `${config.baseUrl}${config.activation.route}`;
 
 
 module.exports = config;

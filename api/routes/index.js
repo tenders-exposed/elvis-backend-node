@@ -9,7 +9,7 @@ const config = require('../../config/default');
 
 const router = express.Router();
 
-router.get('/account/activate', (req, res) => {
+router.get(config.activation.route, (req, res) => {
   AuthController.activateAccount(req)
     .then(() => {
       res.redirect(config.activation.redirectUrl);

@@ -21,10 +21,10 @@ const forgotPassword = (req, res) => {
 const getPasswordReset = (req, res) => {
   AuthController.getPasswordReset(req.query)
     .then((data) => {
-      res.redirect(`${config.password.resetRedirectUrl}&t=${data.token}&email=${data.email}`);
+      res.redirect(`${config.password.reset.redirectUrl}&t=${data.token}&email=${data.email}`);
     })
     .catch((err) => {
-      res.redirect(`${config.password.resetRedirectUrl}&err=${err.message || 'Something went wrong'}`);
+      res.redirect(`${config.password.reset.redirectUrl}&err=${err.message || 'Something went wrong'}`);
     });
 };
 
