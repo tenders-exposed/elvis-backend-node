@@ -94,7 +94,7 @@ app.all('/*', (req, res, next) => {
   return next();
 });
 app.use(session({
-  secret: '0$jdh-YsdnA3fiiH^5$w',
+  secret: config.session.secret,
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false },
@@ -103,13 +103,9 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(nonSwaggerRouter);
-app.use(function onerror(err, req, res, next) {
-  console.log('Onerror', err);
-  next();
-});
 
 SwaggerExpress.create(swaggerConfig, (err, swaggerExpress) => {
-  // if (err) { throw err; }
+  if (err) { throw err; }
 
   // install middleware
   swaggerExpress.register(app);

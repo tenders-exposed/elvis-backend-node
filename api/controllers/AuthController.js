@@ -126,7 +126,7 @@ class AuthController {
         .then((token) => MailGun.sendEmail({
           to: email,
           subject: 'Forgot password',
-          text: `To reset your password please follow the link: \n ${config.password.resetLink}?t=${token}`,
+          text: `To reset your password please follow the link: \n ${config.password.reset.link}?t=${token}`,
         }))
         .then(() => resolve())
         .catch(reject);
