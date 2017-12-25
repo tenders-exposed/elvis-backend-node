@@ -2,60 +2,13 @@
 
 const JWT = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const uuidv4 = require('uuid/v4');
-const _ = require('lodash');
 const codes = require('../helpers/codes');
 const config = require('../../config/default');
 const authValidator = require('../validators/auth');
 const MailGun = require('../classes/MailGun');
 
 class AuthController {
-  static register(req) {
-    return new Promise((resolve, reject) => {
-      let validRequestObject;
-      authValidator.registerValidator(req.body)
-        .then((validBody) => {
-          validRequestObject = validBody;
-          return config.db.select().from('User')
-            .where({
-              email: validRequestObject.email,
-            })
-            .one();
-        })
-        .then((user) => {
-          if (user) {
-            throw codes.BadRequest('The email address is already taken.');
-          }
-
-          return AuthController.createPasswordHash(validRequestObject.password);
-        })
-        .then((passwordHash) => {
-          validRequestObject.password = passwordHash;
-          return config.db.class.get('User');
-        })
-        .then((User) => {
-          validRequestObject.id = uuidv4();
-          return User.create(validRequestObject);
-        })
-        .then((user) => AuthController.createToken(
-          { id: user.id },
-          config.activation.expire,
-        ))
-        .then((token) => {
-          if (process.env.NODE_ENV !== 'test') {
-            return MailGun.sendEmail({
-              to: validRequestObject.email,
-              subject: 'Registration',
-              text: `Thanks for registration. To activate your email please follow the link: \n ${config.activation.link}?t=${token}`,
-            });
-          }
-          return null;
-        })
-        .then(() => resolve(_.pick(validRequestObject, ['id', 'email'])))
-        .catch(reject);
-    });
-  }
-  static userActivation(req) {
+  static activateAccount(req) {
     return new Promise((resolve, reject) => {
       const token = req.query.t;
       if (!token) {
@@ -66,7 +19,7 @@ class AuthController {
           if (!decoded.id) {
             throw codes.BadRequest('Wrong token.');
           }
-          return config.db.select('@rid', 'active').from('User')
+          return config.db.select().from('User')
             .where({
               id: decoded.id,
             })

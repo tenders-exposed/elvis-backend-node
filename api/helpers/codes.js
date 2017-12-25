@@ -4,6 +4,7 @@ const _ = require('lodash');
 
 const SUCCESS = 200;
 const CREATED = 201;
+const NO_CONTENT = 204;
 const MULTIPLE_CHOICES = 300;
 const MOVED_PERMANENTLY = 301;
 const BAD_REQUEST = 400;
@@ -22,6 +23,7 @@ const SERVICE_UNAVAILABLE = 503;
 module.exports = {
   SUCCESS,
   CREATED,
+  NO_CONTENT,
   MULTIPLE_CHOICES,
   MOVED_PERMANENTLY,
   BAD_REQUEST,
@@ -43,6 +45,10 @@ module.exports = {
   created: {
     status: CREATED,
     message: 'Created',
+  },
+  noContent: {
+    status: NO_CONTENT,
+    message: 'The request was successfully fulfilled but there is no additional content',
   },
   badRequest: {
     status: BAD_REQUEST,
@@ -110,7 +116,10 @@ module.exports = {
     return this.getCode('success', ...args);
   },
   Created(...args) {
-    return this.getCode('success', ...args);
+    return this.getCode('created', ...args);
+  },
+  NoContent(...args) {
+    return this.getCode('noContent', ...args);
   },
   BadRequest(...args) {
     return this.getCode('badRequest', null, ...args);
