@@ -50,118 +50,12 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/definitions/Cpv"
+              $ref: "#/definitions/CpvResponse"
         default:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
 
-  /auth/register:
-    x-swagger-router-controller: auth
-    post:
-      tags:
-        - auth
-      description: Register user in db with sending activation email
-      operationId: register
-      parameters:
-        - name: body
-          in: body
-          description: Body params
-          required: true
-          schema:
-            $ref: "#/definitions/RegisterModel"
-      responses:
-        "201":
-          description: Success
-          schema:
-            $ref: "#/definitions/User"
-        "400":
-          description: Bad request ['Validation error.', 'The email address is already taken.']
-          schema:
-            $ref: "#/definitions/BadRequestModel"
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: "#/definitions/InternalErrorModel"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /auth/login:
-    x-swagger-router-controller: auth
-    post:
-      tags:
-        - auth
-      description: User login using email and password
-      operationId: login
-      parameters:
-        - name: body
-          in: body
-          description: Body params
-          required: true
-          schema:
-            $ref: "#/definitions/RegisterModel"
-      responses:
-        "200":
-          description: Success
-          schema:
-            $ref: "#/definitions/LoginSuccessModel"
-        "400":
-          description: Bad request ['Email is required.', 'Password is required.', 'Validation error.']
-          schema:
-            $ref: "#/definitions/BadRequestModel"
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: "#/definitions/InternalErrorModel"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /auth/login/twitter:
-      x-swagger-router-controller: auth
-      get:
-        tags:
-          - auth
-        description: User login with twitter
-        operationId: loginWithTwitter
-        security:
-          - twitterOauth: [read]
-        responses:
-          "200":
-            description: Success
-            schema:
-              $ref: "#/definitions/LoginSuccessModel"
-          "500":
-            description: Internal Server Error
-            schema:
-              $ref: "#/definitions/InternalErrorModel"
-          default:
-            description: Error
-            schema:
-              $ref: "#/definitions/ErrorResponse"
-  /auth/login/github:
-    x-swagger-router-controller: auth
-    get:
-      tags:
-        - auth
-      description: User login with github
-      operationId: loginWithGithub
-      security:
-        - githubOauth: [read, user:email]
-      responses:
-        "200":
-          description: Success
-          schema:
-            $ref: "#/definitions/LoginSuccessModel"
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: "#/definitions/InternalErrorModel"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
   /auth/token/refresh:
     x-swagger-router-controller: auth
     post:
@@ -179,19 +73,19 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/LoginSuccessModel"
+            $ref: "#/definitions/LoginResponse"
         "400":
           description: Bad request ['Refresh token is not provided.', 'Wrong refresh token.']
           schema:
-            $ref: "#/definitions/BadRequestModel"
+            $ref: "#/definitions/ErrorResponse"
         "401":
           description: Unauthorized ['Refresh token expired.']
           schema:
-            $ref: "#/definitions/UnauthorizedModel"
+            $ref: "#/definitions/ErrorResponse"
         "500":
           description: Internal Server Error ['The problem with refresh token check occurred.']
           schema:
-            $ref: "#/definitions/InternalErrorModel"
+            $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
@@ -209,24 +103,22 @@ paths:
             description: Body params
             required: true
             schema:
-              $ref: "#/definitions/ForgotPasswordModel"
+              $ref: "#/definitions/ForgotPasswordRequest"
         responses:
-          "200":
-            description: Success
-            schema:
-              $ref: "#/definitions/SuccessModel"
+          "204":
+            description: Successly sent passport reset email
           "400":
             description: Bad request ['Email is not provided.', 'User is not active.']
             schema:
-              $ref: "#/definitions/BadRequestModel"
+              $ref: "#/definitions/ErrorResponse"
           "404":
             description: Not found ['User not found.']
             schema:
-              $ref: "#/definitions/NotFoundModel"
+              $ref: "#/definitions/ErrorResponse"
           "500":
             description: Internal Server Error
             schema:
-              $ref: "#/definitions/InternalErrorModel"
+              $ref: "#/definitions/ErrorResponse"
           default:
             description: Error
             schema:
@@ -242,11 +134,11 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/RedirectModel"
+            $ref: "#/definitions/Redirect"
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/InternalErrorModel"
+            $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
@@ -262,24 +154,22 @@ paths:
           description: Body params
           required: true
           schema:
-            $ref: "#/definitions/PasswordResetModel"
+            $ref: "#/definitions/ResetPasswordRequest"
       responses:
-        "200":
-          description: Success
-          schema:
-            $ref: "#/definitions/SuccessModel"
+        "204":
+          description: Successfully reset
         "400":
           description: Bad request ['Token is not provided.', 'Wrong token.', 'User is not active.', 'Passwords do not match.']
           schema:
-            $ref: "#/definitions/BadRequestModel"
+            $ref: "#/definitions/ErrorResponse"
         "404":
           description: Not found ['User not found.']
           schema:
-            $ref: "#/definitions/NotFoundModel"
+            $ref: "#/definitions/ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/InternalErrorModel"
+            $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
@@ -287,13 +177,43 @@ paths:
 
   /account:
     x-swagger-router-controller: account
+    post:
+      tags:
+        - account
+        - register
+      description: Create a user account and send activation email
+      operationId: createAccount
+      parameters:
+        - name: body
+          in: body
+          description: Body params
+          required: true
+          schema:
+            $ref: "#/definitions/AccountCredentials"
+      responses:
+        "201":
+          description: Success
+          schema:
+            $ref: "#/definitions/AccountCreateResponse"
+        "400":
+          description: Bad request ['Validation error.', 'The email address is already taken.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
     get:
       tags:
         - account
       description: Get user account
       operationId: getAccount
       parameters:
-        - name: authorization
+        - name: x-access-token
           type: string
           in: header
           description: Bearer access token of the user
@@ -302,19 +222,19 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/AccountSuccessModel"
+            $ref: "#/definitions/AccountResponse"
         "400":
           description: Bad request ['Wrong access token.']
           schema:
-            $ref: "#/definitions/BadRequestModel"
+            $ref: "#/definitions/ErrorResponse"
         "401":
           description: Unauthorized ['No Access Token.', 'Access token expired.']
           schema:
-            $ref: "#/definitions/UnauthorizedModel"
+            $ref: "#/definitions/ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/InternalErrorModel"
+            $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
@@ -325,98 +245,132 @@ paths:
       description: Delete user account
       operationId: deleteAccount
       parameters:
-        - name: authorization
+        - name: x-access-token
           type: string
           in: header
           description: Bearer access token of the user
           required: true
       responses:
-        "200":
-          description: Success
-          schema:
-            $ref: "#/definitions/SuccessModel"
+        "204":
+          description: Successfully deleted
         "400":
           description: Bad request ['Wrong access token.']
           schema:
-            $ref: "#/definitions/BadRequestModel"
+            $ref: "#/definitions/ErrorResponse"
         "401":
           description: Unauthorized ['No Access Token.', 'Access token expired.']
           schema:
-            $ref: "#/definitions/UnauthorizedModel"
+            $ref: "#/definitions/ErrorResponse"
         "500":
           description: Internal Server Error
           schema:
-            $ref: "#/definitions/InternalErrorModel"
+            $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-
+  /account/login:
+    x-swagger-router-controller: account
+    post:
+      tags:
+        - login
+      description: Log in account using email and password
+      operationId: login
+      parameters:
+        - name: body
+          in: body
+          description: Body params
+          required: true
+          schema:
+            $ref: "#/definitions/AccountCredentials"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        "400":
+          description: Bad request ['Email is required.', 'Password is required.', 'Validation error.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /account/login/twitter:
+      x-swagger-router-controller: auth
+      get:
+        tags:
+          - auth
+        description: User login with twitter
+        operationId: loginWithTwitter
+        security:
+          - twitterOauth: [read]
+        responses:
+          "200":
+            description: Success
+            schema:
+              $ref: "#/definitions/LoginResponse"
+          "500":
+            description: Internal Server Error
+            schema:
+              $ref: "#/definitions/ErrorResponse"
+          default:
+            description: Error
+            schema:
+              $ref: "#/definitions/ErrorResponse"
+  /login/github:
+    x-swagger-router-controller: auth
+    get:
+      tags:
+        - auth
+      description: User login with github
+      operationId: loginWithGithub
+      security:
+        - githubOauth: [read, user:email]
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 definitions:
-  Cpv:
-    required:
-      - code
-    properties:
-      code:
-        type: string
-        description: CPV code
-  User:
-    required:
-      - id
-      - email
-    properties:
-      email:
-        type: string
-        description: Valid email address
-      id:
-        type: string
-        description: User's UUID
-  RegisterModel:
+  AccountCredentials:
+    type: object
     required:
       - email
       - password
     properties:
       email:
         type: string
+        format: email
         description: Valid email address
       password:
         type: string
         description: Password string
-  LoginSuccessModel:
-    properties:
-      accessToken:
-        type: string
-        description: Access token with short life
-      refreshToken:
-        type: string
-        description: Refresh token with long life
-  AccountSuccessModel:
-    properties:
-      status:
-        type: number
-        description: "200"
-      message:
-        type: string
-        description: Success
-      data:
-        type: object
-        properties:
-          id:
-            type: string
-          email:
-            type: string
-          twitterId:
-            type: string
-          githubId:
-            type: string
-          active:
-            type: string
-  ForgotPasswordModel:
+  ForgotPasswordRequest:
+    type: object
+    required:
+      - email
     properties:
       email:
         type: string
         format: email
-  PasswordResetModel:
+  ResetPasswordRequest:
+    type: object
+    required:
+      - newPassword
+      - confirmPassword
     properties:
       newPassword:
         type: string
@@ -426,16 +380,45 @@ definitions:
       t:
         type: string
         description: Reset token
-
-  SuccessModel:
+  AccountCreateResponse:
+    type: object
+    required:
+      - id
+      - email
     properties:
-      status:
-        type: number
-        description: Status number is 200
-      message:
+      email:
         type: string
-        description: Success
-  RedirectModel:
+        format: email
+        description: Valid email address
+      id:
+        type: string
+        description: User's UUID
+  AccountResponse:
+    type: object
+    allOf:
+      - $ref: '#/definitions/AccountCreateResponse'
+      - type: object
+        properties:
+          twitterId:
+            type: string
+          githubId:
+            type: string
+          active:
+            type: boolean 
+  LoginResponse:
+    type: object
+    required:
+      - accessToken
+      - refreshToken
+    properties:
+      accessToken:
+        type: string
+        description: Access token with short life
+      refreshToken:
+        type: string
+        description: Refresh token with long life
+
+  Redirect:
     properties:
       status:
         type: number
@@ -443,37 +426,28 @@ definitions:
       location:
         type: string
         description: Redirect url
-  BadRequestModel:
-    properties:
-      status:
-        type: number
-        description: Status number is 400
-      message:
-        type: string
-  UnauthorizedModel:
-    properties:
-      status:
-        type: number
-        description: Status number is 401
-      message:
-        type: string
-  NotFoundModel:
-    properties:
-      status:
-        type: number
-        description: Status number is 404
-      message:
-        type: string
-  InternalErrorModel:
-    properties:
-      status:
-        type: number
-        description: Status number is 500
-      message:
-        type: string
-  ErrorResponse:
+
+  CpvResponse:
+    type: object
     required:
-      - message
+      - code
     properties:
-      message:
+      code:
         type: string
+        description: CPV code
+  ErrorResponse:
+    type: object
+    required:
+      - errors
+    properties:
+      errors:
+        type: array
+        description: Array of errors encountered in given request
+        items:
+          type: object
+          required:
+            - message
+          properties:
+            message:
+              type: string
+              description: Error message

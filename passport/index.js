@@ -18,6 +18,9 @@ module.exports.localStrategyCallback = (email, password, done) => {
       if (!user) {
         return done(codes.BadRequest('Incorrect email.'), false);
       }
+      if (user.active === false) {
+        return done(codes.BadRequest('Activate your account via email before logging in'), false);
+      }
 
       if (!bcrypt.compareSync(password, user.password)) {
         return done(codes.BadRequest('Incorrect password.'), false);

@@ -3,38 +3,8 @@
 const config = require('../../config/default');
 const passport = require('passport');
 const codes = require('../helpers/codes');
-const sendResponse = require('../helpers/response');
+const sendResponse = require('../helpers/errorFormatter');
 const AuthController = require('./AuthController');
-const validateLocalAuthMiddleware = require('../middlewares/validateLocalAuth');
-
-const register = (req, res) => {
-  AuthController.register(req)
-    .then((data) => sendResponse(codes.Success(data), req, res))
-    .catch((err) => sendResponse(err, req, res));
-};
-
-const login = (req, res) => {
-  validateLocalAuthMiddleware(req, res, (err1) => {
-    if (err1) {
-      return sendResponse(codes.InternalServerError(err1), req, res);
-    }
-    return passport.authenticate('local', (err, user) => {
-      if (err) {
-        return sendResponse(err, req, res);
-      }
-
-      if (!user) {
-        return sendResponse(codes.NotFound('User not found.'), req, res);
-      }
-
-      req.user = user;
-
-      return AuthController.createSession(req)
-        .then((data) => sendResponse(codes.Success(data), req, res))
-        .catch((err2) => sendResponse(err2, req, res));
-    })(req, res);
-  });
-};
 
 const refreshToken = (req, res) => {
   AuthController.refreshToken(req)
@@ -101,8 +71,6 @@ const loginWithTwitter = (req, res) => {
 };
 
 module.exports = {
-  register,
-  login,
   refreshToken,
   loginWithGithub,
   loginWithTwitter,
