@@ -19,15 +19,15 @@ router.get(config.activation.route, (req, res) => {
     });
 });
 
-router.get('/login/twitter/callback', passport.authenticate('twitter'), (req, res) => {
+router.get(config.passport.twitter.callbackRoute, passport.authenticate('twitter'), (req, res) => {
   AuthController.createSession(req)
-    .then((data) => sendResponse(codes.Success(data), req, res))
+    .then((tokens) => res.status(codes.SUCCESS).json(tokens))
     .catch((err) => sendResponse(err, req, res));
 });
 
-router.get('/login/github/callback', passport.authenticate('github'), (req, res) => {
+router.get(config.passport.github.callbackRoute, passport.authenticate('github'), (req, res) => {
   AuthController.createSession(req)
-    .then((data) => sendResponse(codes.Success(data), req, res))
+    .then((tokens) => res.status(codes.SUCCESS).json(tokens))
     .catch((err) => sendResponse(err, req, res));
 });
 
