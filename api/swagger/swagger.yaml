@@ -270,6 +270,40 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /account/activate:
+    x-swagger-router-controller: account
+    get:
+      tags:
+        - account
+      description: Activate account using the activation token sent in email at account creation
+      operationId: activateAccount
+      parameters:
+        - name: t
+          in: query
+          description: Activation token sent thorough email at account creation
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/AccountResponse"
+        "400":
+          description: Bad request ['Token is not provided', 'Bad token', 'User already active']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: Not found ['User not found']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /account/login:
     x-swagger-router-controller: account
     post:
