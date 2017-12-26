@@ -7,10 +7,17 @@ module.exports = function create(fittingDef, bagpipes) {
   return function errorFormatter(context, next) {
     if (!util.isError(context.error)) { return next(); }
 
-    const errors = _.map(
-      context.error.results.errors,
-      (err) => _.pick(err, 'message'),
-    );
+    let errors;
+    if (context.error.results) {
+      errors = _.map(
+        context.error.results.errors,
+        (err) => _.pick(err, 'message'),
+      );
+    } else {
+      errors = [{
+        message: context.error.message,
+      }];
+    }
     const errorResponse = { errors };
     context.headers['Content-Type'] = 'application/json';
     delete context.error;
