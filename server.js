@@ -105,9 +105,6 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(nonSwaggerRouter);
 
 SwaggerExpress.create(swaggerConfig, (err, swaggerExpress) => {
-  if (err) { throw err; }
-
-  // install middleware
   swaggerExpress.register(app);
 
   let credentials;
