@@ -22,6 +22,7 @@ test.serial('writeTender creates new tender', async (t) => {
 });
 
 test.serial('writeTender updates indicators', async (t) => {
+  t.plan(2);
   const rawTender = await fixtures.build('rawTender');
   const firstIndicator = await fixtures.build('rawIndicator', {
     relatedEntityId: rawTender.id,
@@ -45,6 +46,7 @@ test.serial('writeTender updates indicators', async (t) => {
 });
 
 test.serial('writeTender updates existing tender', async (t) => {
+  t.plan(2);
   const tenderAttrs = await fixtures.build('extractedTender', { country: 'NL' });
   const updatedTenderAttrs = await fixtures.build('rawTender', {
     country: 'BE',
@@ -75,6 +77,7 @@ test.serial('writeTender rolls back transaction on error', async (t) => {
 // I delierately avoid testing deleteLot and createLot separately instead of this
 // because their purpose is to perform an update in the absence of a unique lot id
 test.serial('writeTender updates existing lots', async (t) => {
+  t.plan(2);
   const existingLot = await fixtures.build('extractedLot', { title: 'existing lot' })
     .then((lotAttrs) => config.db.create('vertex', 'Lot')
       .set(lotAttrs)
@@ -109,6 +112,7 @@ test.serial('writeTender updates existing lots', async (t) => {
 // I delierately avoid testing createBid and deleteBit separately instead of this
 // because their purpose is to perform an update in the absence of a unique bid id
 test.serial('writeTender updates existing bids', async (t) => {
+  t.plan(2);
   const existingBid = await fixtures.build('extractedBid', { isWinning: false })
     .then((bidAttrs) => config.db.create('vertex', 'Bid')
       .set(bidAttrs)
@@ -184,6 +188,7 @@ test.serial('upsertBuyer creates an edge between tender and buyer', async (t) =>
 });
 
 test.serial('upsertBuyer updates an existing buyer', async (t) => {
+  t.plan(2);
   const buyerAttrs = await fixtures.build('extractedBuyer', { isPublic: true });
   const updatedAttrs = await fixtures.build('rawBuyer', {
     isPublic: false,
@@ -207,6 +212,7 @@ test.serial('upsertBuyer updates an existing buyer', async (t) => {
 });
 
 test.serial('upsertBuyer updates the edge between existing buyer and existing tender', async (t) => {
+  t.plan(3);
   const tenderAttrs = await fixtures.build('extractedTender');
   const edgeAttrs = { isLeader: true };
   const existingBuyer = await fixtures.build('extractedBuyer')
@@ -301,6 +307,7 @@ test.serial('upsertBidder creates an edge between bidder and bid', async (t) => 
 });
 
 test.serial('upsertBidder updates an existing bidder', async (t) => {
+  t.plan(2);
   const bidderAttrs = await fixtures.build('extractedBidder', { isPublic: true });
   const updatedAttrs = await fixtures.build('rawBidder', {
     isPublic: false,
@@ -360,6 +367,7 @@ test.serial('upsertCpv creates an edge between CPV and tender', async (t) => {
 });
 
 test.serial('upsertCpv updates the edge between existing CPV and existing tender', async (t) => {
+  t.plan(3);
   const tenderAttrs = await fixtures.build('extractedTender');
   const edgeAttrs = { isMain: true };
   const existingCpv = await fixtures.build('extractedCpv')
@@ -399,6 +407,7 @@ test.serial('upsertCpv updates the edge between existing CPV and existing tender
 });
 
 test.serial('upsertCpv allows cpv to have edges to more than one tender', async (t) => {
+  t.plan(2);
   const rawCpv = await fixtures.build('rawCpv');
   const firstTenderName = 'tender1';
   const secondTenderName = 'tender2';

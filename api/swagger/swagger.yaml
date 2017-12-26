@@ -58,40 +58,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
 
-  /auth/token/refresh:
-    x-swagger-router-controller: auth
-    post:
-      tags:
-        - auth
-      description: Get new tokens pair using refresh token
-      operationId: refreshToken
-      parameters:
-        - name: x-refresh-token
-          type: string
-          in: header
-          description: Refresh Token
-          required: true
-      responses:
-        "200":
-          description: Success
-          schema:
-            $ref: "#/definitions/LoginResponse"
-        "400":
-          description: Bad request ['Refresh token is not provided.', 'Wrong refresh token.']
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        "401":
-          description: Unauthorized ['Refresh token expired.']
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        "500":
-          description: Internal Server Error ['The problem with refresh token check occurred.']
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
+
   /account/password/forgot:
       x-swagger-router-controller: auth
       post:
@@ -373,6 +340,40 @@ paths:
             $ref: "#/definitions/LoginResponse"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /account/token/refresh:
+    x-swagger-router-controller: account
+    get:
+      tags:
+        - login
+      description: Get new tokens pair using refresh token
+      operationId: refreshToken
+      parameters:
+        - name: x-refresh-token
+          type: string
+          in: header
+          description: Refresh Token
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        "400":
+          description: Bad request ['Refresh token is not provided.', 'Wrong refresh token.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['Refresh token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error ['There was a problem checking the refresh token.']
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:

@@ -5,12 +5,6 @@ const codes = require('../helpers/codes');
 const sendResponse = require('../helpers/errorFormatter');
 const AuthController = require('./AuthController');
 
-const refreshToken = (req, res) => {
-  AuthController.refreshToken(req)
-    .then((data) => sendResponse(codes.Success(data), req, res))
-    .catch((err) => sendResponse(err, req, res));
-};
-
 const forgotPassword = (req, res) => {
   AuthController.forgotPassword(req)
     .then((data) => sendResponse(codes.Success(data), req, res))
@@ -34,7 +28,6 @@ const passwordReset = (req, res) => {
 };
 
 module.exports = {
-  refreshToken,
   forgotPassword,
   getPasswordReset,
   passwordReset,
