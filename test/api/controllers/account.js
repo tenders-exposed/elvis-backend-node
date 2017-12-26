@@ -13,12 +13,12 @@ const CREATED = 201;
 const BAD_REQUEST = 400;
 const REGISTER_ROUTE = '/account';
 const LOGIN_ROUTE = '/account/login';
-const REFRESH_TOKEN_ROUTE = '/auth/token/refresh';
+const REFRESH_TOKEN_ROUTE = '/account/token/refresh';
 
 test.before('Create DB', () => helpers.createDB());
 test.afterEach.always(() => helpers.truncateDB());
 
-test.serial('register: Success', async (t) => {
+test.serial('createAccount: Success', async (t) => {
   t.plan(3);
 
   const userCreds = {
@@ -38,7 +38,7 @@ test.serial('register: Success', async (t) => {
   t.is(createdUser.id, res.body.id);
 });
 
-test('register: Validation error - email pattern', async (t) => {
+test('createAccount: Validation error - email pattern', async (t) => {
   t.plan(4);
 
   const userCreds = {
@@ -59,7 +59,7 @@ test('register: Validation error - email pattern', async (t) => {
   t.is(writtenUser, undefined);
 });
 
-test('register: Validation error - required', async (t) => {
+test('createAccount: Validation error - required', async (t) => {
   t.plan(5);
 
   const res = await request(app)
@@ -74,24 +74,26 @@ test('register: Validation error - required', async (t) => {
   t.regex(errorMessages[1], /password/i);
 });
 
-test.serial('register: Email is taken', async (t) => {
+test.serial('createAccount: Email is taken', async (t) => {
+  t.plan(3);
   const userCreds = {
     email: 'testemail123456@mailinator.com',
     password: '123456789test',
   };
   const existingUser = await config.db.class.get('User')
     .then((U) => U.create(Object.assign(userCreds, { id: 'lololo' })));
-  t.plan(3);
   t.is(existingUser.email, userCreds.email);
 
   const res = await request(app)
     .post(REGISTER_ROUTE)
     .send(userCreds);
+
   t.is(res.status, BAD_REQUEST);
   t.regex(res.body.errors[0].message, /taken/i);
 });
 
 test.serial('getAccount returns the account associated with tokens', async (t) => {
+  t.plan(2);
   const userAttrs = {
     id: 'alabala',
     active: true,
@@ -105,15 +107,18 @@ test.serial('getAccount returns the account associated with tokens', async (t) =
     }));
   await config.db.class.get('User')
     .then((User) => User.create(completeUser));
+
   const res = await request(app)
     .get(REGISTER_ROUTE)
     .set('x-access-token', completeUser.accessTokens[0])
     .set('x-refresh-token', completeUser.refreshTokens[0]);
+
   t.is(res.status, SUCCESS);
   t.is(res.body.id, userAttrs.id);
 });
 
 test.serial('login: Success', async (t) => {
+  t.plan(3);
   const userCreds = {
     email: 'testemail123456@mailinator.com',
     password: '123456789test',
@@ -125,13 +130,13 @@ test.serial('login: Success', async (t) => {
   });
   await config.db.class.get('User')
     .then((U) => U.create(userAttrs));
-  t.plan(2);
 
   const res = await request(app)
     .post(LOGIN_ROUTE)
     .send(userCreds);
   t.is(res.status, SUCCESS);
   t.truthy(res.body.accessToken);
+  t.truthy(res.body.refreshToken);
 });
 
 test.serial('login: Wrong email', async (t) => {
@@ -184,3 +189,28 @@ test.serial('login: Wrong password', async (t) => {
   t.regex(res.body.errors[0].message, /password/i);
 });
 
+test.serial('refreshToken: Success', async (t) => {
+  t.plan(5);
+  const userAttrs = {
+    id: 'lololo',
+    email: 'testemail123456@mailinator.com',
+    password: await AuthController.createPasswordHash('123456789test'),
+    active: true,
+  };
+  const tokens = await AuthController.createTokenPair({ userId: userAttrs.userId });
+  userAttrs.refreshTokens = [tokens.refreshToken];
+  userAttrs.accessTokens = [tokens.accessToken];
+  await config.db.class.get('Users')
+    .then((Users) => Users.create(userAttrs));
+
+  const res = await request(app)
+    .get(REFRESH_TOKEN_ROUTE)
+    .set('x-refresh-token', tokens.refreshToken)
+    .send({});
+
+  t.is(res.status, SUCCESS);
+  t.truthy(res.body.accessToken);
+  t.truthy(res.body.refreshToken);
+  t.not(res.body.refreshToken, tokens.refreshToken);
+  t.not(res.body.accessToken, tokens.accessToken);
+});

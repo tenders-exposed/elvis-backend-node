@@ -68,7 +68,7 @@ config.jwt = {
 };
 
 config.expire = {
-  accessToken: 3600, // 1 hour
+  accessToken: 86400, // 1 hour
   refreshToken: 2592000, // 30 days
 };
 

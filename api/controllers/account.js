@@ -3,6 +3,7 @@
 const _ = require('lodash');
 const uuidv4 = require('uuid/v4');
 const passport = require('passport');
+const JWT = require('jsonwebtoken');
 
 const config = require('../../config/default');
 const codes = require('../helpers/codes');
@@ -119,6 +120,59 @@ function loginWithTwitter(req, res) {
   return passport.authenticate('twitter')(req, res);
 }
 
+function refreshToken(req, res) {
+  const refToken = req.swagger.params['x-refresh-token'].value;
+  let foundUser;
+  let newPair = {};
+  return JWT.verify(refToken, config.jwt.secret, (err, decoded) => {
+    if (err) {
+      switch (err.name) {
+        case 'TokenExpiredError':
+          throw codes.Unauthorized('Refresh token expired.');
+        case 'JsonWebTokenError':
+          throw codes.BadRequest(err.message);
+        default:
+          throw codes.InternalServerError('There was a problem checking the refresh token.');
+      }
+    }
+    if (!decoded.id || decoded.type !== 'refresh_token') {
+      throw codes.BadRequest('Wrong refresh token.');
+    }
+    return decoded;
+  })
+    .then((decoded) =>
+      config.db.select().from('User')
+        .where({
+          id: decoded.id,
+        })
+        .one())
+    .then((user) => {
+      if (!user) {
+        throw codes.BadRequest('Wrong refresh token.');
+      }
+      user.accessTokens = user.accessTokens || [];
+      user.refreshTokens = user.refreshTokens || [];
+      if (!user.refreshTokens.includes(refToken)) {
+        throw codes.BadRequest('Wrong refresh token.');
+      }
+      foundUser = user;
+      return AuthController.createTokenPair({ id: foundUser.id });
+    })
+    .then((pair) => {
+      const ind = foundUser.refreshTokens.indexOf(refToken);
+      foundUser.refreshTokens.splice(ind, 1);
+      foundUser.refreshTokens.push(pair.refreshToken);
+      foundUser.accessTokens.push(pair.accessToken);
+
+      newPair = pair;
+      return config.db.update(foundUser.id)
+        .set({ refreshTokens: foundUser.refreshTokens, accessTokens: foundUser.accessTokens })
+        .one();
+    })
+    .then(() => res.status(200).json(newPair))
+    .catch((err) => formatError(err, req, res));
+}
+
 module.exports = {
   createAccount,
   activateAccount,
@@ -127,4 +181,5 @@ module.exports = {
   login,
   loginWithGithub,
   loginWithTwitter,
+  refreshToken,
 };

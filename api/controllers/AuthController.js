@@ -8,65 +8,6 @@ const authValidator = require('../validators/auth');
 const MailGun = require('../classes/MailGun');
 
 class AuthController {
-  static refreshToken(req) {
-    return new Promise((resolve, reject) => {
-      const refreshToken = req.headers['x-refresh-token'];
-
-      if (!refreshToken) {
-        return reject(codes.BadRequest('Refresh token is not provided.'));
-      }
-      return JWT.verify(refreshToken, config.jwt.secret, (err, decoded) => {
-        if (err) {
-          if (err.name === 'TokenExpiredError') {
-            return reject(codes.Unauthorized('Refresh token expired.'));
-          }
-          if (err.name === 'JsonWebTokenError') {
-            return reject(codes.BadRequest(err.message));
-          }
-          return reject(codes.InternalServerError('The problem with refresh token check occurred.'));
-        }
-
-        if (!decoded.id || decoded.type !== 'refresh_token') {
-          return reject(codes.BadRequest('Wrong refresh token.'));
-        }
-
-        let newPair = {};
-        let foundUser;
-
-        return config.db.select().from('User')
-          .where({
-            id: decoded.id,
-          })
-          .one()
-          .then((user) => {
-            if (!user) {
-              throw codes.Unauthorized('No User.');
-            }
-
-            user.accessTokens = user.accessTokens || [];
-            user.refreshTokens = user.refreshTokens || [];
-            if (!user.refreshTokens.includes(refreshToken)) {
-              throw codes.BadRequest('Wrong refresh token.');
-            }
-            foundUser = user;
-            return AuthController.createTokenPair({ id: decoded.id });
-          })
-          .then((pair) => {
-            const ind = foundUser.refreshTokens.indexOf(refreshToken);
-            foundUser.refreshTokens.splice(ind, 1);
-            foundUser.refreshTokens.push(pair.refreshToken);
-            foundUser.accessTokens.push(pair.accessToken);
-
-            newPair = pair;
-            return config.db.update(foundUser.id)
-              .set({ refreshTokens: foundUser.refreshTokens, accessTokens: foundUser.accessTokens })
-              .one();
-          })
-          .then(() => resolve(newPair))
-          .catch(reject);
-      });
-    });
-  }
   static forgotPassword(req) {
     return new Promise((resolve, reject) => {
       const email = req.body.email;
