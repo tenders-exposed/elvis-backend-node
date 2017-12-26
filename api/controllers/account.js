@@ -48,7 +48,7 @@ function createAccount(req, res) {
         return MailGun.sendEmail({
           to: userEmail,
           subject: 'Registration',
-          text: `Thanks for registration. To activate your email please follow the link: \n ${config.activation.link}?t=${token}`,
+          text: `Thanks for registration. To activate your account follow this link: ${config.activation.externalUrl}?t=${token} \n or this link to activate through the API: ${config.activation.url}?t=${token}`,
         });
       }
       return null;
@@ -56,9 +56,39 @@ function createAccount(req, res) {
     .catch((err) => console.error('Error sending activation email:', err));
 }
 
+function activateAccount(req, res) {
+  const token = req.swagger.params.t.value;
+  return AuthController.verifyToken(token)
+    .then((decoded) => {
+      if (!decoded.id) {
+        throw codes.BadRequest('Wrong token.');
+      }
+      return config.db.select().from('User')
+        .where({
+          id: decoded.id,
+        })
+        .one();
+    })
+    .then((user) => {
+      if (!user) {
+        throw codes.NotFound('User not found.');
+      }
+      if (user.active) {
+        throw codes.BadRequest('User is already active.');
+      }
+      return config.db.update(user['@rid'])
+        .set({ active: true })
+        .return('AFTER')
+        .one();
+    })
+    .then((user) =>
+      res.status(codes.SUCCESS).json(_.pick(user, ['id', 'email', 'twitterId', 'githubId', 'active'])))
+    .catch((err) => formatError(err, req, res));
+}
+
 function getAccount(req, res) {
   return validateToken(req, res, () =>
-    res.status(codes.SUCCESS).json(_.pick(req.user, ['id', 'email', 'twitterId', 'githubId', 'active'])))
+    res.status(codes.SUCCESS).json(_.pick(req.user, ['id', 'email', 'twitterId', 'githubId', 'active'])));
 }
 
 function deleteAccount(req, res) {
@@ -90,9 +120,10 @@ function loginWithTwitter(req, res) {
 }
 
 module.exports = {
+  createAccount,
+  activateAccount,
   getAccount,
   deleteAccount,
-  createAccount,
   login,
   loginWithGithub,
   loginWithTwitter,

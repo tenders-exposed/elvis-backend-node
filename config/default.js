@@ -98,11 +98,9 @@ config.mailgun = {
 
 // Account activation
 config.activation = {
-  route: '/account/activate',
   expire: 3600, // 1 hour
-  redirectUrl: 'http://tenders.exposed/',
+  url: `${config.baseUrl}/account/activate`,
+  externalUrl: process.env.ACCOUNT_ACTIVATION_URL,
 };
-config.activation.link = `${config.baseUrl}${config.activation.route}`;
-
 
 module.exports = config;

@@ -8,37 +8,6 @@ const authValidator = require('../validators/auth');
 const MailGun = require('../classes/MailGun');
 
 class AuthController {
-  static activateAccount(req) {
-    return new Promise((resolve, reject) => {
-      const token = req.query.t;
-      if (!token) {
-        return reject(codes.BadRequest('Token is not provided.'));
-      }
-      return AuthController.verifyToken(token)
-        .then((decoded) => {
-          if (!decoded.id) {
-            throw codes.BadRequest('Wrong token.');
-          }
-          return config.db.select().from('User')
-            .where({
-              id: decoded.id,
-            })
-            .one();
-        })
-        .then((user) => {
-          if (!user) {
-            throw codes.NotFound('User not found.');
-          }
-          if (user.active) {
-            throw codes.BadRequest('User is already active.');
-          }
-
-          return config.db.update(user['@rid']).set({ active: true }).one();
-        })
-        .then(() => resolve())
-        .catch(reject);
-    });
-  }
   static refreshToken(req) {
     return new Promise((resolve, reject) => {
       const refreshToken = req.headers['x-refresh-token'];
