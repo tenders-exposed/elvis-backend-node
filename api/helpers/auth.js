@@ -2,14 +2,14 @@
 
 const JWT = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const codes = require('../helpers/codes');
+const codes = require('./codes');
 const config = require('../../config/default');
 
-class AuthController {
+class AuthHelper {
   static createSession(req) {
     return new Promise((resolve, reject) => {
       let session;
-      AuthController.createTokenPair({ id: req.user.id })
+      AuthHelper.createTokenPair({ id: req.user.id })
         .then((pair) => {
           session = pair;
 
@@ -32,11 +32,11 @@ class AuthController {
     return new Promise((resolve, reject) => {
       const session = {};
       data.type = 'access_token';
-      AuthController.createToken(data, config.expire.accessToken)
+      AuthHelper.createToken(data, config.expire.accessToken)
         .then((accessToken) => {
           session.accessToken = accessToken;
           data.type = 'refresh_token';
-          return AuthController.createToken(data, config.expire.refreshToken);
+          return AuthHelper.createToken(data, config.expire.refreshToken);
         })
         .then((refreshToken) => {
           session.refreshToken = refreshToken;
@@ -97,4 +97,4 @@ class AuthController {
   }
 }
 
-module.exports = AuthController;
+module.exports = AuthHelper;

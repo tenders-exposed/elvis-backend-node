@@ -25,7 +25,7 @@ module.exports = (err, req, res) => {
   }
 
   if (process.env.NODE_ENV === 'development') {
-    console.error(errorResponse);
+    console.error(errorResponse); // eslint-disable-line no-console
   }
   return res.status(errorResponse.status).json({
     errors: [

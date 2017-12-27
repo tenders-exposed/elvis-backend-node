@@ -8,7 +8,7 @@ const helpers = require('../../helpers');
 const codes = require('../../../api/helpers/codes');
 const app = require('../../../server');
 const config = require('../../../config/default');
-const AuthController = require('../../../api/controllers/AuthController');
+const AuthHelper = require('../../../api/helpers/auth');
 
 const REGISTER_ROUTE = '/account';
 const LOGIN_ROUTE = '/account/login';
@@ -98,9 +98,9 @@ test.serial('getAccount returns the account associated with tokens', async (t) =
     id: uuidv4(),
     active: true,
     email: 'testemail123456@mailinator.com',
-    password: await AuthController.createPasswordHash('123456789test'),
+    password: await AuthHelper.createPasswordHash('123456789test'),
   };
-  const completeUser = await AuthController.createTokenPair({ id: userAttrs.id })
+  const completeUser = await AuthHelper.createTokenPair({ id: userAttrs.id })
     .then((tokens) => Object.assign(userAttrs, {
       accessTokens: [tokens.accessToken],
       refreshTokens: [tokens.refreshToken],
@@ -126,7 +126,7 @@ test.serial('login: Success', async (t) => {
   const userAttrs = Object.assign(JSON.parse(JSON.stringify(userCreds)), {
     id: uuidv4(),
     active: true,
-    password: await AuthController.createPasswordHash(userCreds.password),
+    password: await AuthHelper.createPasswordHash(userCreds.password),
   });
   await config.db.class.get('User')
     .then((U) => U.create(userAttrs));
@@ -156,7 +156,7 @@ test.serial('login: Wrong password', async (t) => {
   const userCreds = {
     email: 'testemail123456@mailinator.com',
     active: true,
-    password: await AuthController.createPasswordHash('123456789test'),
+    password: await AuthHelper.createPasswordHash('123456789test'),
   };
   await config.db.class.get('User')
     .then((User) => User.create(userCreds));
@@ -175,7 +175,7 @@ test.serial('login: Wrong password', async (t) => {
   const userCreds = {
     email: 'testemail123456@mailinator.com',
     active: true,
-    password: await AuthController.createPasswordHash('123456789test'),
+    password: await AuthHelper.createPasswordHash('123456789test'),
   };
   await config.db.class.get('User')
     .then((User) => User.create(userCreds));
@@ -194,10 +194,10 @@ test.serial('refreshToken: Success', async (t) => {
   const userAttrs = {
     id: uuidv4(),
     email: 'testemail123456@mailinator.com',
-    password: await AuthController.createPasswordHash('123456789test'),
+    password: await AuthHelper.createPasswordHash('123456789test'),
     active: true,
   };
-  const tokens = await AuthController.createTokenPair({ id: userAttrs.id });
+  const tokens = await AuthHelper.createTokenPair({ id: userAttrs.id });
 
   userAttrs.refreshTokens = [tokens.refreshToken];
   userAttrs.accessTokens = [tokens.accessToken];
@@ -223,7 +223,7 @@ test.serial('resetPassword: Success updates the password', async (t) => {
     id: uuidv4(),
     active: true,
     email: 'testemail123456@mailinator.com',
-    password: await AuthController.createPasswordHash(initialPassword),
+    password: await AuthHelper.createPasswordHash(initialPassword),
   };
   await config.db.class.get('User')
     .then((U) => U.create(userAttrs));
@@ -231,7 +231,7 @@ test.serial('resetPassword: Success updates the password', async (t) => {
     email: userAttrs.email,
     password: '123456789test',
     passwordConfirmation: '123456789test',
-    resetPasswordToken: await AuthController.createToken(
+    resetPasswordToken: await AuthHelper.createToken(
       { email: userAttrs.email },
       config.password.forgotToken.expire,
     ),
@@ -245,5 +245,5 @@ test.serial('resetPassword: Success updates the password', async (t) => {
     .where({ email: userAttrs.email })
     .one();
   t.is(res.status, codes.NO_CONTENT);
-  await t.false(AuthController.verifyPassword(initialPassword, updatedUser.password));
+  await t.false(AuthHelper.verifyPassword(initialPassword, updatedUser.password));
 });

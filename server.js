@@ -53,7 +53,6 @@ const swaggerDocument = YAML.load('./api/swagger/swagger.yaml');
 
 // Event listener for HTTP server "error" event.
 const onError = (error) => {
-  console.log('ONERRROR', error);
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -62,11 +61,11 @@ const onError = (error) => {
 
   switch (error.code) {
     case 'EACCES':
-      console.log('%s requires elevated privileges', bind);
+      console.log('%s requires elevated privileges', bind); // eslint-disable-line no-console
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.log('%s is already in use', bind);
+      console.log('%s is already in use', bind); // eslint-disable-line no-console
       process.exit(1);
       break;
     default:
@@ -124,7 +123,7 @@ SwaggerExpress.create(swaggerConfig, (err, swaggerExpress) => {
   server.listen(config.port);
 
   server.on('listening', () => {
-    console.log(`Server is Listening on ${config.port}`);
+    console.log(`Server is Listening on ${config.port}`); // eslint-disable-line no-console
   });
 
   server.on('error', onError);
