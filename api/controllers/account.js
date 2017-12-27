@@ -120,7 +120,7 @@ function loginWithTwitter(req, res) {
 }
 
 function refreshToken(req, res) {
-  const refToken = req.swagger.params['x-refresh-token'].value;
+  const refToken = req.swagger.params['X-Refresh-Token'].value;
   let foundUser;
   let newPair = {};
   return AuthHelper.verifyToken(refToken)

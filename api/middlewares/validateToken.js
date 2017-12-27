@@ -7,7 +7,7 @@ const formatError = require('../helpers/errorFormatter');
 const codes = require('../helpers/codes');
 
 module.exports = (req, res, next) => {
-  const token = req.swagger.params['x-access-token'].value;
+  const token = req.swagger.params.Authorization.value;
 
   if (token) {
     return JWT.verify(token, config.jwt.secret, (err, decoded) => {
