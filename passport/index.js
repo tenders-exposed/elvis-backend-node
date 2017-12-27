@@ -67,7 +67,7 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
       if (foundUser) {
         if (!foundUser.githubId) {
           foundUser.githubId = profile.id;
-          return config.db.update(foundUser.rid).set({ githubId: profile.id }).one();
+          return config.db.update(foundUser['@rid']).set({ githubId: profile.id }).one();
         }
         return foundUser;
       }
@@ -112,7 +112,7 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
       if (foundUser) {
         if (!foundUser.twitterId) {
           foundUser.twitterId = profile.id;
-          return config.db.update(foundUser.rid).set({ twitterId: profile.id }).one();
+          return config.db.update(foundUser['@rid']).set({ twitterId: profile.id }).one();
         }
         return foundUser;
       }

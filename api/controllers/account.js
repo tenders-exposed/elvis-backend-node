@@ -3,7 +3,6 @@
 const _ = require('lodash');
 const uuidv4 = require('uuid/v4');
 const passport = require('passport');
-const JWT = require('jsonwebtoken');
 
 const config = require('../../config/default');
 const codes = require('../helpers/codes');
@@ -124,22 +123,13 @@ function refreshToken(req, res) {
   const refToken = req.swagger.params['x-refresh-token'].value;
   let foundUser;
   let newPair = {};
-  return JWT.verify(refToken, config.jwt.secret, (err, decoded) => {
-    if (err) {
-      switch (err.name) {
-        case 'TokenExpiredError':
-          throw codes.Unauthorized('Refresh token expired.');
-        case 'JsonWebTokenError':
-          throw codes.BadRequest(err.message);
-        default:
-          throw codes.InternalServerError('There was a problem checking the refresh token.');
+  return AuthController.verifyToken(refToken)
+    .then((decoded) => {
+      if (!decoded.id || decoded.type !== 'refresh_token') {
+        throw codes.BadRequest('Wrong refresh token.');
       }
-    }
-    if (!decoded.id || decoded.type !== 'refresh_token') {
-      throw codes.BadRequest('Wrong refresh token.');
-    }
-    return decoded;
-  })
+      return decoded;
+    })
     .then((decoded) =>
       config.db.select().from('User')
         .where({
@@ -159,17 +149,93 @@ function refreshToken(req, res) {
       return AuthController.createTokenPair({ id: foundUser.id });
     })
     .then((pair) => {
+      console.log('PAIR', pair);
       const ind = foundUser.refreshTokens.indexOf(refToken);
       foundUser.refreshTokens.splice(ind, 1);
       foundUser.refreshTokens.push(pair.refreshToken);
       foundUser.accessTokens.push(pair.accessToken);
 
       newPair = pair;
-      return config.db.update(foundUser.id)
+      return config.db.update(foundUser['@rid'])
         .set({ refreshTokens: foundUser.refreshTokens, accessTokens: foundUser.accessTokens })
         .one();
     })
     .then(() => res.status(200).json(newPair))
+    .catch((err) => formatError(err, req, res));
+}
+
+function forgotPassword(req, res) {
+  const email = req.swagger.params.email.value;
+
+  if (!email) {
+    return formatError(codes.BadRequest('Email is not provided.'), req, res);
+  }
+  return config.db.select('@rid', 'active').from('User')
+    .where({
+      email,
+    })
+    .one()
+    .then((user) => {
+      if (!user) {
+        throw codes.NotFound('User not found.');
+      }
+      if (!user.active) {
+        throw codes.BadRequest('User is not active.');
+      }
+      return AuthController.createToken(
+        { email },
+        config.password.forgotToken.expire,
+      );
+    })
+    .then((token) => {
+      res.status(codes.NO_CONTENT).json();
+      return token;
+    })
+    .catch((err) => formatError(err, req, res))
+    .then((token) => MailGun.sendEmail({
+      to: email,
+      subject: 'Forgot password',
+      text: `To reset your password please follow this link:  ${config.password.reset.externalUrl}?resetPasswordToken=${token} \n or make a POST on ${config.password.reset.url} including the token.`,
+    }))
+    .catch((err) => console.error('Error sending reset password email:', err));
+}
+
+function resetPassword(req, res) {
+  const requestObject = req.swagger.params.body.value;
+  return AuthController.verifyToken(requestObject.resetPasswordToken)
+    .then((decoded) => {
+      if (!decoded.email) {
+        throw codes.BadRequest('Wrong token.');
+      }
+      if (requestObject.email !== decoded.email) {
+        throw codes.BadRequest('Wrong token');
+      }
+      return config.db.select('@rid').from('User')
+        .where({
+          email: requestObject.email,
+        })
+        .one();
+    })
+    .then((user) => {
+      if (!user) {
+        throw codes.NotFound('User not found.');
+      }
+      if (requestObject.password !== requestObject.passwordConfirmation) {
+        throw codes.BadRequest('Passwords do not match.');
+      }
+
+      return AuthController.createPasswordHash(requestObject.password);
+    })
+    .then((passwordHash) => config.db.query(
+      'UPDATE User SET password = :passwordHash WHERE email = :email',
+      {
+        params: {
+          passwordHash,
+          email: requestObject.email,
+        },
+      },
+    ))
+    .then(() => res.status(codes.NO_CONTENT).json())
     .catch((err) => formatError(err, req, res));
 }
 
@@ -182,4 +248,6 @@ module.exports = {
   loginWithGithub,
   loginWithTwitter,
   refreshToken,
+  forgotPassword,
+  resetPassword,
 };
