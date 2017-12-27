@@ -94,7 +94,7 @@ paths:
       description: Get user account
       operationId: getAccount
       parameters:
-        - name: x-access-token
+        - name: Authorization
           type: string
           in: header
           description: Bearer access token of the user
@@ -126,7 +126,7 @@ paths:
       description: Delete user account
       operationId: deleteAccount
       parameters:
-        - name: x-access-token
+        - name: Authorization
           type: string
           in: header
           description: Bearer access token of the user
@@ -267,7 +267,7 @@ paths:
       description: Get new tokens pair using refresh token
       operationId: refreshToken
       parameters:
-        - name: x-refresh-token
+        - name: X-Refresh-Token
           type: string
           in: header
           description: Refresh Token

@@ -110,8 +110,8 @@ test.serial('getAccount returns the account associated with tokens', async (t) =
 
   const res = await request(app)
     .get(REGISTER_ROUTE)
-    .set('x-access-token', completeUser.accessTokens[0])
-    .set('x-refresh-token', completeUser.refreshTokens[0]);
+    .set('Authorization', completeUser.accessTokens[0])
+    .set('X-Refresh-Token', completeUser.refreshTokens[0]);
 
   t.is(res.status, codes.SUCCESS);
   t.is(res.body.id, userAttrs.id);
@@ -206,7 +206,7 @@ test.serial('refreshToken: Success', async (t) => {
 
   const res = await request(app)
     .get(REFRESH_TOKEN_ROUTE)
-    .set('x-refresh-token', tokens.refreshToken)
+    .set('X-Refresh-Token', tokens.refreshToken)
     .send();
 
   t.is(res.status, codes.SUCCESS);
