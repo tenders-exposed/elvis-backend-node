@@ -1,7 +1,5 @@
 ---
 extends: ../.eslintrc.yaml
-env:
-  mocha: true
 globals:
   server: false
   factory: false

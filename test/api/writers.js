@@ -217,9 +217,13 @@ test.serial('upsertBuyer updates the edge between existing buyer and existing te
   const edgeAttrs = { isLeader: true };
   const existingBuyer = await fixtures.build('extractedBuyer')
     .then((extractedBuyer) => config.db.create('vertex', 'Buyer')
-      .set(extractedBuyer).commit().one());
+      .set(extractedBuyer)
+      .commit()
+      .one());
   const existingTender = await config.db.create('vertex', 'Tender')
-    .set(tenderAttrs).commit().one();
+    .set(tenderAttrs)
+    .commit()
+    .one();
   const existingEdge = await config.db.create('edge', 'Creates')
     .from(existingBuyer['@rid']).to(existingTender['@rid'])
     .set(edgeAttrs)

@@ -1,8 +1,8 @@
 'use strict';
 
 const test = require('ava').test;
-const passport = require('passport');
-const helpers = require('./helpers');
+const passport = require('../../passport/index');
+const helpers = require('../helpers');
 
 test.before('Create DB', () => helpers.createDB());
 test.afterEach.always(() => helpers.truncateDB());
@@ -32,7 +32,7 @@ test.cb('passport:twitter', (t) => {
   passport.twitterStrategyCallback(null, null, twitterUserAttrs, (err, user) => {
     t.is(err, null);
     t.truthy(user);
-    t.is(user.twitterId, '654321');
+    t.is(user.twitterId, '123456');
     t.is(user.email, 'testemail123456@mailinator.com');
     t.pass();
     t.end();
