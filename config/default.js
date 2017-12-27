@@ -83,8 +83,8 @@ config.password = {
   },
   // Password reset
   reset: {
-    route: 'account/password/reset/',
-    redirectUrl: 'http://tenders.exposed/?reset=true',
+    url: `${config.baseUrl}/account/password/reset`,
+    externalUrl: process.env.PASSWORD_RESET_URL,
   },
 };
 config.password.reset.link = `${config.baseUrl}${config.password.reset.route}`;
