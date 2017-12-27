@@ -8,7 +8,7 @@ const config = require('../../config/default');
 const codes = require('../helpers/codes');
 const formatError = require('../helpers/errorFormatter');
 const validateToken = require('../middlewares/validateToken');
-const AuthController = require('./AuthController');
+const AuthHelper = require('../helpers/auth');
 const MailGun = require('../classes/MailGun');
 
 function createAccount(req, res) {
@@ -23,7 +23,7 @@ function createAccount(req, res) {
       if (user) {
         throw codes.BadRequest('The email address is already taken.');
       }
-      return AuthController.createPasswordHash(req.swagger.params.body.value.password);
+      return AuthHelper.createPasswordHash(req.swagger.params.body.value.password);
     })
     .then((passwordHash) => {
       userAttrs.password = passwordHash;
@@ -39,7 +39,7 @@ function createAccount(req, res) {
       return user;
     })
     .catch((err) => formatError(err, req, res))
-    .then((user) => AuthController.createToken(
+    .then((user) => AuthHelper.createToken(
       { id: user.id },
       config.activation.expire,
     ))
@@ -53,12 +53,12 @@ function createAccount(req, res) {
       }
       return null;
     })
-    .catch((err) => console.error('Error sending activation email:', err));
+    .catch((err) => console.error('Error sending activation email:', err)); // eslint-disable-line no-console
 }
 
 function activateAccount(req, res) {
   const token = req.swagger.params.t.value;
-  return AuthController.verifyToken(token)
+  return AuthHelper.verifyToken(token)
     .then((decoded) => {
       if (!decoded.id) {
         throw codes.BadRequest('Wrong token.');
@@ -105,7 +105,7 @@ function login(req, res) {
       return formatError(err, req, res);
     }
     req.user = user;
-    return AuthController.createSession(req)
+    return AuthHelper.createSession(req)
       .then((tokens) => res.status(codes.SUCCESS).json(tokens))
       .catch((err2) => formatError(err2, req, res));
   })(req, res);
@@ -123,7 +123,7 @@ function refreshToken(req, res) {
   const refToken = req.swagger.params['x-refresh-token'].value;
   let foundUser;
   let newPair = {};
-  return AuthController.verifyToken(refToken)
+  return AuthHelper.verifyToken(refToken)
     .then((decoded) => {
       if (!decoded.id || decoded.type !== 'refresh_token') {
         throw codes.BadRequest('Wrong refresh token.');
@@ -146,10 +146,9 @@ function refreshToken(req, res) {
         throw codes.BadRequest('Wrong refresh token.');
       }
       foundUser = user;
-      return AuthController.createTokenPair({ id: foundUser.id });
+      return AuthHelper.createTokenPair({ id: foundUser.id });
     })
     .then((pair) => {
-      console.log('PAIR', pair);
       const ind = foundUser.refreshTokens.indexOf(refToken);
       foundUser.refreshTokens.splice(ind, 1);
       foundUser.refreshTokens.push(pair.refreshToken);
@@ -182,7 +181,7 @@ function forgotPassword(req, res) {
       if (!user.active) {
         throw codes.BadRequest('User is not active.');
       }
-      return AuthController.createToken(
+      return AuthHelper.createToken(
         { email },
         config.password.forgotToken.expire,
       );
@@ -197,12 +196,12 @@ function forgotPassword(req, res) {
       subject: 'Forgot password',
       text: `To reset your password please follow this link:  ${config.password.reset.externalUrl}?resetPasswordToken=${token} \n or make a POST on ${config.password.reset.url} including the token.`,
     }))
-    .catch((err) => console.error('Error sending reset password email:', err));
+    .catch((err) => console.error('Error sending reset password email:', err)); // eslint-disable-line no-console
 }
 
 function resetPassword(req, res) {
   const requestObject = req.swagger.params.body.value;
-  return AuthController.verifyToken(requestObject.resetPasswordToken)
+  return AuthHelper.verifyToken(requestObject.resetPasswordToken)
     .then((decoded) => {
       if (!decoded.email) {
         throw codes.BadRequest('Wrong token.');
@@ -224,7 +223,7 @@ function resetPassword(req, res) {
         throw codes.BadRequest('Passwords do not match.');
       }
 
-      return AuthController.createPasswordHash(requestObject.password);
+      return AuthHelper.createPasswordHash(requestObject.password);
     })
     .then((passwordHash) => config.db.query(
       'UPDATE User SET password = :passwordHash WHERE email = :email',

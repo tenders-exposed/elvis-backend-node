@@ -3,7 +3,7 @@
 const _ = require('lodash');
 const util = require('util');
 
-module.exports = function create(fittingDef, bagpipes) {
+module.exports = function create() {
   return function errorFormatter(context, next) {
     if (!util.isError(context.error)) { return next(); }
 
