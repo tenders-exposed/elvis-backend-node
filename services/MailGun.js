@@ -1,11 +1,8 @@
 'use strict';
 
 const _ = require('lodash');
-const config = require('../../config/default');
-const mailgun = require('mailgun-js')({
-  apiKey: config.mailgun.apiKey,
-  domain: config.mailgun.domain,
-});
+const config = require('../config/default');
+const mailgun = require('mailgun-js');
 
 class MailGun {
   constructor() {
@@ -40,7 +37,10 @@ class MailGun {
         data['recipient-variables'] = recipientVars;
       }
 
-      mailgun.messages().send(data)
+      mailgun({
+        apiKey: config.mailgun.apiKey,
+        domain: config.mailgun.domain,
+      }).messages().send(data)
         .then((body) => {
           // console.log('Email sent');
           resolve(body);
@@ -53,4 +53,4 @@ class MailGun {
   }
 }
 
-module.exports = new MailGun();
+module.exports = MailGun;

@@ -9,7 +9,7 @@ const codes = require('../helpers/codes');
 const formatError = require('../helpers/errorFormatter');
 const validateToken = require('../middlewares/validateToken');
 const AuthHelper = require('../helpers/auth');
-const MailGun = require('../classes/MailGun');
+const MailGun = require('../../services/MailGun');
 
 function createAccount(req, res) {
   const userAttrs = {};
@@ -45,7 +45,7 @@ function createAccount(req, res) {
     ))
     .then((token) => {
       if (process.env.NODE_ENV !== 'test') {
-        return MailGun.sendEmail({
+        return new MailGun().sendEmail({
           to: userEmail,
           subject: 'Registration',
           text: `Thanks for registration. To activate your account follow this link: ${config.activation.externalUrl}?t=${token} \n or this link to activate through the API: ${config.activation.url}?t=${token}`,
@@ -191,11 +191,16 @@ function forgotPassword(req, res) {
       return token;
     })
     .catch((err) => formatError(err, req, res))
-    .then((token) => MailGun.sendEmail({
-      to: email,
-      subject: 'Forgot password',
-      text: `To reset your password please follow this link:  ${config.password.reset.externalUrl}?resetPasswordToken=${token} \n or make a POST on ${config.password.reset.url} including the token.`,
-    }))
+    .then((token) => {
+      if (process.env.NODE_ENV !== 'test') {
+        return new MailGun().sendEmail({
+          to: email,
+          subject: 'Forgot password',
+          text: `To reset your password please follow this link: ${config.password.reset.externalUrl}?resetPasswordToken=${token} \n or make a POST on ${config.password.reset.url} including the token.`,
+        });
+      }
+      return null;
+    })
     .catch((err) => console.error('Error sending reset password email:', err)); // eslint-disable-line no-console
 }
 
