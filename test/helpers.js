@@ -3,7 +3,7 @@
 const Promise = require('bluebird');
 const config = require('../config/default');
 
-function truncateDB() {
+async function truncateDB() {
   // Order counts. Delete subclasses first
   const dbClasses = [
     'Contracts',
@@ -38,12 +38,12 @@ function truncateDB() {
     'User',
   ];
 
-  return Promise.map(dbClasses, (className) =>
+  await Promise.map(dbClasses, (className) =>
     config.db.exec(`TRUNCATE CLASS ${className} UNSAFE`));
 }
 
-function createDB() {
-  return config.migrationManager.up();
+async function createDB() {
+  await config.migrationManager.up();
 }
 
 module.exports = {
