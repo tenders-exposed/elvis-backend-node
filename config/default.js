@@ -4,10 +4,9 @@ require('dotenv').config();
 const OrientDB = require('orientjs');
 const YAML = require('yamljs');
 
-const NODE_ENV = process.env.NODE_ENV;
-
 // API
 const config = {
+  env: process.env.NODE_ENV || 'development',
   protocol: process.env.PROTOCOL || 'http',
   host: process.env.HOST || '127.0.0.1',
   port: process.env.PORT || 10010,
@@ -24,7 +23,7 @@ const orientDBConfig = {
   username: process.env.ORIENTDB_USER,
   password: process.env.ORIENTDB_PASS,
 };
-if (NODE_ENV === 'test') {
+if (config.env === 'test') {
   orientDBConfig.name = process.env.ORIENTDB_TEST_DB;
   orientDBConfig.storage = 'memory';
 } else {
@@ -45,13 +44,13 @@ config.migrationManager = new OrientDB.Migration.Manager({
 // Oauth
 config.passport = {
   github: {
-    clientId: 'be1b9eaa54f2e13626fc',
-    clientSecret: '82c1f213555de6154cd435f5c8e479f036bfef14',
+    clientId: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
     callbackRoute: '/account/login/github/callback',
   },
   twitter: {
-    apiKey: '01r9gu9YFPP6PLYwuTxMSRqUv',
-    apiSecret: '8HzX2VERNE8Y3vpskad0QPBVFWC1FF2RptPrjtWuC9jMju3BM8',
+    apiKey: process.env.TWITTER_API_KEY,
+    apiSecret: process.env.TWITTER_API_SECRET,
     callbackRoute: '/account/login/twitter/callback',
   },
 };
@@ -91,9 +90,9 @@ config.password.reset.link = `${config.baseUrl}${config.password.reset.route}`;
 
 // Mail
 config.mailgun = {
-  apiKey: process.env.API_KEY,
-  domain: process.env.DOMAIN,
-  from: process.env.FROM || 'tech@tenders.exposed',
+  apiKey: process.env.MAILGUN_API_KEY,
+  domain: process.env.MAILGUN_DOMAIN,
+  from: process.env.MAILGUN_FROM || 'tech@tenders.exposed',
 };
 
 // Account activation

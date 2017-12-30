@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const codes = require('./codes');
+const config = require('../../config/default');
 
 module.exports = (err, req, res) => {
   if (!req || !res) {
@@ -11,7 +12,7 @@ module.exports = (err, req, res) => {
 
   if (err.status && err.message) {
     if (err.development) {
-      if (process.env.NODE_ENV !== 'development') {
+      if (config.env !== 'development') {
         delete err.development;
       } else if (err.development.error) {
         err.development.error_info = err.development.error.toString();
@@ -24,7 +25,7 @@ module.exports = (err, req, res) => {
     errorResponse.error_info = err.toString();
   }
 
-  if (process.env.NODE_ENV === 'development') {
+  if (config.env === 'development') {
     console.error(errorResponse); // eslint-disable-line no-console
   }
   return res.status(errorResponse.status).json({
