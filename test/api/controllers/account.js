@@ -12,7 +12,6 @@ const AuthHelper = require('../../../api/helpers/auth');
 
 const REGISTER_ROUTE = '/account';
 const LOGIN_ROUTE = '/account/login';
-const REFRESH_TOKEN_ROUTE = '/account/token/refresh';
 const RESET_PASSWORD_ROUTE = '/account/password/reset';
 
 test.before('Create DB', () => helpers.createDB());
@@ -169,52 +168,6 @@ test.serial('login: Wrong password', async (t) => {
   t.is(res.status, codes.BAD_REQUEST);
   t.regex(res.body.errors[0].message, /incorrect/i);
   t.regex(res.body.errors[0].message, /password/i);
-});
-
-test.serial('login: Wrong password', async (t) => {
-  t.plan(3);
-  const userCreds = {
-    email: 'testemail123456@mailinator.com',
-    active: true,
-    password: await AuthHelper.createPasswordHash('123456789test'),
-  };
-  await config.db.class.get('User')
-    .then((User) => User.create(userCreds));
-
-  const res = await request(app)
-    .post(LOGIN_ROUTE)
-    .send({ email: userCreds.email, password: 'wrong_password' });
-
-  t.is(res.status, codes.BAD_REQUEST);
-  t.regex(res.body.errors[0].message, /incorrect/i);
-  t.regex(res.body.errors[0].message, /password/i);
-});
-
-test.serial('refreshToken: Success', async (t) => {
-  t.plan(5);
-  const userAttrs = {
-    id: uuidv4(),
-    email: 'testemail123456@mailinator.com',
-    password: await AuthHelper.createPasswordHash('123456789test'),
-    active: true,
-  };
-  const tokens = await AuthHelper.createTokenPair({ id: userAttrs.id });
-
-  userAttrs.refreshTokens = [tokens.refreshToken];
-  userAttrs.accessTokens = [tokens.accessToken];
-  await config.db.class.get('User')
-    .then((User) => User.create(userAttrs));
-
-  const res = await request(app)
-    .get(REFRESH_TOKEN_ROUTE)
-    .set('X-Refresh-Token', tokens.refreshToken)
-    .send();
-
-  t.is(res.status, codes.SUCCESS);
-  t.truthy(res.body.accessToken);
-  t.truthy(res.body.refreshToken);
-  t.not(res.body.refreshToken, tokens.refreshToken);
-  t.not(res.body.accessToken, tokens.accessToken);
 });
 
 test.serial('resetPassword: Success updates the password', async (t) => {
