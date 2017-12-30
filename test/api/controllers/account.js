@@ -154,6 +154,7 @@ test.serial('login: Wrong email', async (t) => {
 test.serial('login: Wrong password', async (t) => {
   t.plan(3);
   const userCreds = {
+    id: uuidv4(),
     email: 'testemail123456@mailinator.com',
     active: true,
     password: await AuthHelper.createPasswordHash('123456789test'),
@@ -231,10 +232,7 @@ test.serial('resetPassword: Success updates the password', async (t) => {
     email: userAttrs.email,
     password: '123456789test',
     passwordConfirmation: '123456789test',
-    resetPasswordToken: await AuthHelper.createToken(
-      { email: userAttrs.email },
-      config.password.forgotToken.expire,
-    ),
+    resetPasswordToken: await AuthHelper.createToken({ email: userAttrs.email }),
   };
 
   const res = await request(app)
@@ -245,5 +243,6 @@ test.serial('resetPassword: Success updates the password', async (t) => {
     .where({ email: userAttrs.email })
     .one();
   t.is(res.status, codes.NO_CONTENT);
-  await t.false(AuthHelper.verifyPassword(initialPassword, updatedUser.password));
+  const check = await AuthHelper.verifyPassword(requestAttrs.password, updatedUser.password);
+  t.is(check, true);
 });
