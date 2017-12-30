@@ -4,6 +4,10 @@ node_js:
 sudo: required
 services:
   - docker
+addons:
+  jwt:
+    secure: <JWT_SECRET ENCRYPTED>
+    secure: <SESSION_SECRET ENCRYPTED>
 env:
   global:
     - NODE_ENV=test
