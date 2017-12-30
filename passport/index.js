@@ -129,25 +129,27 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
 module.exports.configureStrategies = () => {
   passport.use(new LocalStrategy({ usernameField: 'email' }, module.exports.localStrategyCallback));
 
-  passport.use(new GitHubStrategy(
-    {
-      clientID: config.passport.github.clientId,
-      clientSecret: config.passport.github.clientSecret,
-      callbackURL: config.passport.github.callbackUrl,
-      scope: ['user:email'],
-    },
-    module.exports.githubStrategyCallback,
-  ));
+  if (config.env !== 'test') {
+    passport.use(new GitHubStrategy(
+      {
+        clientID: config.passport.github.clientId,
+        clientSecret: config.passport.github.clientSecret,
+        callbackURL: config.passport.github.callbackUrl,
+        scope: ['user:email'],
+      },
+      module.exports.githubStrategyCallback,
+    ));
 
-  passport.use(new TwitterStrategy(
-    {
-      consumerKey: config.passport.twitter.apiKey,
-      consumerSecret: config.passport.twitter.apiSecret,
-      callbackURL: config.passport.twitter.callbackUrl,
-      includeEmail: true,
-    },
-    module.exports.twitterStrategyCallback,
-  ));
+    passport.use(new TwitterStrategy(
+      {
+        consumerKey: config.passport.twitter.apiKey,
+        consumerSecret: config.passport.twitter.apiSecret,
+        callbackURL: config.passport.twitter.callbackUrl,
+        includeEmail: true,
+      },
+      module.exports.twitterStrategyCallback,
+    ));
+  }
 
   passport.serializeUser((user, done) => {
     done(null, user.id);

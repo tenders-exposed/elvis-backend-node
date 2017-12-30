@@ -4,10 +4,6 @@ node_js:
 sudo: required
 services:
   - docker
-addons:
-  jwt:
-    secure: <JWT_SECRET ENCRYPTED>
-    secure: <SESSION_SECRET ENCRYPTED>
 env:
   global:
     - NODE_ENV=test
@@ -18,6 +14,8 @@ env:
     - ORIENTDB_TEST_DB=elvis-testing
     - ORIENTDB_USER=admin
     - ORIENTDB_PASS=admin
+    - JWT_SECRET=shhh
+    - SESSION_SECRET=hhhh
 before_install:
   - docker run -d --name orientdb -p 2424:2424 -e ORIENTDB_ROOT_PASSWORD=root orientdb:2.2.30
   - docker start orientdb
