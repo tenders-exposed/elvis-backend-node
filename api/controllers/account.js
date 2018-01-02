@@ -44,7 +44,7 @@ function createAccount(req, res) {
       config.activation.expire,
     ))
     .then((token) => {
-      if (config.env !== 'test') {
+      if (config.env !== 'testing') {
         return new MailGun().sendEmail({
           to: userEmail,
           subject: 'Registration',
@@ -192,7 +192,7 @@ function forgotPassword(req, res) {
     })
     .catch((err) => formatError(err, req, res))
     .then((token) => {
-      if (config.env !== 'test') {
+      if (config.env !== 'testing') {
         return new MailGun().sendEmail({
           to: email,
           subject: 'Forgot password',

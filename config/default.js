@@ -23,7 +23,7 @@ const orientDBConfig = {
   username: process.env.ORIENTDB_USER,
   password: process.env.ORIENTDB_PASS,
 };
-if (config.env === 'test') {
+if (config.env === 'testing') {
   orientDBConfig.name = process.env.ORIENTDB_TEST_DB;
   orientDBConfig.storage = 'memory';
 } else {

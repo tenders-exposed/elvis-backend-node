@@ -46,7 +46,7 @@
   "scripts": {
     "migrate": "node ./scripts/migrate.js",
     "lint": "eslint .",
-    "test": "NODE_ENV=test nyc ava --serial",
+    "test": "NODE_ENV=testing nyc ava --serial",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "import_data": "node ./scripts/import_data.js"
   },
