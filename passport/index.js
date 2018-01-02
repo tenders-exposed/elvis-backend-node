@@ -129,7 +129,7 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
 module.exports.configureStrategies = () => {
   passport.use(new LocalStrategy({ usernameField: 'email' }, module.exports.localStrategyCallback));
 
-  if (config.env !== 'test') {
+  if (config.env !== 'testing') {
     passport.use(new GitHubStrategy(
       {
         clientID: config.passport.github.clientId,
