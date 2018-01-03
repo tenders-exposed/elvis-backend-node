@@ -138,7 +138,6 @@ test.serial('writeTender updates existing bids', async (t) => {
     .to(existingLot['@rid'])
     .commit()
     .one();
-
   const updatedBidAttrs = await fixtures.build('rawBid', { isWinning: true });
   const updatedLotAttrs = await fixtures.build('rawLot', { bids: [updatedBidAttrs] });
   const updatedTenderAttrs = await fixtures.build('rawTender', {
@@ -259,7 +258,7 @@ test.serial('createBid creates an edge between bid and buyers', async (t) => {
     tr.create('vertex', 'Buyer').set(rawBuyer));
   transaction.let(lotName, (tr) =>
     tr.create('vertex', 'Lot').set(rawLot));
-  const writtenBid = await writers.createBid(transaction, rawBid, lotName, [buyerName])
+  const writtenBid = await writers.createBid(transaction, rawBid, lotName, [buyerName], {}, {})
     .then((bidName) => transaction.commit()
       .return(`$${bidName}`)
       .one());

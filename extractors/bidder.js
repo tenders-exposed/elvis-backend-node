@@ -5,7 +5,7 @@ const _ = require('lodash');
 const helpers = require('./helpers');
 const indicatorExtractor = require('./indicator');
 
-function extractBidder(bidderAttrs, indicators = []) {
+function extractBidder(bidderAttrs, tenderAttrs = {}) {
   return {
     id: bidderAttrs.id,
     name: bidderAttrs.name,
@@ -13,7 +13,7 @@ function extractBidder(bidderAttrs, indicators = []) {
     isPublic: bidderAttrs.isPublic,
     xDigiwhistLastModified: helpers.formatTimestamp(bidderAttrs.modified),
     indicators: _
-      .filter(indicators, { relatedEntityId: bidderAttrs.id })
+      .filter((tenderAttrs.indicators || []), { relatedEntityId: bidderAttrs.id })
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
   };
 }

@@ -76,7 +76,11 @@ const bidAttrs = {
 };
 factory.define('rawBid', Object, bidAttrs);
 factory.define('extractedBid', Object, bidAttrs, {
-  afterBuild: (rawBid) => bidExtractor.extractBid(rawBid),
+  afterBuild: async (rawBid) => {
+    const rawTenderAttrs = await factory.build('rawTender');
+    const rawLotAttrs = await factory.build('rawLot');
+    bidExtractor.extractBid(rawBid, rawTenderAttrs, rawLotAttrs);
+  },
 });
 
 const bidderAttrs = {
