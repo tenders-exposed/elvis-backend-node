@@ -19,12 +19,10 @@ function recordName(id, className) {
 // Returns true
 // Raises OrientDBError if the writing failed
 async function writeTender(fullTenderRecord) {
-  const indicators = fullTenderRecord.indicators;
-  const publications = fullTenderRecord.publications;
   const tender = tenderExtractor.extractTender(
     _.omit(fullTenderRecord, ['indicators', 'publications']),
-    indicators,
-    publications,
+    fullTenderRecord.indicators,
+    fullTenderRecord.publications,
   );
   const tenderName = recordName(tender.id, 'Tender');
 
@@ -46,7 +44,7 @@ async function writeTender(fullTenderRecord) {
   // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
   const buyerNames = await Promise.map(
     _.filter(fullTenderRecord.buyers, (rawBuyer) => rawBuyer.id),
-    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, indicators),
+    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, fullTenderRecord),
   );
 
   if (_.isUndefined(existingTender) === false) {
@@ -59,7 +57,7 @@ async function writeTender(fullTenderRecord) {
 
   await Promise.map((fullTenderRecord.lots || []), (rawLot) => {
     rawLot.awardCriteria = rawLot.awardCriteria || fullTenderRecord.awardCriteria;
-    return createLot(transaction, rawLot, tenderName, buyerNames, indicators, publications);
+    return createLot(transaction, rawLot, tenderName, buyerNames, fullTenderRecord);
   });
 
   await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
@@ -92,7 +90,7 @@ async function deleteBid(transaction, bidID) {
   return bidName;
 }
 
-async function createLot(transaction, rawLot, tenderName, buyerNames, indicators = [], publications = []) { // eslint-disable-line max-len
+async function createLot(transaction, rawLot, tenderName, buyerNames, rawTender) { // eslint-disable-line max-len
   const rawBids = (rawLot.bids || []);
   rawLot.bidsCount = rawBids.length;
   const lot = lotExtractor.extractLot(rawLot);
@@ -108,12 +106,12 @@ async function createLot(transaction, rawLot, tenderName, buyerNames, indicators
   });
 
   await Promise.map(rawBids, (rawBid) =>
-    createBid(transaction, rawBid, lotName, buyerNames, indicators, publications));
+    createBid(transaction, rawBid, lotName, buyerNames, rawTender, rawLot));
   return lotName;
 }
 
-async function createBid(transaction, rawBid, lotName, buyerNames, indicators = [], publications = []) { // eslint-disable-line max-len
-  const bid = bidExtractor.extractBid(rawBid, publications);
+async function createBid(transaction, rawBid, lotName, buyerNames, rawTender, rawLot) { // eslint-disable-line max-len
+  const bid = bidExtractor.extractBid(rawBid, rawTender, rawLot);
   const bidName = recordName(uuidv4(), 'Bid');
 
   transaction.let(bidName, (t) => {
@@ -135,13 +133,13 @@ async function createBid(transaction, rawBid, lotName, buyerNames, indicators = 
   // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
   await Promise.map(
     (rawBid.bidders || []).filter((rawBidder) => rawBidder.id),
-    (rawBidder) => upsertBidder(transaction, rawBidder, bidName, indicators),
+    (rawBidder) => upsertBidder(transaction, rawBidder, bidName, rawTender),
   );
   return bidName;
 }
 
-async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, indicators = []) {
-  const buyer = buyerExtractor.extractBuyer(rawBuyer, indicators);
+async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, rawTender = {}) {
+  const buyer = buyerExtractor.extractBuyer(rawBuyer, rawTender);
   const buyerName = recordName(rawBuyer.id, 'Buyer');
 
   const existingBuyer = await config.db.select().from('Buyer')
@@ -182,8 +180,8 @@ async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, 
   return buyerName;
 }
 
-async function upsertBidder(transaction, rawBidder, bidName, indicators = []) {
-  const bidder = bidderExtractor.extractBidder(rawBidder, indicators);
+async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
+  const bidder = bidderExtractor.extractBidder(rawBidder, rawTender);
   const bidderName = recordName(rawBidder.id, 'Bidder');
 
   const existingBidder = await config.db.select().from('Bidder')
