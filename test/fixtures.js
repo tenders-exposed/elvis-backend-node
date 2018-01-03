@@ -1,7 +1,7 @@
 'use strict';
 
-const FactoryGirl = require('factory-girl');
 const uuidv4 = require('uuid/v4');
+const FactoryGirl = require('factory-girl');
 const tenderExtractor = require('./../extractors/tender');
 const buyerExtractor = require('./../extractors/buyer');
 const lotExtractor = require('./../extractors/lot');
