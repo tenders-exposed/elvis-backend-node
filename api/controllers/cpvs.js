@@ -1,12 +1,17 @@
 'use strict';
 
+const _ = require('lodash');
+const codes = require('../helpers/codes');
 const config = require('../../config/default');
+const formatError = require('../helpers/errorFormatter');
 
 function listCpvs(req, res) {
   const countries = req.swagger.params.countries.value;
-  console.log('Countries param:', countries); // eslint-disable-line no-console
-  config.db.select('code').from('CPV').all()
-    .then((cpvs) => res.json(cpvs));
+  config.db.select().from('CPV').all()
+    .then((cpvs) => res.status(codes.SUCCESS).json({
+      cpvs: _.map(cpvs, (cpv) => _.pick(cpv, ['code', 'xName', 'xNumberDigits'])),
+    }))
+    .catch((err) => formatError(err));
 }
 
 module.exports = {
