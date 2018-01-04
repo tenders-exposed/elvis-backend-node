@@ -13,12 +13,3 @@ factory.define('tender', BaseNode, {
   xDigiwhistLastModified: '2017-06-08 11:55:43',
   country: 'NL',
 });
-
-factory.define('cpv', BaseNode, {
-  class: 'CPV',
-  code: factory.sequence((n) => `0136648903${n}`),
-  xName: 'Butterbear',
-  xNumberDigits: factory.sequence((n) => n),
-});
-module.exports = factory;
-

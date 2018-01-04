@@ -44,7 +44,7 @@ async function writeTender(fullTenderRecord) {
   // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
   const buyerNames = await Promise.map(
     _.filter(fullTenderRecord.buyers, (rawBuyer) => rawBuyer.id),
-    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, fullTenderRecord),
+    (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, fullTenderRecord), // eslint-disable-line max-len
   );
 
   if (_.isUndefined(existingTender) === false) {

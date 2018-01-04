@@ -249,6 +249,7 @@ test.serial('upsertBuyer updates the edge between existing buyer and existing te
 });
 
 test.serial('createBid creates an edge between bid and buyers', async (t) => {
+  const rawTender = await fixtures.create('rawTender');
   const rawBid = await fixtures.create('rawBid');
   const rawLot = await fixtures.create('extractedLot');
   const rawBuyer = await fixtures.create('extractedBuyer');
@@ -258,7 +259,7 @@ test.serial('createBid creates an edge between bid and buyers', async (t) => {
     tr.create('vertex', 'Buyer').set(rawBuyer));
   transaction.let(lotName, (tr) =>
     tr.create('vertex', 'Lot').set(rawLot));
-  const writtenBid = await writers.createBid(transaction, rawBid, lotName, [buyerName], {}, {})
+  const writtenBid = await writers.createBid(transaction, rawBid, lotName, [buyerName], rawTender, {}) // eslint-disable-line max-len
     .then((bidName) => transaction.commit()
       .return(`$${bidName}`)
       .one());

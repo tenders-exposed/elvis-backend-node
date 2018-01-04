@@ -41,16 +41,43 @@ paths:
       parameters:
         - name: countries
           in: query
-          description: Get only Cpvs from contracts from a certain country
+          description: Get only the CPVs of contracts from certain countries
           required: false
           type: array
           items:
             type: string
+        - name: years
+          in: query
+          description: Get only the CPVs of contracts from certain countries
+          required: false
+          type: array
+          items:
+            type: integer
+        - name: buyers
+          in: query
+          description: Get only the CPVs of contracts awarded by certain buyers
+          required: false
+          type: array
+          items:
+            type: string
+            format: uuid
+        - name: bidders
+          in: query
+          description: Get only the CPVs of contracts awarded to certain bidders
+          required: false
+          type: array
+          items:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Success
           schema:
             $ref: "#/definitions/CpvIndex"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
         default:
           description: Error
           schema:
@@ -371,14 +398,6 @@ definitions:
       password:
         type: string
         description: Password string
-  ForgotPasswordRequest:
-    type: object
-    required:
-      - email
-    properties:
-      email:
-        type: string
-        format: email
   ResetPasswordRequest:
     type: object
     required:
