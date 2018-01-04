@@ -4,6 +4,7 @@ function extractCpv(cpvAttrs) {
   return {
     xName: cpvAttrs.name,
     code: cpvAttrs.code,
+    xNumberDigits: cpvAttrs.xNumberDigits,
   };
 }
 

@@ -28,8 +28,9 @@ factory.define('extractedTender', Object, tenderAttrs, {
 });
 
 const cpvAttrs = {
-  code: '12021220-1',
+  code: factory.sequence((n) => `12021220-${n}`),
   name: 'Talkative ghosts',
+  xNumberDigits: 3,
 };
 factory.define('rawCpv', Object, cpvAttrs);
 factory.define('extractedCpv', Object, cpvAttrs, {
@@ -79,7 +80,7 @@ factory.define('extractedBid', Object, bidAttrs, {
   afterBuild: async (rawBid) => {
     const rawTenderAttrs = await factory.build('rawTender');
     const rawLotAttrs = await factory.build('rawLot');
-    bidExtractor.extractBid(rawBid, rawTenderAttrs, rawLotAttrs);
+    return bidExtractor.extractBid(rawBid, rawTenderAttrs, rawLotAttrs);
   },
 });
 

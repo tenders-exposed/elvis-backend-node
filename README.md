@@ -2,7 +2,7 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/tenders-exposed/elvis-backend-node/badge.svg?branch=master)](https://coveralls.io/github/tenders-exposed/elvis-backend-node?branch=master)
 
-Search and visualize public procurements for EU countries http://elvis.tenders.exposed/
+Search and visualize public procurements for EU countries http://tenders.exposed/
 
 Previously, elvis.tenders.exposed was powered by tenders-exposed/elvis-backend but we decided to rewrite it completely because:
 
