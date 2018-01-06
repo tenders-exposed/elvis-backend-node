@@ -1,8 +1,6 @@
-*
-!api/
-!config/
-!migrations/
-!extractors/
-!scripts/
-!*.json
-!*.js
+./test
+./node_modules
+./coverage
+./vscode
+./nyc_output
+*.md
