@@ -31,31 +31,31 @@ paths:
   /swagger.yaml:
     x-swagger-pipe: swagger_raw
 
-  /cpvs:
+  /tenders/cpvs:
     x-swagger-router-controller: cpvs
     get:
       tags:
         - cpvs
-      description: Returns a list of all cpvs in the db
-      operationId: listCpvs
+      description: Returns a list of CPVs from all the tenders in the database
+      operationId: getTenderCpvs
       parameters:
         - name: countries
           in: query
-          description: Get only the CPVs of contracts from certain countries
+          description: Get only the CPVs of tenders from certain countries - array of ISO 3166-1 alpha-2 country codes
           required: false
           type: array
           items:
             type: string
         - name: years
           in: query
-          description: Get only the CPVs of contracts from certain countries
+          description: Get only the CPVs of tenders from certain years - array of years
           required: false
           type: array
           items:
             type: integer
         - name: buyers
           in: query
-          description: Get only the CPVs of contracts awarded by certain buyers
+          description: Get only the CPVs of tenders awarded by certain buyers - array of buyer IDs
           required: false
           type: array
           items:
@@ -63,7 +63,7 @@ paths:
             format: uuid
         - name: bidders
           in: query
-          description: Get only the CPVs of contracts awarded to certain bidders
+          description: Get only the CPVs of tenders awarded to certain bidders - array of bidder IDs
           required: false
           type: array
           items:
