@@ -3,7 +3,7 @@ services:
   elvis_api:
     build: .
     ports:
-      - "1010:1010"
+      - "10010:10010"
     env_file: .env
     restart: always
     links:
