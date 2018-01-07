@@ -4,35 +4,15 @@
 
 const _ = require('lodash');
 const { URL } = require('url');
-const https = require('https');
 const Promise = require('bluebird');
 
 const config = require('../config/default');
-const codes = require('../api/helpers/codes');
+const helpers = require('./helpers');
 
 const cpvsURL = new URL('https://raw.githubusercontent.com/tenders-exposed/data_sources/master/cpv_codes.json');
 
-function fetchCPVs() {
-  return new Promise((resolve, reject) => {
-    console.log('Fetching CPVs...');
-    https.get(cpvsURL, (res) => {
-      const { statusCode } = res;
-      if (statusCode !== codes.SUCCESS) {
-        throw new Error(`Request failed with status code: ${statusCode}`);
-      }
-
-      res.setEncoding('utf8');
-      let rawData = '';
-      res.on('data', (chunk) => { rawData += chunk; });
-      res.on('end', () => resolve(JSON.parse(rawData)));
-    }).on('error', (e) => {
-      reject(e);
-    });
-  });
-}
-
 function importCPVs() {
-  fetchCPVs()
+  helpers.fetchRemoteFile(cpvsURL)
     .then((cpvList) => {
       console.log('Upserting CPVs...');
       return Promise.map(cpvList, (rawCpv) => {

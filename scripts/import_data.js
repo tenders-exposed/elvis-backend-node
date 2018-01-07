@@ -59,6 +59,6 @@ function importFileData(filePath, concurrency, retries) {
   });
 }
 
-module.export = {
+module.exports = {
   importFileData,
 };
