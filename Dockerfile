@@ -12,7 +12,7 @@ RUN npm install --only=production
 COPY . ./
 
 ENV HOST 0.0.0.0
-ENV PORT 1010
+ENV PORT 10010
 
 EXPOSE $PORT
 CMD ["npm", "start"]
