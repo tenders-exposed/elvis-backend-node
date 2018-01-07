@@ -14,30 +14,37 @@ const fixtures = require('../../fixtures');
 test.before(() => helpers.createDB());
 test.afterEach.always(() => helpers.truncateDB());
 
-test.serial('listCpvs returns empty array if there are no cpvs', async (t) => {
+function expectedResponse(matchTenderID) {
+  return config.db.select('expand(out("HasCPV"))')
+    .from('Tender')
+    .where({ id: matchTenderID })
+    .all()
+    .then((writtenCpvs) => ({
+      cpvs: _.map(writtenCpvs, (cpv) => cpvController.formatCpv(cpv)),
+    }));
+}
+
+test.serial('getTenderCpvs returns empty array if there are no cpvs', async (t) => {
   t.plan(2);
   const res = await request(app)
-    .get('/cpvs');
+    .get('/tenders/cpvs');
   t.is(res.status, codes.SUCCESS);
   t.deepEqual({ cpvs: [] }, res.body);
 });
 
-test.serial('listCpvs returns all cpvs by default', async (t) => {
+test.serial('getTenderCpvs returns all cpvs by default', async (t) => {
   t.plan(2);
   const cpvs = fixtures.assocAttrsMany('rawCpv', 2);
-  await fixtures.build('rawFullTender', { cpvs })
+  const tender = await fixtures.build('rawFullTender', { cpvs })
     .then((rawTender) => writers.writeTender(rawTender));
-  const expectedResponse = await config.db.select().from('CPV').all()
-    .then((writtenCpvs) => ({
-      cpvs: _.map(writtenCpvs, (cpv) => cpvController.formatCpv(cpv)),
-    }));
   const res = await request(app)
-    .get('/cpvs');
+    .get('/tenders/cpvs');
+
   t.is(res.status, codes.SUCCESS);
-  t.deepEqual(expectedResponse, res.body);
+  t.deepEqual(await expectedResponse(tender.id), res.body);
 });
 
-test.serial('listCpvs filters cpvs by country', async (t) => {
+test.serial('getTenderCpvs filters cpvs by country', async (t) => {
   t.plan(2);
   const rawMatchTender = await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
@@ -47,20 +54,14 @@ test.serial('listCpvs filters cpvs by country', async (t) => {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
     country: 'NL',
   }).then((ten) => writers.writeTender(ten));
-  const expectedResponse = await config.db.select('expand(out("HasCPV"))')
-    .from('Tender')
-    .where({ id: rawMatchTender.id })
-    .all()
-    .then((writtenCpvs) => ({
-      cpvs: _.map(writtenCpvs, (cpv) => cpvController.formatCpv(cpv)),
-    }));
   const res = await request(app)
-    .get('/cpvs?countries[]=RO');
+    .get('/tenders/cpvs?countries[]=RO');
+
   t.is(res.status, codes.SUCCESS);
-  t.deepEqual(expectedResponse, res.body);
+  t.deepEqual(await expectedResponse(rawMatchTender.id), res.body);
 });
 
-test.serial('listCpvs filters cpvs by buyer', async (t) => {
+test.serial('getTenderCpvs filters cpvs by buyer', async (t) => {
   t.plan(2);
   const buyer = await fixtures.build('rawBuyer');
   const rawMatchTender = await fixtures.build('rawFullTender', {
@@ -70,21 +71,14 @@ test.serial('listCpvs filters cpvs by buyer', async (t) => {
   await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
   }).then((ten) => writers.writeTender(ten));
-
-  const expectedResponse = await config.db.select('expand(out("HasCPV"))')
-    .from('Tender')
-    .where({ id: rawMatchTender.id })
-    .all()
-    .then((writtenCpvs) => ({
-      cpvs: _.map(writtenCpvs, (cpv) => cpvController.formatCpv(cpv)),
-    }));
   const res = await request(app)
-    .get(`/cpvs?buyers[]=${buyer.id}`);
+    .get(`/tenders/cpvs?buyers[]=${buyer.id}`);
+
   t.is(res.status, codes.SUCCESS);
-  t.deepEqual(expectedResponse, res.body);
+  t.deepEqual(await expectedResponse(rawMatchTender.id), res.body);
 });
 
-test.serial('listCpvs filters cpvs by bidder', async (t) => {
+test.serial('getTenderCpvs filters cpvs by bidder', async (t) => {
   t.plan(2);
   const bidder = await fixtures.build('rawBidder');
   const rawMatchTender = await fixtures.build('rawBid', { bidders: [bidder] })
@@ -97,21 +91,14 @@ test.serial('listCpvs filters cpvs by bidder', async (t) => {
   await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
   }).then((ten) => writers.writeTender(ten));
-
-  const expectedResponse = await config.db.select('expand(out("HasCPV"))')
-    .from('Tender')
-    .where({ id: rawMatchTender.id })
-    .all()
-    .then((writtenCpvs) => ({
-      cpvs: _.map(writtenCpvs, (cpv) => cpvController.formatCpv(cpv)),
-    }));
   const res = await request(app)
-    .get(`/cpvs?bidders[]=${bidder.id}`);
+    .get(`/tenders/cpvs?bidders[]=${bidder.id}`);
+
   t.is(res.status, codes.SUCCESS);
-  t.deepEqual(expectedResponse, res.body);
+  t.deepEqual(await expectedResponse(rawMatchTender.id), res.body);
 });
 
-test.serial('listCpvs filters cpvs by year', async (t) => {
+test.serial('getTenderCpvs filters cpvs by year', async (t) => {
   t.plan(2);
   const rawMatchTender = await fixtures.build('rawLotWithBid', {
     awardDecisionDate: '2016-01-02',
@@ -129,16 +116,9 @@ test.serial('listCpvs filters cpvs by year', async (t) => {
       lots: [lot],
     }))
     .then((ten) => writers.writeTender(ten));
-
-  const expectedResponse = await config.db.select('expand(out("HasCPV"))')
-    .from('Tender')
-    .where({ id: rawMatchTender.id })
-    .all()
-    .then((writtenCpvs) => ({
-      cpvs: _.map(writtenCpvs, (cpv) => cpvController.formatCpv(cpv)),
-    }));
   const res = await request(app)
-    .get('/cpvs?years[]=2016');
+    .get('/tenders/cpvs?years[]=2016');
+
   t.is(res.status, codes.SUCCESS);
-  t.deepEqual(expectedResponse, res.body);
+  t.deepEqual(await expectedResponse(rawMatchTender.id), res.body);
 });
