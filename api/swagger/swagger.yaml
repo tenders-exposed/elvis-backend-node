@@ -133,6 +133,57 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /tenders/years:
+    x-swagger-router-controller: years
+    get:
+      tags:
+        - years
+      description: Returns a list of all the years for which we have tenders
+      operationId: getTenderYears
+      parameters:
+        - name: cpvs
+          in: query
+          description: Get only the years with tenders that have these CPVs - array of CPV codes
+          required: false
+          type: array
+          items:
+            type: string
+        - name: countries
+          in: query
+          description: Get only the years with tenders from certain countries - array of ISO 3166-1 alpha-2 country codes
+          required: false
+          type: array
+          items:
+            type: string
+        - name: buyers
+          in: query
+          description: Get only the years with tenders awarded by certain buyers - array of buyer IDs
+          required: false
+          type: array
+          items:
+            type: string
+            format: uuid
+        - name: bidders
+          in: query
+          description: Get only the years with tenders awarded to certain bidders - array of bidder IDs
+          required: false
+          type: array
+          items:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/YearIndex"
+        "400":
+          description: Bad request [Request validation failed (wrong param type)]
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /account:
     x-swagger-router-controller: accounts
     post:
@@ -543,6 +594,13 @@ definitions:
       name:
         type: string
         description: Full name of the country
+  YearIndex:
+    type: object
+    properties:
+      years:
+        type: array
+        items:
+          type: integer
   ErrorResponse:
     type: object
     required:
