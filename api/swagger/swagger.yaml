@@ -134,7 +134,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account:
-    x-swagger-router-controller: account
+    x-swagger-router-controller: accounts
     post:
       tags:
         - account
@@ -227,7 +227,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/activate:
-    x-swagger-router-controller: account
+    x-swagger-router-controller: accounts
     get:
       tags:
         - account
@@ -261,7 +261,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/login:
-    x-swagger-router-controller: account
+    x-swagger-router-controller: accounts
     post:
       tags:
         - login
@@ -292,7 +292,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/login/twitter:
-      x-swagger-router-controller: account
+      x-swagger-router-controller: accounts
       get:
         tags:
           - login
@@ -314,7 +314,7 @@ paths:
             schema:
               $ref: "#/definitions/ErrorResponse"
   /account/login/github:
-    x-swagger-router-controller: account
+    x-swagger-router-controller: accounts
     get:
       tags:
         - login
@@ -336,7 +336,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/token/refresh:
-    x-swagger-router-controller: account
+    x-swagger-router-controller: accounts
     get:
       tags:
         - login
@@ -370,7 +370,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/password/forgot:
-    x-swagger-router-controller: account
+    x-swagger-router-controller: accounts
     get:
       tags:
         - account
@@ -403,7 +403,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/password/reset:
-    x-swagger-router-controller: account
+    x-swagger-router-controller: accounts
     post:
       tags:
         - account
