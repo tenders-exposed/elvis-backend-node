@@ -27,7 +27,6 @@ async function truncateDB() {
     'Comprises',
     'Bidder',
     'Buyer',
-    'Actor',
     'Bid',
     'Lot',
     'Tender',
