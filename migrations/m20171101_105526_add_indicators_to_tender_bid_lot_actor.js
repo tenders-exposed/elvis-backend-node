@@ -5,7 +5,7 @@ const Promise = require('bluebird');
 exports.name = 'add indicators to tender bid lot actor';
 
 exports.up = (db) => (
-  Promise.map(['Tender', 'Actor'], (className) => {
+  Promise.map(['Tender', 'Bidder', 'Buyer'], (className) => {
     db.class.get(className)
       .then((Class) => {
         Class.property.create([
@@ -20,7 +20,7 @@ exports.up = (db) => (
 );
 
 exports.down = (db) => (
-  Promise.map(['Tender', 'Actor'], (className) => {
+  Promise.map(['Tender', 'Bidder', 'Buyer'], (className) => {
     db.class.get(className)
       .then((Class) => Class.property.drop('indicators'));
   })
