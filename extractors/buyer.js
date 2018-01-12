@@ -8,6 +8,7 @@ function extractBuyer(buyerAttrs, tenderAttrs = {}) {
   return {
     id: buyerAttrs.id,
     name: buyerAttrs.name,
+    normalizedName: buyerAttrs.name.normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
     address: buyerAttrs.address,
     isPublic: buyerAttrs.isPublic,
     buyerType: buyerAttrs.buyerType,
