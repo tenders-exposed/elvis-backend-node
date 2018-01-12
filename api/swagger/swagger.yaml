@@ -184,6 +184,54 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /tenders/actors:
+    x-swagger-router-controller: actors
+    get:
+      tags:
+        - actors
+      description: Returns a list of all the actors (bidders and buyers) involved in tenders
+      operationId: getTenderActors
+      parameters:
+        - name: name
+          in: query
+          description: Get only the actors who's name matches this string
+          required: false
+          type: string
+          minLength: 2
+        - name: cpvs
+          in: query
+          description: Get only the actors involved in tenders that have these CPVs - array of CPV codes
+          required: false
+          type: array
+          items:
+            type: string
+        - name: countries
+          in: query
+          description: Get only the actors involved in tenders from certain countries - array of ISO 3166-1 alpha-2 country codes
+          required: false
+          type: array
+          items:
+            type: string
+        - name: years
+          in: query
+          description: Get only the actors involved in tenders from certain years - array of years
+          required: false
+          type: array
+          items:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/ActorIndex"
+        "400":
+          description: Bad request [Request validation failed (wrong param type)]
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /account:
     x-swagger-router-controller: accounts
     post:
@@ -587,6 +635,8 @@ definitions:
           $ref: "#/definitions/Country"
   Country:
     type: object
+    required:
+      - code
     properties:
       code:
         type: string
@@ -601,6 +651,28 @@ definitions:
         type: array
         items:
           type: integer
+  ActorIndex:
+    type: object
+    properties:
+      actors:
+        type: array
+        items:
+          $ref: "#/definitions/Actor"
+  Actor:
+    type: object
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: Actor id
+        format: uuid
+      name:
+        type: string
+        description: Actor name
+      type:
+        type: string
+        description: Actor type (bidder/buyer)
   ErrorResponse:
     type: object
     required:
