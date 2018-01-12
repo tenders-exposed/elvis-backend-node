@@ -14,6 +14,12 @@ We chose Node.js because:
 * we decided to use a graph database (OrientDB) and the Node.js ecosystem offered good tools for this
 * Node.js is more widespread across the open spending and open contracting community
 
+#### Using the API
+
+Check out the API documentation made with Swagger:
+
+https://api.tenders.exposed/docs
+
 #### Contributing
 
 1. Download OrientDB `2.2.30`:
@@ -82,9 +88,33 @@ We chose Node.js because:
 
     `orientjs -h localhost -p 2424 -n elvis -U admin -P admin migrate create {newMigrationName}`
 
+#### Deploy
+
+1. Pull latest changes.
+
+2. Update configuration in `.env` based on `.env.example` if necessary.
+
+3. Build the containers:
+
+    `ORIENTDB_ROOT_PASSWORD={password} docker-compose build elvis_api`
+
+4. Start the containers:
+
+    `docker-compose up --no-deps -d elvis_api`
+
+   If this is the first deploy run:
+
+    `docker-compose up -d elvis_api`
+
+5. Migrate:
+
+    `docker-compose run --name=migrate --rm elvis_api npm run migrate`
+
+
 #### Import data
 The amount of data we have is overwhelming for a single Node process. Not only
 does the import take long but it reaches [Heap out of memory error](https://stackoverflow.com/questions/38558989/node-js-heap-out-of-memory) even with up to 15GB of RAM.
+
 To speed things up and avoid overwhelming an individual process we are now running a Node process for each
 file instead of passing multile files to the same process.
 To achieve this we make a docker container to import each file and we orchestrate the containers with [GNU parallel](https://www.gnu.org/software/parallel/man.html#DESCRIPTION):
@@ -96,7 +126,14 @@ docker-compose run --name="elvis_import_"{} --rm elvis_api \
 node --max-old-space-size=4096 ./scripts/import_data.js -c 1000 -r 1 /rawdata/data/exported_by_country/{}
 ```
 
-With `-j5` we are telling `parallel` to process 5 containers at once. We also
-use `--max-old-space-size=4096` to allow each node process up to 4GB of RAM. We also set
-number of retries for import data sript with `-r` and how many concurrent lines should
-be processed with `-c`.
+With `-j5` we are telling `parallel` to process 5 containers at once. The option `--max-old-space-size=4096` allows the node process up to use up to 4GB of RAM. The import scripts also takes options: 
+- `-r` to set number of retries for each line
+- `-c` to set how many concurrent lines should be processed at once
+
+We also have to import static data for countries:
+
+`docker-compose run --name=import_countries --rm elvis_api node ./scripts/import_countries.js`
+
+and CPVs:
+
+`docker-compose run --name=import_cpvs --rm elvis_api node ./scripts/import_cpvs.js`
