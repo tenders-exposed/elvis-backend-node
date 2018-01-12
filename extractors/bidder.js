@@ -9,6 +9,7 @@ function extractBidder(bidderAttrs, tenderAttrs = {}) {
   return {
     id: bidderAttrs.id,
     name: bidderAttrs.name,
+    normalizedName: bidderAttrs.name.normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
     address: bidderAttrs.address,
     isPublic: bidderAttrs.isPublic,
     xDigiwhistLastModified: helpers.formatTimestamp(bidderAttrs.modified),
