@@ -1,8 +1,13 @@
 version: '3'
 services:
   elvis_api:
-    build: .
+    build:
+      context: .
+      args:
+        - PORT
     env_file: .env
+    ports:
+      - "${PORT}:${PORT}"
     restart: always
     links:
       - orientdb
@@ -16,5 +21,7 @@ services:
   orientdb:
     image: orientdb:2.2.30
     restart: always
-    environment:
-      - ORIENTDB_ROOT_PASSWORD=$ORIENTDB_ROOT_PASSWORD
+    ports:
+      - "${ORIENTDB_PORT}:2424"
+      - "2480:2480"
+
