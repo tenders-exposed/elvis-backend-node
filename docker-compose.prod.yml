@@ -1,0 +1,16 @@
+version: '3'
+services:
+  elvis_api:
+    ports:
+      - "10011:10010"
+  orientdb:
+    ports:
+      - 2425:2424
+      - 2481:2480
+    volumes:
+      - odb_data:/orientdb/databases
+      - odb_backup:/orientdb/backup
+volumes:
+  odb_data:
+  odb_backup:
+
