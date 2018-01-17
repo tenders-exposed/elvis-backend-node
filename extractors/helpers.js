@@ -12,6 +12,15 @@ function formatTimestamp(timestampStr) {
   return formattedDate;
 }
 
+function removeDiacritics(str) {
+  let normalizedStr;
+  if (_.isNil(str) === false) {
+    normalizedStr = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+  return normalizedStr;
+}
+
 module.exports = {
   formatTimestamp,
+  removeDiacritics,
 };
