@@ -23,3 +23,13 @@ test('formatTimestamp alters only format not value', (t) => {
   const formatted = extractorHelpers.formatTimestamp(initial);
   t.deepEqual(moment(formatted).toObject(), timestampAttrs);
 });
+
+test('removeDiacritics returns undefined for undefined strings', (t) => {
+  t.is(extractorHelpers.removeDiacritics(undefined), undefined);
+});
+
+test('removeDiacritics returns string without diacritics', (t) => {
+  const initial = 'Římskokatolická';
+  const normalized = 'Rimskokatolicka';
+  t.is(extractorHelpers.removeDiacritics(initial), normalized);
+});
