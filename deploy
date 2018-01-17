@@ -7,7 +7,7 @@ case "$ENV" in
         docker-compose -f docker-compose.yml -f docker-compose.prod.yml -p elvis-backend-prod up -d
         ;;
     "development")
-        docker-compose -f docker-compose.yml -f docker-compose.prod.yml -p elvis-backend-dev up -d
+        docker-compose -p elvis-backend-dev up -d
         ;;
     *)
         echo 'Use `deploy production` or `deploy development`'
