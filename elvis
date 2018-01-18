@@ -1,0 +1,80 @@
+#!/bin/bash
+# vim: set filetype=sh :
+
+source cli/optparse.bash
+
+optparse.define short=c long=command\
+                desc="Command to run (update|build|start|stop|up|down|status)"\
+                variable=COMMAND
+optparse.define short=E long=dotenv\
+                desc=".env file"\
+                variable=ENV_FILE default=.env
+optparse.define short=e long=env\
+                desc="Environment name (production|development)"\
+                variable=ENV default=production
+optparse.define short=a long=api\
+                desc="API only (--no-deps)"\
+                variable=NODEPS value="--no-deps" default=""
+
+source $(optparse.build)
+
+if [[ ! $1 ]]; then
+    $0 --help
+    exit 1
+fi
+
+if [ ! -f $ENV_FILE ] ;then
+    echo "Env file does not exist!"
+    read -p "Continue without? (y/n) " -n 1 -r
+    echo
+    case "$REPLY" in
+        y|Y ) echo "Continuing without an env file...";;
+        n|N ) exit 1;;
+        *   ) echo "invalid answer" && exit 1;;
+    esac
+else
+    source $ENV_FILE
+fi
+
+case "$ENV" in
+    production )
+        NAME=elvisbackendprod
+        DOCKER_OPTIONS="-f docker-compose.yml -f docker-compose.prod.yml"
+        ;;
+    development )
+        NAME=elvisbackenddev
+        DOCKER_OPTIONS=""
+        ;;
+    * ) echo "invalid answer (production|development)" && exit 1;;
+esac
+
+case "$COMMAND" in
+    update)
+        git pull
+        docker-compose $DOCKER_OPTIONS -p $NAME build $NODEPS elvis_api
+        docker-compose $DOCKER_OPTIONS -p $NAME up $NODEPS -d elvis_api
+        ;;
+    build)
+        docker-compose $DOCKER_OPTIONS -p $NAME build $NODEPS elvis_api
+        ;;
+    up)
+        docker-compose $DOCKER_OPTIONS -p $NAME up $NODEPS -d
+        ;;
+    down)
+        docker-compose $DOCKER_OPTIONS -p $NAME down
+        ;;
+    start)
+        docker-compose $DOCKER_OPTIONS -p $NAME start
+        ;;
+    stop)
+        docker-compose $DOCKER_OPTIONS -p $NAME stop
+        ;;
+    status)
+        docker-compose $DOCKER_OPTIONS -p $NAME ps
+        ;;
+
+    *) echo "invalid answer" && exit 1;;
+esac
+
+exit 0
+
