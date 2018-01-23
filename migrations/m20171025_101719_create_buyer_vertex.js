@@ -4,7 +4,7 @@ exports.name = 'create buyer vertex';
 
 exports.up = (db) => (
   db.class.create('Buyer', 'V')
-    .then((Buyer) => {
+    .then((Buyer) =>
       Buyer.property.create([
         {
           name: 'id',
@@ -37,14 +37,12 @@ exports.up = (db) => (
           name: 'isSubsidized',
           type: 'Boolean',
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Buyer.id',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

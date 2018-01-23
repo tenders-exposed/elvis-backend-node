@@ -4,7 +4,7 @@ exports.name = 'create bidder vertex';
 
 exports.up = (db) => (
   db.class.create('Bidder', 'V')
-    .then((Bidder) => {
+    .then((Bidder) =>
       Bidder.property.create([
         {
           name: 'id',
@@ -29,14 +29,12 @@ exports.up = (db) => (
           name: 'isPublic',
           type: 'Boolean',
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Bidder.id',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

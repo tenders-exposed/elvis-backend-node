@@ -4,7 +4,7 @@ exports.name = 'create network settings class';
 
 exports.up = (db) => (
   db.class.create('NetworkSettings')
-    .then((NetworkSettings) => {
+    .then((NetworkSettings) =>
       NetworkSettings.property.create([
         {
           name: 'nodeSize',
@@ -16,8 +16,7 @@ exports.up = (db) => (
           type: 'String',
           mandatory: true,
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

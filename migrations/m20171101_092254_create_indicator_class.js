@@ -4,7 +4,7 @@ exports.name = 'create indicator class';
 
 exports.up = (db) => (
   db.class.create('Indicator')
-    .then((Indicator) => {
+    .then((Indicator) =>
       Indicator.property.create([
         {
           name: 'id',
@@ -23,14 +23,12 @@ exports.up = (db) => (
           name: 'value',
           type: 'double',
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Indicator.id',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

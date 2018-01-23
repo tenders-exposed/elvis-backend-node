@@ -4,15 +4,14 @@ exports.name = 'create partners edge';
 
 exports.up = (db) => (
   db.class.create('Partners', 'NetworkEdge')
-    .then((Partners) => {
+    .then((Partners) =>
       Partners.property.create([
         {
           name: 'value',
           type: 'Double',
           mandatory: true,
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

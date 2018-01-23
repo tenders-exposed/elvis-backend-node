@@ -4,7 +4,7 @@ exports.name = 'create network base edge';
 
 exports.up = (db) => (
   db.class.create('NetworkEdge', 'E')
-    .then((NetworkEdge) => {
+    .then((NetworkEdge) =>
       NetworkEdge.property.create([
         {
           name: 'id',
@@ -17,14 +17,12 @@ exports.up = (db) => (
           mandatory: true,
           default: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'NetworkEdge.id',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

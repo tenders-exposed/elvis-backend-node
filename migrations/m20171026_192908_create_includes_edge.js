@@ -4,14 +4,13 @@ exports.name = 'create includes edge';
 
 exports.up = (db) => (
   db.class.create('Includes', 'NetworkEdge')
-    .then((Includes) => {
+    .then((Includes) =>
       Includes.property.create([
         {
           name: 'percent',
           type: 'Double',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

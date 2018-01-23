@@ -7,12 +7,10 @@ exports.name = 'add normalized name to bidder and buyer';
 exports.up = (db) => (
   Promise.map(['Bidder', 'Buyer'], (className) => {
     db.class.get(className)
-      .then((Class) => {
-        Class.property.create({
-          name: 'normalizedName',
-          type: 'String',
-        });
-      })
+      .then((Class) => Class.property.create({
+        name: 'normalizedName',
+        type: 'String',
+      }))
       .then(() => db.query(`CREATE INDEX ${className}.name 
         ON ${className}(name, normalizedName) FULLTEXT ENGINE LUCENE`));
   })

@@ -4,7 +4,7 @@ exports.name = 'create bid lot edge';
 
 exports.up = (db) => (
   db.class.create('AppliedTo', 'E')
-    .then((AppliedTo) => {
+    .then((AppliedTo) =>
       AppliedTo.property.create([
         {
           name: 'in',
@@ -16,16 +16,14 @@ exports.up = (db) => (
           type: 'Link',
           mandatory: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'AppliedTo.in.out',
         type: 'UNIQUE_HASH_INDEX',
         class: 'AppliedTo',
         properties: ['in', 'out'],
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

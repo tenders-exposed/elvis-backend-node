@@ -6,7 +6,7 @@ exports.name = 'add english title and TED Contract Notice ID to tender';
 
 exports.up = (db) => (
   db.class.get('Tender')
-    .then((Tender) => {
+    .then((Tender) =>
       Tender.property.create([
         {
           name: 'titleEnglish',
@@ -16,8 +16,7 @@ exports.up = (db) => (
           name: 'xTEDCNID',
           type: 'String',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

@@ -4,7 +4,7 @@ exports.name = 'create lot vertex';
 
 exports.up = (db) => (
   db.class.create('Lot', 'V')
-    .then((Lot) => {
+    .then((Lot) =>
       Lot.property.create([
         {
           name: 'title',
@@ -53,8 +53,7 @@ exports.up = (db) => (
           type: 'Embedded',
           linkedClass: 'Price',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

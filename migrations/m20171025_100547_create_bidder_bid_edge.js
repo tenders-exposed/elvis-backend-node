@@ -4,7 +4,7 @@ exports.name = 'create bidder bid edge';
 
 exports.up = (db) => (
   db.class.create('Participates', 'E')
-    .then((Participates) => {
+    .then((Participates) =>
       Participates.property.create([
         {
           name: 'isLeader',
@@ -20,16 +20,14 @@ exports.up = (db) => (
           type: 'Link',
           mandatory: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Participates.in.out',
         type: 'UNIQUE_HASH_INDEX',
         class: 'Participates',
         properties: ['in', 'out'],
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

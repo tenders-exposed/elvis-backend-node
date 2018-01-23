@@ -4,7 +4,7 @@ exports.name = 'create country class';
 
 exports.up = (db) => (
   db.class.create('Country')
-    .then((Country) => {
+    .then((Country) =>
       Country.property.create([
         {
           name: 'code',
@@ -16,14 +16,12 @@ exports.up = (db) => (
           type: 'String',
           mandatory: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Country.code',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => db.class.drop('Country');

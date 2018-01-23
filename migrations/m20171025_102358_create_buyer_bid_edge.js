@@ -4,7 +4,7 @@ exports.name = 'create buyer bid edge';
 
 exports.up = (db) => (
   db.class.create('Awards', 'E')
-    .then((Awards) => {
+    .then((Awards) =>
       Awards.property.create([
         {
           name: 'in',
@@ -16,16 +16,14 @@ exports.up = (db) => (
           type: 'Link',
           mandatory: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Awards.in.out',
         type: 'UNIQUE_HASH_INDEX',
         class: 'Awards',
         properties: ['in', 'out'],
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

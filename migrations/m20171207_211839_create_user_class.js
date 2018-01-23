@@ -4,7 +4,7 @@ exports.name = 'users';
 
 exports.up = (db) => (
   db.class.create('User')
-    .then((User) => {
+    .then((User) =>
       User.property.create([
         {
           name: 'id',
@@ -42,16 +42,14 @@ exports.up = (db) => (
           name: 'refreshTokens',
           type: 'EmbeddedSet',
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'User.id',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (
-  db.class.drop('Users')
+  db.class.drop('User')
 );

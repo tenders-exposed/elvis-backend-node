@@ -4,7 +4,7 @@ exports.name = 'create network vertex';
 
 exports.up = (db) => (
   db.class.create('Network', 'V')
-    .then((Network) => {
+    .then((Network) =>
       Network.property.create([
         {
           name: 'id',
@@ -29,14 +29,12 @@ exports.up = (db) => (
           name: 'description',
           type: 'String',
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Network.id',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

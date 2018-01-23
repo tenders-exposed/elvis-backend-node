@@ -4,7 +4,7 @@ exports.name = 'create contracts edge';
 
 exports.up = (db) => (
   db.class.create('Contracts', 'NetworkEdge')
-    .then((Contracts) => {
+    .then((Contracts) =>
       Contracts.property.create([
         {
           name: 'value',
@@ -15,8 +15,7 @@ exports.up = (db) => (
           name: 'flags',
           type: 'EmbeddedList',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

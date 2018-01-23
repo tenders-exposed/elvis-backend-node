@@ -6,7 +6,7 @@ exports.name = 'add xCountry and xYear to Bid';
 
 exports.up = (db) => (
   db.class.get('Bid')
-    .then((Bid) => {
+    .then((Bid) =>
       Bid.property.create([
         {
           name: 'xYear',
@@ -17,20 +17,17 @@ exports.up = (db) => (
           type: 'String',
           mandatory: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Bid.xCountry',
         type: 'NOTUNIQUE_HASH_INDEX',
-      });
-    })
-    .then(() => {
+      }))
+    .then(() =>
       db.index.create({
         name: 'Bid.xYear',
         type: 'NOTUNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (
