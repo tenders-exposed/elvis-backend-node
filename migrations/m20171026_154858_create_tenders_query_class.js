@@ -4,7 +4,7 @@ exports.name = 'create tenders query class';
 
 exports.up = (db) => (
   db.class.create('TendersQuery')
-    .then((TendersQuery) => {
+    .then((TendersQuery) =>
       TendersQuery.property.create([
         {
           name: 'countries',
@@ -26,8 +26,7 @@ exports.up = (db) => (
           name: 'buyers',
           type: 'EmbeddedSet',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

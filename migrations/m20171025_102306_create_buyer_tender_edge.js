@@ -4,7 +4,7 @@ exports.name = 'create buyer tender edge';
 
 exports.up = (db) => (
   db.class.create('Creates', 'E')
-    .then((Creates) => {
+    .then((Creates) =>
       Creates.property.create([
         {
           name: 'isLeader',
@@ -20,16 +20,14 @@ exports.up = (db) => (
           type: 'Link',
           mandatory: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Creates.in.out',
         type: 'UNIQUE_HASH_INDEX',
         class: 'Creates',
         properties: ['in', 'out'],
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

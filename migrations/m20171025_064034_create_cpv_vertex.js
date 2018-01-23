@@ -4,7 +4,7 @@ exports.name = 'create cpv vertex';
 
 exports.up = (db) => (
   db.class.create('CPV', 'V')
-    .then((CPV) => {
+    .then((CPV) =>
       CPV.property.create([
         {
           name: 'code',
@@ -15,14 +15,12 @@ exports.up = (db) => (
           name: 'xName',
           type: 'String',
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'CPV.code',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (

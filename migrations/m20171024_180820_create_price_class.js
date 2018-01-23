@@ -4,7 +4,7 @@ exports.name = 'create price class';
 
 exports.up = (db) => (
   db.class.create('Price')
-    .then((Price) => {
+    .then((Price) =>
       Price.property.create([
         {
           name: 'amountWithVat',
@@ -32,8 +32,7 @@ exports.up = (db) => (
           name: 'vat',
           type: 'Double',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

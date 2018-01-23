@@ -7,15 +7,14 @@ exports.name = 'add indicators to tender bid lot actor';
 exports.up = (db) => (
   Promise.map(['Tender', 'Bidder', 'Buyer'], (className) => {
     db.class.get(className)
-      .then((Class) => {
+      .then((Class) =>
         Class.property.create([
           {
             name: 'indicators',
             type: 'EmbeddedSet',
             linkedClass: 'Indicator',
           },
-        ]);
-      });
+        ]));
   })
 );
 

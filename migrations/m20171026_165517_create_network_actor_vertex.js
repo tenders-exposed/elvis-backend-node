@@ -4,7 +4,7 @@ exports.name = 'create network actor';
 
 exports.up = (db) => (
   db.class.create('NetworkActor', 'NetworkVertex')
-    .then((NetworkActor) => {
+    .then((NetworkActor) =>
       NetworkActor.property.create([
         {
           name: 'label',
@@ -20,8 +20,7 @@ exports.up = (db) => (
           name: 'flags',
           type: 'EmbeddedList',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

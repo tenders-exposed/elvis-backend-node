@@ -4,7 +4,7 @@ exports.name = 'create bid vertex';
 
 exports.up = (db) => (
   db.class.create('Bid', 'V')
-    .then((Bid) => {
+    .then((Bid) =>
       Bid.property.create([
         {
           name: 'isWinning',
@@ -33,8 +33,7 @@ exports.up = (db) => (
           type: 'Embedded',
           linkedClass: 'Price',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

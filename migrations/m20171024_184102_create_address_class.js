@@ -4,7 +4,7 @@ exports.name = 'create address class';
 
 exports.up = (db) => (
   db.class.create('Address')
-    .then((Address) => {
+    .then((Address) =>
       Address.property.create([
         {
           name: 'country',
@@ -30,8 +30,7 @@ exports.up = (db) => (
           name: 'nuts',
           type: 'EmbeddedList',
         },
-      ]);
-    })
+      ]))
 );
 
 exports.down = (db) => (

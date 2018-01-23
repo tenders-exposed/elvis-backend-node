@@ -4,7 +4,7 @@ exports.name = 'create tender vertex';
 
 exports.up = (db) => (
   db.class.create('Tender', 'V')
-    .then((Tender) => {
+    .then((Tender) =>
       Tender.property.create([
         {
           name: 'id',
@@ -54,14 +54,12 @@ exports.up = (db) => (
           type: 'DateTime',
           mandatory: true,
         },
-      ]);
-    })
-    .then(() => {
+      ]))
+    .then(() =>
       db.index.create({
         name: 'Tender.id',
         type: 'UNIQUE_HASH_INDEX',
-      });
-    })
+      }))
 );
 
 exports.down = (db) => (
