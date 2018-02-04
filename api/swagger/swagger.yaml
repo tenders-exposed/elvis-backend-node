@@ -242,7 +242,7 @@ paths:
       parameters:
         - name: body
           in: body
-          description: Body params
+          description: Account credentials
           required: true
           schema:
             $ref: "#/definitions/AccountCredentials"
@@ -534,12 +534,40 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /network:
+    x-swagger-router-controller: networks
+    post:
+      tags:
+        - network
+      description: Create a network
+      operationId: createNetwork
+      parameters:
+        - name: body
+          in: body
+          description: Network params
+          required: true
+          schema:
+            $ref: "#/definitions/CreateNetworkRequest"
+      responses:
+        "201":
+          description: Successfully created network
+          schema:
+            $ref: "#/definitions/CreateNetworkResponse"
+        "400":
+          description: Bad request
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 definitions:
   AccountCredentials:
     type: object
     required:
       - email
       - password
+    additionalProperties: false
     properties:
       email:
         type: string
@@ -547,7 +575,7 @@ definitions:
         description: Valid email address
       password:
         type: string
-        description: Password string
+        description: Password
   ResetPasswordRequest:
     type: object
     required:
@@ -555,6 +583,7 @@ definitions:
       - resetPasswordToken
       - password
       - passwordConfirmation
+    additionalProperties: false
     properties:
       email:
         type: string
@@ -591,7 +620,7 @@ definitions:
           githubId:
             type: string
           active:
-            type: boolean 
+            type: boolean
   LoginResponse:
     type: object
     required:
@@ -604,6 +633,161 @@ definitions:
       refreshToken:
         type: string
         description: Refresh token with long life
+  CreateNetworkRequest:
+    type: object
+    required:
+      - query
+      - settings
+    additionalProperties: false
+    properties:
+      query:
+        $ref: "#/definitions/NetworkQuery"
+      settings:
+        $ref: "#/definitions/NetworkSettings"
+      name:
+        type: string
+        description: Name of the network
+      synopsis:
+        type: string
+        description: Short description of the network
+  CreateNetworkResponse:
+    type: object
+    required:
+      - id
+      - nodes
+      - edges
+      - count
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Networks UUID
+      nodes:
+        type: array
+        items:
+          $ref: "#/definitions/NetworkNode"
+      edges:
+        type: array
+        items:
+          $ref: "#/definitions/NetworkEdge"
+      count:
+        type: object
+        properties:
+          nodes:
+            type: integer
+            description: Number of nodes in the network
+          edges:
+            type: integer
+            description: Number of edges in the network
+      query:
+        $ref: "#/definitions/NetworkQuery"
+      settings:
+        $ref: "#/definitions/NetworkSettings"
+      name:
+        type: string
+        description: Name of the network
+      synopsis:
+        type: string
+        description: Short description of the network
+  NetworkSettings:
+    type: object
+    description: Network settings
+    additionalProperties: false
+    properties:
+      nodeSize:
+        type: string
+        description: What should node size represent
+        enum:
+          - numberOfWinningBids
+          - amountOfMoneyExchanged
+      edgeSize:
+        type: string
+        description: What should edge thickness represent
+        enum:
+          - numberOfWinningBids
+          - amountOfMoneyExchanged
+  NetworkQuery:
+    type: object
+    description: Query object containing filters
+    additionalProperties: false
+    properties:
+      countries:
+        type: array
+        items:
+          type: string
+          description: ISO 3166-1 alpha-2 country code
+      years:
+        type: array
+        items:
+          type: integer
+          description: Year
+      buyers:
+        type: array
+        items:
+          type: string
+          format: uuid
+          description: Buyer ID
+      bidders:
+        type: array
+        items:
+          type: string
+          format: uuid
+          description: Bidder ID
+      cpvs:
+        type: array
+        items:
+          type: string
+          description: CPV code
+  NetworkNode:
+    type: object
+    required:
+      - label
+      - id
+      - type
+      - value
+    properties:
+      label:
+        type: string
+        description: Label of the node i.e. name of bidder/buyer
+      id:
+        type: string
+        format: uuid
+        description: ID of the node i.e. UUID of bidder/buyer the node represents
+      type:
+        type: string
+        description: Node type
+        enum:
+          - bidder
+          - buyer
+      value:
+        type: number
+        format: double
+        description: Number of winning bids/amount of money exchanged depending on network settings
+  NetworkEdge:
+    type: object
+    required:
+      - type
+      - value
+      - to
+      - from
+    properties:
+      type:
+        type: string
+        description: Edge type (bidder/buyer)
+        enum:
+          - contracts
+          - partners
+      value:
+        type: number
+        format: double
+        description: Number of winning bids/amount of money exchanged depending on network settings
+      from:
+        type: string
+        format: uuid
+        description: ID of the base node
+      to:
+        type: string
+        description: ID of the receiving node
   CpvIndex:
     type: object
     properties:
@@ -672,7 +856,10 @@ definitions:
         description: Actor name
       type:
         type: string
-        description: Actor type (bidder/buyer)
+        description: Actor type
+        enum:
+          - bidder
+          - buyer
   ErrorResponse:
     type: object
     required:
