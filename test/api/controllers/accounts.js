@@ -79,8 +79,10 @@ test.serial('createAccount: Email is taken', async (t) => {
     email: 'testemail123456@mailinator.com',
     password: '123456789test',
   };
-  const existingUser = await config.db.class.get('User')
-    .then((U) => U.create(Object.assign({ id: uuidv4() }, userCreds)));
+  const existingUser = await config.db.create('vertex', 'User')
+    .set(Object.assign({ id: uuidv4() }, userCreds))
+    .commit()
+    .one();
   t.is(existingUser.email, userCreds.email);
 
   const res = await request(app)
@@ -104,8 +106,10 @@ test.serial('getAccount returns the account associated with tokens', async (t) =
       accessTokens: [tokens.accessToken],
       refreshTokens: [tokens.refreshToken],
     }));
-  await config.db.class.get('User')
-    .then((User) => User.create(completeUser));
+  await config.db.create('vertex', 'User')
+    .set(completeUser)
+    .commit()
+    .one();
 
   const res = await request(app)
     .get(REGISTER_ROUTE)
@@ -127,8 +131,10 @@ test.serial('login: Success', async (t) => {
     active: true,
     password: await AuthHelper.createPasswordHash(userCreds.password),
   });
-  await config.db.class.get('User')
-    .then((U) => U.create(userAttrs));
+  await config.db.create('vertex', 'User')
+    .set(userAttrs)
+    .commit()
+    .one();
 
   const res = await request(app)
     .post(LOGIN_ROUTE)
@@ -158,8 +164,10 @@ test.serial('login: Wrong password', async (t) => {
     active: true,
     password: await AuthHelper.createPasswordHash('123456789test'),
   };
-  await config.db.class.get('User')
-    .then((User) => User.create(userCreds));
+  await config.db.create('vertex', 'User')
+    .set(userCreds)
+    .commit()
+    .one();
 
   const res = await request(app)
     .post(LOGIN_ROUTE)
@@ -179,8 +187,10 @@ test.serial('resetPassword: Success updates the password', async (t) => {
     email: 'testemail123456@mailinator.com',
     password: await AuthHelper.createPasswordHash(initialPassword),
   };
-  await config.db.class.get('User')
-    .then((U) => U.create(userAttrs));
+  await config.db.create('vertex', 'User')
+    .set(userAttrs)
+    .commit()
+    .one();
   const requestAttrs = {
     email: userAttrs.email,
     password: '123456789test',

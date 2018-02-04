@@ -27,12 +27,12 @@ function createAccount(req, res) {
     })
     .then((passwordHash) => {
       userAttrs.password = passwordHash;
-      return config.db.class.get('User');
-    })
-    .then((User) => {
       userAttrs.id = uuidv4();
       userAttrs.email = userEmail;
-      return User.create(userAttrs);
+      return config.db.create('vertex', 'User')
+        .set(userAttrs)
+        .commit()
+        .one();
     })
     .then((user) => {
       res.status(codes.CREATED).json(_.pick(user, ['id', 'email']));

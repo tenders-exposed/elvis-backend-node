@@ -34,7 +34,6 @@ module.exports.localStrategyCallback = (email, password, done) => {
 
 module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb) => {
   let email;
-  let foundUser;
   let query = 'SELECT @rid, id, email, githubId, twitterId FROM User WHERE githubId = :githubId';
   const params = {
     githubId: profile.id,
@@ -58,32 +57,35 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
   )
     .then((user) => {
       if (user && user.length) {
-        foundUser = user[0];
         return user[0];
       }
-      return config.db.class.get('User');
+      return undefined;
     })
-    .then((User) => {
+    .then((foundUser) => {
       if (foundUser) {
         if (!foundUser.githubId) {
           foundUser.githubId = profile.id;
-          return config.db.update(foundUser['@rid']).set({ githubId: profile.id }).one();
+          return config.db.update('User')
+            .set({ githubId: profile.id })
+            .where({ '@rid': foundUser['@rid'] })
+            .return('AFTER')
+            .commit()
+            .one();
         }
         return foundUser;
       }
       params.id = uuidv4();
-      return User.create(params);
+      return config.db.create('vertex', 'User')
+        .set(params)
+        .commit()
+        .one();
     })
-    .then((user) => {
-      foundUser = foundUser || user;
-      cb(null, foundUser);
-    })
+    .then((user) => cb(null, user))
     .catch((err) => cb(err));
 };
 
 module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
   let email;
-  let foundUser;
   let query = 'SELECT @rid, email, githubId, twitterId FROM User WHERE twitterId = :twitterId';
   const params = {
     twitterId: profile.id,
@@ -103,26 +105,30 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
   )
     .then((user) => {
       if (user && user.length) {
-        foundUser = user[0];
         return user[0];
       }
-      return config.db.class.get('User');
+      return undefined;
     })
-    .then((User) => {
+    .then((foundUser) => {
       if (foundUser) {
         if (!foundUser.twitterId) {
           foundUser.twitterId = profile.id;
-          return config.db.update(foundUser['@rid']).set({ twitterId: profile.id }).one();
+          return config.db.update('User')
+            .set({ twitterId: profile.id })
+            .where({ '@rid': foundUser['@rid'] })
+            .return('AFTER')
+            .commit()
+            .one();
         }
         return foundUser;
       }
       params.id = uuidv4();
-      return User.create(params);
+      return config.db.create('vertex', 'User')
+        .set(params)
+        .commit()
+        .one();
     })
-    .then((user) => {
-      foundUser = foundUser || user;
-      cb(null, foundUser);
-    })
+    .then((user) => cb(null, user))
     .catch((err) => cb(err));
 };
 
