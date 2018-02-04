@@ -80,7 +80,7 @@ test.serial('createAccount: Email is taken', async (t) => {
     password: '123456789test',
   };
   const existingUser = await config.db.class.get('User')
-    .then((U) => U.create(Object.assign(userCreds, { id: uuidv4() })));
+    .then((U) => U.create(Object.assign({ id: uuidv4() }, userCreds)));
   t.is(existingUser.email, userCreds.email);
 
   const res = await request(app)

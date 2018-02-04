@@ -1,32 +1,25 @@
 'use strict';
 
-exports.name = 'create network base edge';
+exports.name = 'drop id from node';
 
 exports.up = (db) => (
-  db.class.create('NetworkEdge', 'E')
-    .then((NetworkEdge) => {
+  db.index.drop('NetworkEdge.id')
+    .then(() => db.class.get('NetworkEdge'))
+    .then((NetworkEdge) => NetworkEdge.property.drop('id'))
+);
+
+exports.down = (db) => (
+  db.class.get('NetworkEdge')
+    .then((NetworkEdge) =>
       NetworkEdge.property.create([
         {
           name: 'id',
           type: 'String',
           mandatory: true,
-        },
-        {
-          name: 'visible',
-          type: 'Boolean',
-          mandatory: true,
-          default: true,
-        },
-      ]);
-    })
-    .then(() => {
+        }]))
+    .then(() =>
       db.index.create({
         name: 'NetworkEdge.id',
-        type: 'unique',
-      });
-    })
-);
-
-exports.down = (db) => (
-  db.class.drop('NetworkEdge')
+        type: 'UNIQUE_HASH_INDEX',
+      }))
 );

@@ -11,6 +11,7 @@ async function truncateDB() {
     'Incorporates',
     'Includes',
     'ActingAs',
+    'PartOf',
     'NetworkEdge',
     'ActorConsortium',
     'ActorCluster',
