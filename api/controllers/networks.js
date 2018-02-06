@@ -7,7 +7,7 @@ const moment = require('moment');
 
 const config = require('../../config/default');
 const codes = require('../helpers/codes');
-// const validateToken = require('../middlewares/validateToken');
+const validateToken = require('../middlewares/validateToken');
 const formatError = require('../helpers/errorFormatter');
 
 function createNetwork(req, res) {
@@ -49,8 +49,26 @@ function createNetwork(req, res) {
         return network;
       },
     ))
+    .then((network) =>
+      validateToken(req, res, () => {
+        if (_.isUndefined(req.user) === false) {
+          return createOwnsEdge(network, req.user).then(() => {
+            network.user = req.user;
+            return network;
+          });
+        }
+        return network;
+      }))
     .then((network) => res.status(codes.CREATED).json(formatNetwork(network)))
     .catch((err) => formatError(err, req, res));
+}
+
+function createOwnsEdge(network, user) {
+  return config.db.create('edge', 'Owns')
+    .from(user['@rid'])
+    .to(network['@rid'])
+    .commit()
+    .one();
 }
 
 function queryToBidFilters(networkQuery) {
@@ -109,7 +127,7 @@ function createBidderNodes(bidFilters, valueQuery, network) {
       nodeAttrs.type = 'bidder';
       nodeAttrs.visible = true;
       nodeAttrs.id = uuidv4();
-      return createActorNode(nodeAttrs, bidderNode['@rid'], network['@rid']);
+      return createNetworkActor(nodeAttrs, bidderNode['@rid'], network['@rid']);
     }));
 }
 
@@ -134,11 +152,11 @@ function createBuyerNodes(bidFilters, valueQuery, network) {
       nodeAttrs.type = 'buyer';
       nodeAttrs.visible = true;
       nodeAttrs.id = uuidv4();
-      return createActorNode(nodeAttrs, buyerNode['@rid'], network['@rid']);
+      return createNetworkActor(nodeAttrs, buyerNode['@rid'], network['@rid']);
     }));
 }
 
-function createActorNode(nodeAttrs, actorRID, networkRID) {
+function createNetworkActor(nodeAttrs, actorRID, networkRID) {
   let node;
   return config.db.create('vertex', 'NetworkActor')
     .set(nodeAttrs)
@@ -178,7 +196,7 @@ function createContractsEdges(bidFilters, valueQuery, network) {
         value: edge.value,
         visible: true,
       };
-      return createEdge('Contracts', edgeAttrs, edge.buyerID, edge.bidderID, network.id);
+      return createNetworkEdge('Contracts', edgeAttrs, edge.buyerID, edge.bidderID, network.id);
     }));
 }
 
@@ -200,11 +218,11 @@ function createPartnersEdges(actorClass, edgeToBidClass, bidFilters, valueQuery,
         value: edge.value,
         visible: true,
       };
-      return createEdge('Partners', edgeAttrs, edge.actorID, edge.partnerID, network.id);
+      return createNetworkEdge('Partners', edgeAttrs, edge.actorID, edge.partnerID, network.id);
     }));
 }
 
-function createEdge(edgeClass, edgeAttrs, fromID, toID, networkID) {
+function createNetworkEdge(edgeClass, edgeAttrs, fromID, toID, networkID) {
   const networkActorQuery = `SELECT * FROM NetworkActor
     WHERE out('PartOf').id=:networkID AND
     in('ActingAs').id=:actorID;`;
@@ -250,7 +268,11 @@ function formatNetwork(network) {
     nodes: network.nodes.length,
     edges: network.edges.length,
   };
-  return _.pick(network, ['id', 'name', 'synopsis', 'settings', 'query', 'nodes', 'edges', 'count']);
+  if (_.isUndefined(network.user) === false) {
+    network.user = _.pick(network.user, ['id', 'email']);
+  }
+  return _.pick(network, ['id', 'name', 'synopsis', 'settings', 'query', 'nodes',
+    'edges', 'count', 'user']);
 }
 
 module.exports = {

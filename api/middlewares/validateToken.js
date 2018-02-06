@@ -20,7 +20,7 @@ module.exports = (req, res, next) => {
           return formatError(codes.BadRequest(err.message), req, res);
         }
 
-        return formatError(codes.InternalServerError('The problem with access token check occurred.'), req, res);
+        return formatError(codes.InternalServerError('There was a problem checking the access token.'), req, res);
       }
 
       if (!decoded.id || decoded.type !== 'access_token') {
@@ -34,7 +34,7 @@ module.exports = (req, res, next) => {
         .one()
         .then((user) => {
           if (user && user.accessTokens && user.accessTokens.includes(token)) {
-            req.user = _.pick(user, ['id', 'email', 'accessTokens', 'refreshTokens', 'twitterId', 'githubId', 'active']);
+            req.user = user;
             return next();
           }
 
@@ -43,6 +43,5 @@ module.exports = (req, res, next) => {
         .catch((error) => formatError(codes.InternalServerError(error), req, res));
     });
   }
-
-  return formatError(codes.Unauthorized('No Access Token.'), req, res);
+  return next();
 };
