@@ -542,6 +542,11 @@ paths:
       description: Create a network
       operationId: createNetwork
       parameters:
+        - name: Authorization
+          type: string
+          in: header
+          description: Bearer access token of the user
+          required: false
         - name: body
           in: body
           description: Network params
