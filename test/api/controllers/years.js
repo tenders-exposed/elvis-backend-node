@@ -2,7 +2,7 @@
 
 const request = require('supertest');
 const test = require('ava').test;
-const writers = require('../../../api/writers');
+const writers = require('../../../api/writers/tender');
 const codes = require('../../../api/helpers/codes');
 const helpers = require('../../helpers');
 const app = require('../../../server');

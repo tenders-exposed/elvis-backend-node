@@ -3,10 +3,11 @@
 const _ = require('lodash');
 const test = require('ava').test;
 const OrientDBError = require('orientjs/lib/errors');
-const config = require('../../config/default');
-const writers = require('./../../api/writers');
-const helpers = require('./../helpers');
-const fixtures = require('./../fixtures');
+
+const config = require('../../../config/default');
+const writers = require('./../../../api/writers/tender');
+const helpers = require('./../../helpers');
+const fixtures = require('./../../fixtures');
 
 test.before(() => helpers.createDB());
 test.afterEach.always(() => helpers.truncateDB());

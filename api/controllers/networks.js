@@ -4,7 +4,7 @@ const _ = require('lodash');
 const Promise = require('bluebird');
 
 const config = require('../../config/default');
-const writers = require('../networkWriters');
+const writers = require('../writers/network');
 const codes = require('../helpers/codes');
 const validateToken = require('../middlewares/validateToken');
 const formatError = require('../helpers/errorFormatter');

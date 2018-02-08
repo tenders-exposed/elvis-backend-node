@@ -4,13 +4,13 @@ const _ = require('lodash');
 const Promise = require('bluebird');
 const uuidv4 = require('uuid/v4');
 
-const config = require('../config/default');
-const tenderExtractor = require('./../extractors/tender');
-const buyerExtractor = require('./../extractors/buyer');
-const lotExtractor = require('./../extractors/lot');
-const bidExtractor = require('./../extractors/bid');
-const bidderExtractor = require('./../extractors/bidder');
-const cpvExtractor = require('./../extractors/cpv');
+const config = require('../../config/default');
+const tenderExtractor = require('./../../extractors/tender');
+const buyerExtractor = require('./../../extractors/buyer');
+const lotExtractor = require('./../../extractors/lot');
+const bidExtractor = require('./../../extractors/bid');
+const bidderExtractor = require('./../../extractors/bidder');
+const cpvExtractor = require('./../../extractors/cpv');
 
 function recordName(id, className) {
   return `${className.toLowerCase()}${id.replace(/-/g, '')}`;
