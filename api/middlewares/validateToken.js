@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const JWT = require('jsonwebtoken');
 const config = require('../../config/default');
 const formatError = require('../helpers/errorFormatter');
