@@ -5,7 +5,7 @@ const Promise = require('bluebird');
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 
-const config = require('../config/default');
+const config = require('../../config/default');
 
 function recordName(id, className) {
   return `${className.toLowerCase()}${id.replace(/-/g, '')}`;

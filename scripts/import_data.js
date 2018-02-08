@@ -8,7 +8,7 @@ const PQueue = require('p-queue');
 const pRetry = require('p-retry');
 const OrientDBError = require('orientjs/lib/errors');
 
-const writers = require('./../api/writers');
+const writers = require('./../api/writers/tender');
 
 const program = require('commander');
 
