@@ -11,11 +11,6 @@ const formatError = require('../helpers/errorFormatter');
 
 function createNetwork(req, res) {
   const networkParams = req.swagger.params.body.value;
-  const networkQuery = _.pickBy(networkParams.query, (val) => !(_.isUndefined(val)));
-  if (_.isEmpty(networkQuery) === true) {
-    throw codes.BadRequest('Network "query" can\'t be empty.');
-  }
-
   return validateToken(req, res, () =>
     writers.createNetwork(networkParams, req.user))
     .then((network) => formatNetwork(network))
