@@ -698,6 +698,9 @@ definitions:
     type: object
     description: Network settings
     additionalProperties: false
+    required:
+      - nodeSize
+      - edgeSize
     properties:
       nodeSize:
         type: string

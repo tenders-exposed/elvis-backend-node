@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 
+const codes = require('../helpers/codes');
 const config = require('../../config/default');
 
 function recordName(id, className) {
@@ -13,6 +14,10 @@ function recordName(id, className) {
 
 async function createNetwork(networkParams, user) {
   const networkQuery = _.pickBy(networkParams.query, (val) => !(_.isUndefined(val)));
+  if (_.isEmpty(networkQuery) === true) {
+    throw codes.BadRequest('Network "query" can\'t be empty.');
+  }
+
   const networkAttrs = Object.assign({}, networkParams);
   Object.assign(networkAttrs, {
     id: uuidv4(),

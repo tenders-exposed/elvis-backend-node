@@ -1,0 +1,314 @@
+'use strict';
+
+const _ = require('lodash');
+const test = require('ava').test;
+const Promise = require('bluebird');
+const OrientDBError = require('orientjs/lib/errors');
+
+const config = require('../../../config/default');
+const tenderWriters = require('./../../../api/writers/tender');
+const networkWriters = require('./../../../api/writers/network');
+const helpers = require('./../../helpers');
+const fixtures = require('./../../fixtures');
+
+test.before(() => helpers.createDB());
+test.afterEach.always(() => helpers.truncateDB());
+
+function selectNetworkActors(networkID, actorIDS) {
+  const networkActorsQuery = `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND in('ActingAs').id in :actorIDS`;
+  return config.db.query(networkActorsQuery, {
+    params: { networkID, actorIDS },
+  });
+}
+
+function selectNetworkEdges(networkID, actorIDS) {
+  const edgesQuery = `SELECT *
+    FROM NetworkEdge
+    WHERE out.out('PartOf').id=:networkID
+    AND out.in('ActingAs').id in :actorIDS`;
+  return config.db.query(edgesQuery, {
+    params: { networkID, actorIDS },
+  });
+}
+
+test.serial('createNetwork creates network without nodes', async (t) => {
+  t.plan(3);
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+    name: 'createNetwork creates network without nodes',
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  t.not(network['@rid'], undefined);
+  t.is(network.name, networkParams.name);
+  t.is(networkParams.query, networkParams.query);
+});
+
+test.serial('createNetwork raises error if query is empty', async (t) => {
+  t.plan(3);
+  const networkParams = {
+    query: {},
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const error = await t.throws(networkWriters.createNetwork(networkParams, undefined));
+  t.regex(error.message, /query/i);
+  t.regex(error.message, /empty/i);
+});
+
+test.serial('createNetwork raises error if mandatory settings are missing', async (t) => {
+  t.plan(3);
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const error = await t.throws(
+    networkWriters.createNetwork(networkParams, undefined),
+    OrientDBError.RequestError,
+  );
+  t.regex(error.message, /edgeSize/i);
+  t.regex(error.message, /mandatory/i);
+});
+
+test.serial('createNetwork creates network actors ', async (t) => {
+  t.plan(2);
+  const buyer = await fixtures.build('rawBuyer');
+  const bidders = await fixtures.buildMany('rawBidder', 2);
+  await fixtures.build('rawBidWithBidder', { bidders })
+    .then((rawBid) => fixtures.build('rawLot', { bids: [rawBid] }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const networkBuyers = await selectNetworkActors(network.id, [buyer.id]);
+  const networkBidders = await selectNetworkActors(network.id, _.map(bidders, 'id'));
+  t.is(networkBuyers.length, 1);
+  t.is(networkBidders.length, 2);
+});
+
+test.serial('createNetwork creates actor even if the counterpart misses', async (t) => {
+  t.plan(1);
+  const buyer = await fixtures.build('rawBuyer');
+  await fixtures.build('rawFullTender', {
+    buyers: [buyer],
+    country: 'CZ',
+  }).then((rawTender) => tenderWriters.writeTender(rawTender));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const networkBuyers = await selectNetworkActors(network.id, [buyer.id]);
+  t.is(networkBuyers.length, 1);
+});
+
+test.serial('createNetwork creates network edges ', async (t) => {
+  t.plan(2);
+  const buyer = await fixtures.build('rawBuyer');
+  const bidders = await fixtures.buildMany('rawBidder', 2);
+  await fixtures.build('rawBidWithBidder', { bidders })
+    .then((rawBid) => fixtures.build('rawLot', { bids: [rawBid] }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+
+  const contractsEdges = await selectNetworkEdges(network.id, [buyer.id]);
+  const partnersEdges = await selectNetworkEdges(network.id, _.map(bidders, 'id'));
+  t.is(contractsEdges.length, 2);
+  t.is(partnersEdges.length, 1);
+});
+
+test.serial('createNetwork uses number of winning bids for node size', async (t) => {
+  t.plan(3);
+  const buyer = await fixtures.build('rawBuyer');
+  const bidders = await fixtures.buildMany('rawBidder', 2);
+  const bids = await Promise.map(bidders, (bidder) =>
+    fixtures.build('rawBidWithBidder', { bidders: [bidder] }));
+  await fixtures.build('rawLot', { bids })
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'numberOfWinningBids',
+      edgeSize: 'numberOfWinningBids',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const networkBuyers = await selectNetworkActors(network.id, [buyer.id]);
+  const networkBidders = await selectNetworkActors(network.id, _.map(bidders, 'id'));
+  t.is(networkBuyers[0].value, 2);
+  t.is(networkBidders[0].value, 1);
+  t.is(networkBidders[1].value, 1);
+});
+
+test.serial('createNetwork uses amount of money exchanged for node size', async (t) => {
+  t.plan(3);
+  const buyer = await fixtures.build('rawBuyer');
+  const bidders = await fixtures.buildMany('rawBidder', 2);
+  const bids = await Promise.map(bidders, (bidder) =>
+    fixtures.build('rawBidWithBidder', {
+      bidders: [bidder],
+      price: {
+        netAmountEur: 201921.4,
+      },
+    }));
+  await fixtures.build('rawLot', { bids })
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const networkBuyers = await selectNetworkActors(network.id, [buyer.id]);
+  const networkBidders = await selectNetworkActors(network.id, _.map(bidders, 'id'));
+  t.is(networkBuyers[0].value, 403842.8);
+  t.is(networkBidders[0].value, 201921.4);
+  t.is(networkBidders[1].value, 201921.4);
+});
+
+test.serial('createNetwork uses number of winning bids for contracts edge size ', async (t) => {
+  t.plan(2);
+  const buyer = await fixtures.build('rawBuyer');
+  const bidder = await fixtures.build('rawBidder');
+  await Promise.each([1, 2, 3], () => fixtures.build('rawBid', { bidders: [bidder] })
+    .then((rawBid) => fixtures.build('rawLot', { bids: [rawBid] }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender)));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'numberOfWinningBids',
+      edgeSize: 'numberOfWinningBids',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const contractsEdges = await selectNetworkEdges(network.id, [buyer.id, bidder.id]);
+  t.is(contractsEdges.length, 1);
+  t.is(contractsEdges[0].value, 3);
+});
+
+test.serial('createNetwork uses amount of money exchanged bids for contracts edge size ', async (t) => {
+  t.plan(2);
+  const buyer = await fixtures.build('rawBuyer');
+  const bidder = await fixtures.build('rawBidder');
+  await Promise.each([1, 2, 3], () => fixtures.build('rawBid', {
+    bidders: [bidder],
+    price: {
+      netAmountEur: 201.4,
+    },
+  })
+    .then((rawBid) => fixtures.build('rawLot', { bids: [rawBid] }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender)));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const contractsEdges = await selectNetworkEdges(network.id, [buyer.id, bidder.id]);
+  t.is(contractsEdges.length, 1);
+  t.is(contractsEdges[0].value, (201.4 * 3));
+});
+
+test.serial('createNetwork uses number of shared bids for partners edge size ', async (t) => {
+  t.plan(2);
+  const buyer = await fixtures.build('rawBuyer');
+  const bidders = await fixtures.buildMany('rawBidder', 2);
+  await Promise.each([1, 2, 3], () => fixtures.build('rawBid', { bidders })
+    .then((rawBid) => fixtures.build('rawLot', { bids: [rawBid] }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender)));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const partnersEdges = await selectNetworkEdges(network.id, _.map(bidders, 'id'));
+  t.is(partnersEdges.length, 1);
+  t.is(partnersEdges[0].value, 3);
+});
