@@ -534,7 +534,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /network:
+  /networks:
     x-swagger-router-controller: networks
     post:
       tags:
@@ -545,7 +545,7 @@ paths:
         - name: Authorization
           type: string
           in: header
-          description: Bearer access token of the user
+          description: Bearer access token of the user who owns the network
           required: false
         - name: body
           in: body
@@ -560,6 +560,43 @@ paths:
             $ref: "#/definitions/CreateNetworkResponse"
         "400":
           description: Bad request
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /networks/{networkID}:
+    x-swagger-router-controller: networks
+    delete:
+      tags:
+        - network
+      description: Delete a network
+      operationId: deleteNetwork
+      parameters:
+        - name: Authorization
+          type: string
+          in: header
+          description: Bearer access token of the user who owns the network
+          required: true
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network that should be deleted
+          required: true
+      responses:
+        "204":
+          description: Successfully deleted
+        "400":
+          description: Bad request ['Wrong access token.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
