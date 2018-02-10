@@ -92,11 +92,13 @@ function getAccount(req, res) {
 }
 
 function deleteAccount(req, res) {
-  return validateToken(req, res, () =>
-    config.db.delete().from('User')
-      .where({ id: req.user.id }).one()
-      .then(() => res.status(codes.NO_CONTENT).json())
-      .catch((err) => formatError(err, req, res)));
+  return validateToken(req, res, () => {
+    if (_.isUndefined(req.user) === false) {
+      return config.db.vertex.delete(req.user)
+        .then(() => res.status(codes.NO_CONTENT).json());
+    }
+    throw codes.Unauthorized('This operation requires authorization.');
+  }).catch((err) => formatError(err, req, res));
 }
 
 function login(req, res) {

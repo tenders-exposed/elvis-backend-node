@@ -18,6 +18,29 @@ function createNetwork(req, res) {
     .catch((err) => formatError(err, req, res));
 }
 
+function deleteNetwork(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  return validateToken(req, res, () => {
+    if (_.isUndefined(req.user) === false) {
+      return config.db.select("*, in('Owns').id as userIDS")
+        .from('Network')
+        .where({ id: networkID })
+        .one()
+        .then((network) => {
+          if (_.isUndefined(network) === true) {
+            throw codes.NotFound('Network not found.');
+          }
+          if (network.userIDS[0] !== req.user.id) {
+            throw codes.Unauthorized('Network does not belong to this user');
+          }
+          return config.db.vertex.delete(network);
+        })
+        .then(() => res.status(codes.NO_CONTENT).json());
+    }
+    throw codes.Unauthorized('This operation requires authorization.');
+  }).catch((err) => formatError(err, req, res));
+}
+
 function formatNetwork(network) {
   const networkID = network.id;
   const networkQuery = `SELECT *
@@ -71,5 +94,6 @@ function formatNetwork(network) {
 
 module.exports = {
   createNetwork,
+  deleteNetwork,
   formatNetwork,
 };
