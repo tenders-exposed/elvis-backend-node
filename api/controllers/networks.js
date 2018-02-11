@@ -10,11 +10,13 @@ const validateToken = require('../middlewares/validateToken');
 const formatError = require('../helpers/errorFormatter');
 
 function createNetwork(req, res) {
-  const networkParams = req.swagger.params.body.value;
+  const networkParams = req.swagger.params.body.value.network;
   return validateToken(req, res, () =>
     writers.createNetwork(networkParams, req.user))
     .then((network) => formatNetworkWithRelated(network))
-    .then((network) => res.status(codes.CREATED).json(network))
+    .then((network) => res.status(codes.CREATED).json({
+      network,
+    }))
     .catch((err) => formatError(err, req, res));
 }
 
@@ -48,7 +50,9 @@ function getNetwork(req, res) {
     .where({ id: networkID })
     .one()
     .then((network) => formatNetworkWithRelated(network))
-    .then((network) => res.status(codes.SUCCESS).json(network))
+    .then((network) => res.status(codes.SUCCESS).json({
+      network,
+    }))
     .catch((err) => formatError(err, req, res));
 }
 
@@ -60,7 +64,9 @@ function getNetworks(req, res) {
         .where({ "in('Owns').id": req.user.id })
         .all()
         .then((networks) =>
-          res.status(codes.SUCCESS).json(_.map(networks, (network) => formatNetwork(network))));
+          res.status(codes.SUCCESS).json({
+            networks: _.map(networks, (network) => formatNetwork(network)),
+          }));
     }
     throw codes.Unauthorized('This operation requires authorization.');
   }).catch((err) => formatError(err, req, res));
