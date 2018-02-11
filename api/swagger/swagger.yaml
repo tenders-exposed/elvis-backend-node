@@ -557,7 +557,7 @@ paths:
         "201":
           description: Successfully created network
           schema:
-            $ref: "#/definitions/NetworkWithRelated"
+            $ref: "#/definitions/NetworkResponse"
         "400":
           description: Bad request ['Wrong access token.', 'Network "query" can\'t be empty.']
           schema:
@@ -589,9 +589,7 @@ paths:
         "200":
           description: List networks
           schema:
-            type: array
-            items:
-              $ref: '#/definitions/Network'
+            $ref: "#/definitions/NetworkIndex"
         "400":
           description: Bad request ['Wrong access token.']
           schema:
@@ -625,7 +623,7 @@ paths:
         "200":
           description: List network
           schema:
-            $ref: '#/definitions/NetworkWithRelated'
+            $ref: '#/definitions/NetworkResponse'
         "404":
           description: Network not found
           schema:
@@ -747,21 +745,36 @@ definitions:
         description: Refresh token with long life
   CreateNetworkRequest:
     type: object
-    required:
-      - query
-      - settings
-    additionalProperties: false
     properties:
-      query:
-        $ref: "#/definitions/NetworkQuery"
-      settings:
-        $ref: "#/definitions/NetworkSettings"
-      name:
-        type: string
-        description: Name of the network
-      synopsis:
-        type: string
-        description: Short description of the network
+      network:
+        type: object
+        required:
+          - query
+          - settings
+        additionalProperties: false
+        properties:
+          query:
+            $ref: "#/definitions/NetworkQuery"
+          settings:
+            $ref: "#/definitions/NetworkSettings"
+          name:
+            type: string
+            description: Name of the network
+          synopsis:
+            type: string
+            description: Short description of the network
+  NetworkResponse:
+    type: object
+    properties:
+      network:
+        $ref: "#/definitions/NetworkWithRelated"
+  NetworkIndex:
+    type: object
+    properties:
+      networks:
+        type: array
+        items:
+          $ref: "#/definitions/Network"
   Network:
     type: object
     required:
