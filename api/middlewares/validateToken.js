@@ -37,7 +37,7 @@ module.exports = (req, res, next) => {
             return next();
           }
 
-          return formatError(codes.Unauthorized('No User.'), req, res);
+          return formatError(codes.Unauthorized('User not found.'), req, res);
         })
         .catch((error) => formatError(codes.InternalServerError(error), req, res));
     });
