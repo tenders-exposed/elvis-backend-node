@@ -557,9 +557,51 @@ paths:
         "201":
           description: Successfully created network
           schema:
-            $ref: "#/definitions/CreateNetworkResponse"
+            $ref: "#/definitions/NetworkWithRelated"
         "400":
-          description: Bad request
+          description: Bad request ['Wrong access token.', 'Network "query" can\'t be empty.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    get:
+      tags:
+        - network
+      description: List a users networks
+      operationId: getNetworks
+      parameters:
+        - name: Authorization
+          type: string
+          in: header
+          description: Bearer access token of the user
+          required: true
+      responses:
+        "200":
+          description: List networks
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Network'
+        "400":
+          description: Bad request ['Wrong access token.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:
@@ -568,6 +610,30 @@ paths:
             $ref: "#/definitions/ErrorResponse"
   /networks/{networkID}:
     x-swagger-router-controller: networks
+    get:
+      tags:
+        - network
+      description: List a network
+      operationId: getNetwork
+      parameters:
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network that should be retrieved
+          required: true
+      responses:
+        "200":
+          description: List network
+          schema:
+            $ref: '#/definitions/NetworkWithRelated'
+        "404":
+          description: Network not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
     delete:
       tags:
         - network
@@ -587,6 +653,10 @@ paths:
       responses:
         "204":
           description: Successfully deleted
+        "404":
+          description: Network not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
         "400":
           description: Bad request ['Wrong access token.']
           schema:
@@ -692,35 +762,17 @@ definitions:
       synopsis:
         type: string
         description: Short description of the network
-  CreateNetworkResponse:
+  Network:
     type: object
     required:
       - id
-      - nodes
-      - edges
-      - count
+      - query
+      - settings
     properties:
       id:
         type: string
         format: uuid
         description: Networks UUID
-      nodes:
-        type: array
-        items:
-          $ref: "#/definitions/NetworkNode"
-      edges:
-        type: array
-        items:
-          $ref: "#/definitions/NetworkEdge"
-      count:
-        type: object
-        properties:
-          nodes:
-            type: integer
-            description: Number of nodes in the network
-          edges:
-            type: integer
-            description: Number of edges in the network
       query:
         $ref: "#/definitions/NetworkQuery"
       settings:
@@ -731,6 +783,32 @@ definitions:
       synopsis:
         type: string
         description: Short description of the network
+  NetworkWithRelated:
+    allOf:
+    - $ref: '#/definitions/Network'
+    - type: object
+      required:
+        - nodes
+        - edges
+        - count
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: "#/definitions/NetworkNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/definitions/NetworkEdge"
+        count:
+          type: object
+          properties:
+            nodes:
+              type: integer
+              description: Number of nodes in the network
+            edges:
+              type: integer
+              description: Number of edges in the network
   NetworkSettings:
     type: object
     description: Network settings
