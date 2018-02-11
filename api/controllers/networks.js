@@ -93,15 +93,11 @@ function formatNetworkWithRelated(network) {
     FROM ${className}
     WHERE visible=true
     AND out.out('PartOf').id=:networkID;`;
-  const userQuery = `SELECT *
-    FROM User
-    WHERE out('Owns').id in [:networkID];`;
   return Promise.join(
     config.db.query(nodesQuery, { params: { networkID } }),
     config.db.query(edgesQuery('Contracts'), { params: { networkID } }),
     config.db.query(edgesQuery('Partners'), { params: { networkID } }),
-    config.db.query(userQuery, { params: { networkID } }),
-    (nodes, contractsEdges, partnersEdges, users) => {
+    (nodes, contractsEdges, partnersEdges) => {
       prettyNetwork.nodes = nodes.map((node) =>
         _.pick(node, ['label', 'id', 'type', 'medianCompetition', 'value', 'country']));
       prettyNetwork.edges = _.concat(contractsEdges, partnersEdges).map((edge) =>
@@ -110,9 +106,6 @@ function formatNetworkWithRelated(network) {
         nodes: prettyNetwork.nodes.length,
         edges: prettyNetwork.edges.length,
       };
-      if (_.isUndefined(users[0]) === false) {
-        prettyNetwork.user = _.pick(users[0], ['id', 'email']);
-      }
       return prettyNetwork;
     },
   );
