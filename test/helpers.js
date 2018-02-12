@@ -1,7 +1,9 @@
 'use strict';
 
+const uuidv4 = require('uuid/v4');
 const Promise = require('bluebird');
 const config = require('../config/default');
+const AuthHelper = require('../api/helpers/auth');
 
 async function truncateDB() {
   // Order counts. Delete subclasses first
@@ -46,7 +48,26 @@ async function createDB() {
   await config.migrationManager.up();
 }
 
+async function createUser() {
+  const userAttrs = {
+    id: uuidv4(),
+    active: true,
+    email: 'testemail123456@mailinator.com',
+    password: await AuthHelper.createPasswordHash('123456789test'),
+  };
+  await AuthHelper.createTokenPair({ id: userAttrs.id })
+    .then((tokens) => Object.assign(userAttrs, {
+      accessTokens: [tokens.accessToken],
+      refreshTokens: [tokens.refreshToken],
+    }));
+  return config.db.create('vertex', 'User')
+    .set(userAttrs)
+    .commit()
+    .one();
+}
+
 module.exports = {
   truncateDB,
   createDB,
+  createUser,
 };

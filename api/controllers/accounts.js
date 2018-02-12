@@ -95,10 +95,11 @@ function deleteAccount(req, res) {
   return validateToken(req, res, () => {
     if (_.isUndefined(req.user) === false) {
       return config.db.vertex.delete(req.user)
-        .then(() => res.status(codes.NO_CONTENT).json());
+        .then(() => res.status(codes.NO_CONTENT).json())
+        .catch((err) => formatError(err, req, res));
     }
     throw codes.Unauthorized('This operation requires authorization.');
-  }).catch((err) => formatError(err, req, res));
+  });
 }
 
 function login(req, res) {

@@ -95,29 +95,15 @@ test.serial('createAccount: Email is taken', async (t) => {
 
 test.serial('getAccount returns the account associated with tokens', async (t) => {
   t.plan(2);
-  const userAttrs = {
-    id: uuidv4(),
-    active: true,
-    email: 'testemail123456@mailinator.com',
-    password: await AuthHelper.createPasswordHash('123456789test'),
-  };
-  const completeUser = await AuthHelper.createTokenPair({ id: userAttrs.id })
-    .then((tokens) => Object.assign(userAttrs, {
-      accessTokens: [tokens.accessToken],
-      refreshTokens: [tokens.refreshToken],
-    }));
-  await config.db.create('vertex', 'User')
-    .set(completeUser)
-    .commit()
-    .one();
+  const user = await helpers.createUser();
 
   const res = await request(app)
     .get(REGISTER_ROUTE)
-    .set('Authorization', completeUser.accessTokens[0])
-    .set('X-Refresh-Token', completeUser.refreshTokens[0]);
+    .set('Authorization', user.accessTokens[0])
+    .set('X-Refresh-Token', user.refreshTokens[0]);
 
   t.is(res.status, codes.SUCCESS);
-  t.is(res.body.id, userAttrs.id);
+  t.is(res.body.id, user.id);
 });
 
 test.serial('login: Success', async (t) => {
