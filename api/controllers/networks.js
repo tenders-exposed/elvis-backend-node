@@ -86,6 +86,19 @@ function formatNetwork(network) {
   return prettyNetwork;
 }
 
+function formatNode(networkActor) {
+  const node = _.pick(networkActor, ['label', 'id', 'type', 'medianCompetition',
+    'value', 'country', 'visible']);
+  node.flags = {};
+  return node;
+}
+
+function formatEdge(networkEdge) {
+  const edge = _.pick(networkEdge, ['from', 'to', 'type', 'value', 'visible']);
+  edge.flags = {};
+  return edge;
+}
+
 function formatNetworkWithRelated(network) {
   const prettyNetwork = formatNetwork(network);
   const networkID = network.id;
@@ -105,10 +118,9 @@ function formatNetworkWithRelated(network) {
     config.db.query(edgesQuery('Contracts'), { params: { networkID } }),
     config.db.query(edgesQuery('Partners'), { params: { networkID } }),
     (nodes, contractsEdges, partnersEdges) => {
-      prettyNetwork.nodes = nodes.map((node) =>
-        _.pick(node, ['label', 'id', 'type', 'medianCompetition', 'value', 'country', 'visible']));
-      prettyNetwork.edges = _.concat(contractsEdges, partnersEdges).map((edge) =>
-        _.pick(edge, ['from', 'to', 'type', 'value', 'visible']));
+      prettyNetwork.nodes = nodes.map((node) => formatNode(node));
+      prettyNetwork.edges = _.concat(contractsEdges, partnersEdges)
+        .map((edge) => formatEdge(edge));
       prettyNetwork.count = {
         nodes: prettyNetwork.nodes.length,
         edges: prettyNetwork.edges.length,

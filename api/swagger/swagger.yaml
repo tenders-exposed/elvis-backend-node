@@ -908,6 +908,10 @@ definitions:
       visible:
         type: boolean
         description: Is the node visible
+      flags:
+        type: object
+        description: Red flags of the node
+        default: {}
   NetworkEdge:
     type: object
     required:
@@ -936,6 +940,10 @@ definitions:
       visible:
         type: boolean
         description: Is the edge visible
+      flags:
+        type: object
+        description: Red flags of the node
+        default: {}
   CpvIndex:
     type: object
     properties:
