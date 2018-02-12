@@ -12,12 +12,12 @@ const formatError = require('../helpers/errorFormatter');
 function createNetwork(req, res) {
   const networkParams = req.swagger.params.body.value.network;
   return validateToken(req, res, () =>
-    writers.createNetwork(networkParams, req.user))
-    .then((network) => formatNetworkWithRelated(network))
-    .then((network) => res.status(codes.CREATED).json({
-      network,
-    }))
-    .catch((err) => formatError(err, req, res));
+    writers.createNetwork(networkParams, req.user)
+      .then((network) => formatNetworkWithRelated(network))
+      .then((network) => res.status(codes.CREATED).json({
+        network,
+      }))
+      .catch((err) => formatError(err, req, res)));
 }
 
 function deleteNetwork(req, res) {
@@ -37,10 +37,11 @@ function deleteNetwork(req, res) {
           }
           return config.db.vertex.delete(network);
         })
-        .then(() => res.status(codes.NO_CONTENT).json());
+        .then(() => res.status(codes.NO_CONTENT).json())
+        .catch((err) => formatError(err, req, res));
     }
-    throw codes.Unauthorized('This operation requires authorization.');
-  }).catch((err) => formatError(err, req, res));
+    return formatError(codes.Unauthorized('This operation requires authorization.'));
+  });
 }
 
 function getNetwork(req, res) {
@@ -49,7 +50,12 @@ function getNetwork(req, res) {
     .from('Network')
     .where({ id: networkID })
     .one()
-    .then((network) => formatNetworkWithRelated(network))
+    .then((network) => {
+      if (_.isUndefined(network) === true) {
+        throw codes.NotFound('Network not found');
+      }
+      return formatNetworkWithRelated(network);
+    })
     .then((network) => res.status(codes.SUCCESS).json({
       network,
     }))
@@ -66,10 +72,11 @@ function getNetworks(req, res) {
         .then((networks) =>
           res.status(codes.SUCCESS).json({
             networks: _.map(networks, (network) => formatNetwork(network)),
-          }));
+          }))
+        .catch((err) => formatError(err, req, res));
     }
-    throw codes.Unauthorized('This operation requires authorization.');
-  }).catch((err) => formatError(err, req, res));
+    return formatError(codes.Unauthorized('This operation requires authorization.'));
+  });
 }
 
 function formatNetwork(network) {
@@ -99,9 +106,9 @@ function formatNetworkWithRelated(network) {
     config.db.query(edgesQuery('Partners'), { params: { networkID } }),
     (nodes, contractsEdges, partnersEdges) => {
       prettyNetwork.nodes = nodes.map((node) =>
-        _.pick(node, ['label', 'id', 'type', 'medianCompetition', 'value', 'country']));
+        _.pick(node, ['label', 'id', 'type', 'medianCompetition', 'value', 'country', 'visible']));
       prettyNetwork.edges = _.concat(contractsEdges, partnersEdges).map((edge) =>
-        _.pick(edge, ['from', 'to', 'type', 'value']));
+        _.pick(edge, ['from', 'to', 'type', 'value', 'visible']));
       prettyNetwork.count = {
         nodes: prettyNetwork.nodes.length,
         edges: prettyNetwork.edges.length,

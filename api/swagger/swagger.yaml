@@ -272,7 +272,7 @@ paths:
         - name: Authorization
           type: string
           in: header
-          description: Bearer access token of the user
+          description: Access token of the user
           required: true
       responses:
         "200":
@@ -304,7 +304,7 @@ paths:
         - name: Authorization
           type: string
           in: header
-          description: Bearer access token of the user
+          description: Access token of the user
           required: true
       responses:
         "204":
@@ -545,7 +545,7 @@ paths:
         - name: Authorization
           type: string
           in: header
-          description: Bearer access token of the user who owns the network
+          description: Access token of the user who owns the network
           required: false
         - name: body
           in: body
@@ -583,7 +583,7 @@ paths:
         - name: Authorization
           type: string
           in: header
-          description: Bearer access token of the user
+          description: Access token of the user
           required: true
       responses:
         "200":
@@ -641,7 +641,7 @@ paths:
         - name: Authorization
           type: string
           in: header
-          description: Bearer access token of the user who owns the network
+          description: Access token of the user who owns the network
           required: true
         - name: networkID
           type: string
@@ -899,6 +899,15 @@ definitions:
         type: number
         format: double
         description: Number of winning bids/amount of money exchanged depending on network settings
+      country:
+        type: string
+        description: ISO 3166-1 alpha-2 country code
+      medianCompetition:
+        type: integer
+        description: Median number of bidders in this actor's bids
+      visible:
+        type: boolean
+        description: Is the node visible
   NetworkEdge:
     type: object
     required:
@@ -924,6 +933,9 @@ definitions:
       to:
         type: string
         description: ID of the receiving node
+      visible:
+        type: boolean
+        description: Is the edge visible
   CpvIndex:
     type: object
     properties:
