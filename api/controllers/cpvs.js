@@ -10,32 +10,36 @@ function getTenderCpvs(req, res) {
     _.mapValues(req.swagger.params, 'value'),
     (val) => !(_.isUndefined(val)),
   );
-  const queryCriteria = ["{ as: bids }.out('AppliedTo').in('Comprises').out('HasCPV'){ as: cpvs }"];
+  const queryCriteria = [];
   const queryParams = {};
   if (swaggerParams.countries) {
-    queryCriteria.push('{ as: bids,  where: (xCountry in :countries) }');
+    queryCriteria.push('xCountry in :countries');
     queryParams.countries = swaggerParams.countries;
   }
   if (swaggerParams.years) {
-    queryCriteria.push('{ as: bids,  where: (xYear in :years) }');
+    queryCriteria.push('xYear in :years');
     queryParams.years = swaggerParams.years;
   }
   if (swaggerParams.buyers) {
-    queryCriteria.push(`{ as: bids }.in('Awards')
-      { class: Buyer, where: (id in :buyers) }`);
+    queryCriteria.push("in('Awards').id in :buyers");
     queryParams.buyers = swaggerParams.buyers;
   }
   if (swaggerParams.bidders) {
-    queryCriteria.push(`{ as: bids }.in('Participates')
-      { class: Bidder, where: (id in :bidders) }`);
+    queryCriteria.push("in('Participates').id in :bidders");
     queryParams.bidders = swaggerParams.bidders;
   }
-  const query = `SELECT expand(cpvs) FROM (
-    MATCH { class: Bid, as: bids },
-      ${_.join(queryCriteria, ',')}
-    RETURN cpvs
-  )`;
-  return config.db.query(query, { params: queryParams })
+  const cpvsQuery = `SELECT cpv.code as code,
+    cpv.xNumberDigits as xNumberDigits,
+    cpv.xName as xName,
+    set(bidID).size() as xNumberBids
+    FROM (
+      SELECT @rid as bidID, out('AppliedTo').in('Comprises').out('HasCPV') as cpv
+        FROM Bid
+        ${queryCriteria.length ? `WHERE ${_.join(queryCriteria, 'AND')}` : ''}
+      UNWIND cpv
+    ) GROUP BY cpv
+    ORDER BY code asc;`;
+  return config.db.query(cpvsQuery, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
       cpvs: _.map(results, (cpv) => formatCpv(cpv)),
     }))
@@ -43,7 +47,7 @@ function getTenderCpvs(req, res) {
 }
 
 function formatCpv(cpvNode) {
-  return _.pick(cpvNode, ['code', 'xName', 'xNumberDigits']);
+  return _.pick(cpvNode, ['code', 'xName', 'xNumberDigits', 'xNumberBids']);
 }
 
 module.exports = {
