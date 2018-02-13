@@ -53,7 +53,7 @@ function getActors(swaggerParams, actorClass, edgeToBidClass) {
   }
   let query = `SELECT *, $score FROM ${from}`;
   if (_.isEmpty(queryCriteria) === false) {
-    query = query.concat(` WHERE ${_.join(queryCriteria, 'AND')}`);
+    query = query.concat(` WHERE ${_.join(queryCriteria, ' AND ')}`);
   }
   return config.db.query(query, { params: queryParams });
 }

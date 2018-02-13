@@ -35,7 +35,7 @@ function getTenderCpvs(req, res) {
     FROM (
       SELECT @rid as bidID, out('AppliedTo').in('Comprises').out('HasCPV') as cpv
         FROM Bid
-        ${queryCriteria.length ? `WHERE ${_.join(queryCriteria, 'AND')}` : ''}
+        ${queryCriteria.length ? ` WHERE ${_.join(queryCriteria, ' AND ')}` : ''}
       UNWIND cpv
     ) GROUP BY cpv
     ORDER BY code asc;`;

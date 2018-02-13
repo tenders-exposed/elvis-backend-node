@@ -126,7 +126,7 @@ test.serial('getTenderCountries filters countries by year', async (t) => {
     }))
     .then((ten) => writers.writeTender(ten));
   const res = await request(app)
-    .get('/tenders/countries?years[]=2016');
+    .get('/tenders/countries?years=2016,2017');
 
   t.is(res.status, codes.SUCCESS);
   await t.deepEqual(await expectedResponse(expectedCountry), res.body);

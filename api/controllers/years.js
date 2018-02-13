@@ -30,7 +30,7 @@ function getTenderYears(req, res) {
   }
   const query = `SELECT distinct(xYear)
     FROM Bid
-    ${queryCriteria.length ? `WHERE ${_.join(queryCriteria, 'AND')}` : ''}`;
+    ${queryCriteria.length ? ` WHERE ${_.join(queryCriteria, ' AND ')}` : ''}`;
   return config.db.query(query, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
       years: _.map(results, 'distinct'),
