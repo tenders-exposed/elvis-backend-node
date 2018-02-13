@@ -120,7 +120,7 @@ test.serial('getTenderCpvs filters cpvs by year', async (t) => {
     }))
     .then((ten) => writers.writeTender(ten));
   const res = await request(app)
-    .get('/tenders/cpvs?years[]=2016');
+    .get('/tenders/cpvs?years=2016,2017');
 
   t.is(res.status, codes.SUCCESS);
   t.deepEqual(await expectedResponse(rawMatchTender.id), res.body);

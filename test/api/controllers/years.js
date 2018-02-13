@@ -127,7 +127,7 @@ test.serial('getTenderYears filters years by countries', async (t) => {
     country: alternativeCountry,
   })).then((ten) => writers.writeTender(ten));
   const res = await request(app)
-    .get(`/tenders/years?countries[]=${expectedCountry}`);
+    .get(`/tenders/years?countries=${expectedCountry},PL`);
 
   t.is(res.status, codes.SUCCESS);
   await t.deepEqual({ years: [expectedYear] }, res.body);

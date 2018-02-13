@@ -94,7 +94,7 @@ test.serial('getTenderActors filters actors by year', async (t) => {
     }))
     .then((ten) => writers.writeTender(ten));
   const res = await request(app)
-    .get(`/tenders/actors?years[]=${expectedYear}`);
+    .get(`/tenders/actors?years=${expectedYear},2017`);
 
   t.is(res.status, codes.SUCCESS);
   t.deepEqual(await expectedResponse([expectedBuyer, expectedBidder]), res.body);

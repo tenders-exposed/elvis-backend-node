@@ -33,7 +33,7 @@ function getTenderCountries(req, res) {
     WHERE code in (
       SELECT distinct(xCountry) as countryCode
         FROM Bid
-        ${queryCriteria.length ? `WHERE ${_.join(queryCriteria, 'AND')}` : ''}
+        ${queryCriteria.length ? ` WHERE ${_.join(queryCriteria, ' AND ')}` : ''}
     )`;
   return config.db.query(query, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
