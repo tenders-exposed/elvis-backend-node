@@ -20,7 +20,10 @@ function expectedResponse(matchTenderID) {
     .where({ id: matchTenderID })
     .all()
     .then((writtenCpvs) => ({
-      cpvs: _.map(writtenCpvs, (cpv) => cpvController.formatCpv(cpv)),
+      cpvs: _.map(_.sortBy(writtenCpvs, 'code'), (cpv) => {
+        cpv.xNumberBids = 1;
+        return cpvController.formatCpv(cpv);
+      }),
     }));
 }
 

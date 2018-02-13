@@ -966,6 +966,9 @@ definitions:
       xNumberDigits:
         type: integer
         description: Number of relevant digits in the CPV
+      xNumberBids:
+        type: integer
+        description: Number of bids with this CPV
   CountryIndex:
     type: object
     properties:
