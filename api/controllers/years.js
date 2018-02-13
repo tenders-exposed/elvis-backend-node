@@ -10,31 +10,27 @@ function getTenderYears(req, res) {
     _.mapValues(req.swagger.params, 'value'),
     (val) => !(_.isUndefined(val)),
   );
-  const queryCriteria = ['{ class: Bid, as: bids }'];
+  const queryCriteria = [];
   const queryParams = {};
   if (swaggerParams.cpvs) {
-    queryCriteria.push(`{ as: bids }.out('AppliedTo').in('Comprises').out('HasCPV')
-      { class: CPV, where: (code in :cpvs)}`);
+    queryCriteria.push("out('AppliedTo').in('Comprises').out('HasCPV').code in :cpvs");
     queryParams.cpvs = swaggerParams.cpvs;
   }
   if (swaggerParams.countries) {
-    queryCriteria.push('{ as: bids,  where: (xCountry in :countries) }');
+    queryCriteria.push('xCountry in :countries');
     queryParams.countries = swaggerParams.countries;
   }
   if (swaggerParams.buyers) {
-    queryCriteria.push(`{ as: bids }.in('Awards')
-      { class: Buyer, where: (id in :buyers) }`);
+    queryCriteria.push("in('Awards').id in :buyers");
     queryParams.buyers = swaggerParams.buyers;
   }
   if (swaggerParams.bidders) {
-    queryCriteria.push(`{ as: bids }.in('Participates')
-      { class: Bidder, where: (id in :bidders) }`);
+    queryCriteria.push("in('Participates').id in :bidders");
     queryParams.bidders = swaggerParams.bidders;
   }
-  const query = `SELECT distinct(years) FROM (
-    MATCH ${_.join(queryCriteria, ',')}
-    RETURN bids.xYear as years
-  )`;
+  const query = `SELECT distinct(xYear)
+    FROM Bid
+    ${queryCriteria.length ? `WHERE ${_.join(queryCriteria, 'AND')}` : ''}`;
   return config.db.query(query, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
       years: _.map(results, 'distinct'),
