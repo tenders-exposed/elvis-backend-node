@@ -1,5 +1,6 @@
 'use strict';
 
+const moment = require('moment');
 const _ = require('lodash');
 const Promise = require('bluebird');
 
@@ -44,6 +45,40 @@ function deleteNetwork(req, res) {
   });
 }
 
+function updateNetwork(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  const networkParams = req.swagger.params.body.value.network;
+  return validateToken(req, res, () => {
+    if (_.isUndefined(req.user) === false) {
+      return config.db.select("*, in('Owns').id as userIDS")
+        .from('Network')
+        .where({ id: networkID })
+        .one()
+        .then((network) => {
+          if (_.isUndefined(network) === true) {
+            throw codes.NotFound('Network not found.');
+          }
+          if (network.userIDS[0] !== req.user.id) {
+            throw codes.Unauthorized('Network does not belong to this user');
+          }
+          networkParams.updated = moment().format('YYYY-MM-DD HH:mm:ss');
+          return config.db.update('Network')
+            .set(networkParams)
+            .where({ '@rid': network['@rid'] })
+            .return('AFTER')
+            .commit()
+            .one();
+        })
+        .then((network) => formatNetworkWithRelated(network))
+        .then((network) => res.status(codes.SUCCESS).json({
+          network,
+        }))
+        .catch((err) => formatError(err, req, res));
+    }
+    return formatError(codes.Unauthorized('This operation requires authorization.'));
+  });
+}
+
 function getNetwork(req, res) {
   const networkID = req.swagger.params.networkID.value;
   return config.db.select()
@@ -70,9 +105,10 @@ function getNetworks(req, res) {
         .where({ "in('Owns').id": req.user.id })
         .all()
         .then((networks) =>
-          res.status(codes.SUCCESS).json({
-            networks: _.map(networks, (network) => formatNetwork(network)),
-          }))
+          Promise.map(networks, (network) => formatNetwork(network)))
+        .then((networks) => res.status(codes.SUCCESS).json({
+          networks,
+        }))
         .catch((err) => formatError(err, req, res));
     }
     return formatError(codes.Unauthorized('This operation requires authorization.'));
@@ -81,9 +117,28 @@ function getNetworks(req, res) {
 
 function formatNetwork(network) {
   const prettyNetwork = _.pick(network, ['id', 'name', 'synopsis']);
+  prettyNetwork.created = moment(network.created).format();
+  prettyNetwork.updated = moment(network.updated).format();
   prettyNetwork.settings = _.pick(network.settings, ['nodeSize', 'edgeSize']);
   prettyNetwork.query = _.pick(network.query, ['countries', 'years', 'cpvs', 'bidders', 'buyers']);
-  return prettyNetwork;
+  prettyNetwork.count = {};
+  const nodeCountQuery = `SELECT in('PartOf').size() as nodeCount
+    FROM Network
+    WHERE id=:networkID`;
+  const edgeCountQuery = (edgeName) =>
+    `SELECT in('PartOf').out('${edgeName}').size() as edgeCount
+    FROM Network
+    WHERE id=:networkID`;
+  return Promise.join(
+    config.db.query(nodeCountQuery, { params: { networkID: network.id } }),
+    config.db.query(edgeCountQuery('Contracts'), { params: { networkID: network.id } }),
+    config.db.query(edgeCountQuery('Partners'), { params: { networkID: network.id } }),
+    (nodeResult, contractsResult, partnersResult) => {
+      prettyNetwork.count.nodeCount = nodeResult[0].nodeCount;
+      prettyNetwork.count.edgeCount = contractsResult[0].edgeCount + partnersResult[0].edgeCount;
+      return prettyNetwork;
+    },
+  );
 }
 
 function formatNode(networkActor) {
@@ -100,39 +155,38 @@ function formatEdge(networkEdge) {
 }
 
 function formatNetworkWithRelated(network) {
-  const prettyNetwork = formatNetwork(network);
-  const networkID = network.id;
-  const nodesQuery = `SELECT *
-    FROM NetworkActor
-    WHERE out('PartOf').id=:networkID
-    AND visible=true;`;
-  const edgesQuery = (className) => `SELECT *,
-    in.id as \`from\`,
-    out.id as to,
-    @class.toLowerCase() as type
-    FROM ${className}
-    WHERE visible=true
-    AND out.out('PartOf').id=:networkID;`;
-  return Promise.join(
-    config.db.query(nodesQuery, { params: { networkID } }),
-    config.db.query(edgesQuery('Contracts'), { params: { networkID } }),
-    config.db.query(edgesQuery('Partners'), { params: { networkID } }),
-    (nodes, contractsEdges, partnersEdges) => {
-      prettyNetwork.nodes = nodes.map((node) => formatNode(node));
-      prettyNetwork.edges = _.concat(contractsEdges, partnersEdges)
-        .map((edge) => formatEdge(edge));
-      prettyNetwork.count = {
-        nodes: prettyNetwork.nodes.length,
-        edges: prettyNetwork.edges.length,
-      };
-      return prettyNetwork;
-    },
-  );
+  return formatNetwork(network)
+    .then((prettyNetwork) => {
+      const networkID = network.id;
+      const nodesQuery = `SELECT *
+        FROM NetworkActor
+        WHERE out('PartOf').id=:networkID
+        AND visible=true;`;
+      const edgesQuery = (className) => `SELECT *,
+        in.id as \`from\`,
+        out.id as to,
+        @class.toLowerCase() as type
+        FROM ${className}
+        WHERE visible=true
+        AND out.out('PartOf').id=:networkID;`;
+      return Promise.join(
+        config.db.query(nodesQuery, { params: { networkID } }),
+        config.db.query(edgesQuery('Contracts'), { params: { networkID } }),
+        config.db.query(edgesQuery('Partners'), { params: { networkID } }),
+        (nodes, contractsEdges, partnersEdges) => {
+          prettyNetwork.nodes = nodes.map((node) => formatNode(node));
+          prettyNetwork.edges = _.concat(contractsEdges, partnersEdges)
+            .map((edge) => formatEdge(edge));
+          return prettyNetwork;
+        },
+      );
+    });
 }
 
 module.exports = {
   createNetwork,
   deleteNetwork,
+  updateNetwork,
   getNetwork,
   getNetworks,
   formatNetwork,

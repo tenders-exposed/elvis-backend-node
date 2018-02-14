@@ -632,6 +632,53 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+    patch:
+      tags:
+        - network
+      description: Update network name and synopsis
+      operationId: updateNetwork
+      parameters:
+        - name: Authorization
+          type: string
+          in: header
+          description: Access token of the user who owns the network
+          required: true
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network that should be retrieved
+          required: true
+        - name: body
+          in: body
+          description: Network params
+          required: true
+          schema:
+            $ref: "#/definitions/UpdateNetworkRequest"
+      responses:
+        "200":
+          description: Successfully updated network
+          schema:
+            $ref: "#/definitions/NetworkResponse"
+        "404":
+          description: Network not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "400":
+          description: Bad request ['Wrong access token.', 'Network "query" can\'t be empty.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
     delete:
       tags:
         - network
@@ -763,6 +810,17 @@ definitions:
           synopsis:
             type: string
             description: Short description of the network
+  UpdateNetworkRequest:
+    type: object
+    properties:
+      network:
+        properties:
+          name:
+            type: string
+            description: Name of the network
+          synopsis:
+            type: string
+            description: Short description of the network
   NetworkResponse:
     type: object
     properties:
@@ -780,7 +838,10 @@ definitions:
     required:
       - id
       - query
+      - count
       - settings
+      - created
+      - updated
     properties:
       id:
         type: string
@@ -796,6 +857,23 @@ definitions:
       synopsis:
         type: string
         description: Short description of the network
+      created:
+        type: string
+        format: date-time
+        description: When the network was created
+      updated:
+        type: string
+        format: date-time
+        description: When the network was last updated
+      count:
+        type: object
+        properties:
+          nodes:
+            type: integer
+            description: Number of nodes in the network
+          edges:
+            type: integer
+            description: Number of edges in the network
   NetworkWithRelated:
     allOf:
     - $ref: '#/definitions/Network'
@@ -803,7 +881,6 @@ definitions:
       required:
         - nodes
         - edges
-        - count
       properties:
         nodes:
           type: array
@@ -813,15 +890,6 @@ definitions:
           type: array
           items:
             $ref: "#/definitions/NetworkEdge"
-        count:
-          type: object
-          properties:
-            nodes:
-              type: integer
-              description: Number of nodes in the network
-            edges:
-              type: integer
-              description: Number of edges in the network
   NetworkSettings:
     type: object
     description: Network settings
