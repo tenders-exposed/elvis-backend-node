@@ -20,13 +20,17 @@ function getTenderCpvs(req, res) {
     queryCriteria.push('xYear in :years');
     queryParams.years = swaggerParams.years;
   }
+  const actorQueries = [];
   if (swaggerParams.buyers) {
-    queryCriteria.push("in('Awards').id in :buyers");
+    actorQueries.push("in('Awards').id in :buyers");
     queryParams.buyers = swaggerParams.buyers;
   }
   if (swaggerParams.bidders) {
-    queryCriteria.push("in('Participates').id in :bidders");
+    actorQueries.push("in('Participates').id in :bidders");
     queryParams.bidders = swaggerParams.bidders;
+  }
+  if (actorQueries.length) {
+    queryCriteria.push(_.join(actorQueries, ' OR '));
   }
   const cpvsQuery = `SELECT cpv.code as code,
     cpv.xNumberDigits as xNumberDigits,
