@@ -27,7 +27,7 @@ function getTenderActors(req, res) {
 }
 
 function getActors(swaggerParams, actorClass, edgeToBidClass) {
-  // Get only buyers involved in bids
+  // Get only actors involved in bids
   const queryParams = {};
   const queryCriteria = [];
   let from = actorClass;
