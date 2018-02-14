@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const test = require('ava').test;
 const Promise = require('bluebird');
 const request = require('supertest');
@@ -42,7 +41,6 @@ test.serial('createNetwork succeeds with empty nodes and edges', async (t) => {
     .post('/networks')
     .send(networkParams);
   t.is(res.status, codes.CREATED);
-
   const createdNetwork = await config.db.select()
     .from('Network')
     .where({ id: res.body.network.id })
@@ -197,10 +195,9 @@ test.serial('getNetworks returns a user\'s networks', async (t) => {
     .set('Authorization', user.accessTokens[0]);
   t.is(res.status, codes.SUCCESS);
 
-  const expected = {
-    networks: _.sortBy(_.map(userNetworks, (network) => networkController.formatNetwork(network))),
-  };
-  t.deepEqual(res.body, expected);
+  const networks = await Promise.map(userNetworks, (network) =>
+    networkController.formatNetwork(network));
+  t.deepEqual(res.body, { networks });
 });
 
 test.serial('getNetworks fails if authorization is not provided', async (t) => {
@@ -290,4 +287,78 @@ test.serial('getNetwork returns error if the network is not found', async (t) =>
     .delete('/networks/focuspocus')
     .set('Authorization', user.accessTokens[0]);
   t.is(res.status, codes.NOT_FOUND);
+});
+
+test.serial('updateNetwork returns error if the network is not found', async (t) => {
+  t.plan(1);
+  const user = await helpers.createUser();
+  const res = await request(app)
+    .patch('/networks/focuspocus')
+    .set('Authorization', user.accessTokens[0]);
+  t.is(res.status, codes.NOT_FOUND);
+});
+
+test.serial('updateNetwork doesn\'t update network if the authorizaton fails', async (t) => {
+  t.plan(2);
+  const networkParams = {
+    query: {
+      countries: [
+        'CZ',
+      ],
+    },
+    settings: {
+      nodeSize: 'numberOfWinningBids',
+      edgeSize: 'numberOfWinningBids',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const updateParams = {
+    network: {
+      name: "updateNetwork doesn't update network if the authorizaton fails",
+    },
+  };
+  const res = await request(app)
+    .patch(`/networks/${network.id}`)
+    .set('Authorization', 'lololo')
+    .send(updateParams);
+  t.is(res.status, codes.BAD_REQUEST);
+
+  const updatedNetwork = await config.db.select()
+    .from('Network')
+    .where({ id: network.id })
+    .one();
+  t.is(updatedNetwork.name, undefined);
+});
+
+test.serial('updateNetwork updates network if the authorizaton succeeds', async (t) => {
+  t.plan(2);
+  const user = await helpers.createUser();
+  const networkParams = {
+    query: {
+      countries: [
+        'CZ',
+      ],
+    },
+    settings: {
+      nodeSize: 'numberOfWinningBids',
+      edgeSize: 'numberOfWinningBids',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, user);
+  const updateParams = {
+    network: {
+      name: "updateNetwork doesn't update network if the authorizaton fails",
+    },
+  };
+  const res = await request(app)
+    .patch(`/networks/${network.id}`)
+    .set('Authorization', user.accessTokens[0])
+    .send(updateParams);
+  t.is(res.status, codes.SUCCESS);
+
+  const updatedNetwork = await config.db.select()
+    .from('Network')
+    .where({ id: network.id })
+    .one();
+  t.is(updatedNetwork.name, updateParams.network.name);
 });
