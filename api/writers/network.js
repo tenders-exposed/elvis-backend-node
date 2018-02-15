@@ -40,8 +40,8 @@ async function createNetwork(networkParams, user) {
   );
   await Promise.all([
     createContractsEdges(transaction, networkParams.settings, networkQuery, networkActorsMapping),
-    createPartnersEdges(transaction, 'Buyer', 'Awards', networkQuery, networkActorsMapping),
-    createPartnersEdges(transaction, 'Bidder', 'Participates', networkQuery, networkActorsMapping),
+    createPartnersEdges(transaction, 'Awards', networkQuery, networkActorsMapping),
+    createPartnersEdges(transaction, 'Participates', networkQuery, networkActorsMapping),
   ]);
 
   return transaction.commit(2).return(`$${networkName}`).one();
@@ -56,31 +56,20 @@ function queryToBidFilters(networkQuery) {
   if (networkQuery.bidders) {
     actorFilters.push("in('Participates').id in :bidders");
   }
-  if (_.isEmpty(actorFilters) === false) {
-    filters.push(`{ as: bids, where: (${_.join(_.compact(actorFilters), ' OR ')})}`);
+  if (actorFilters.length) {
+    filters.push(`(${_.join(_.compact(actorFilters), ' OR ')})`);
   }
 
   if (networkQuery.countries) {
-    filters.push('{ as: bids,  where: (xCountry in :countries) }');
+    filters.push('xCountry in :countries');
   }
   if (networkQuery.years) {
-    filters.push('{ as: bids,  where: (xYear in :years) }');
+    filters.push('xYear in :years');
   }
   if (networkQuery.cpvs) {
-    filters.push(`{ as: bids }.out('AppliedTo').in('Comprises').out('HasCPV')
-      { class: CPV, where: (code in :cpvs)}`);
+    filters.push("out('AppliedTo').in('Comprises').out('HasCPV').code in :cpvs");
   }
   return filters;
-}
-
-function settingsToValueQuery(sizeSetting) {
-  let value;
-  if (sizeSetting === 'numberOfWinningBids') {
-    value = 'count(bids)';
-  } else if (sizeSetting === 'amountOfMoneyExchanged') {
-    value = 'sum(bids.price.netAmountEur)';
-  }
-  return value;
 }
 
 function createOwnsEdge(transaction, user, networkName) {
@@ -96,31 +85,41 @@ function createOwnsEdge(transaction, user, networkName) {
   return undefined;
 }
 
+function settingsToValueQuery(sizeSetting) {
+  let value;
+  if (sizeSetting === 'numberOfWinningBids') {
+    value = 'set(@rid).size()';
+  } else if (sizeSetting === 'amountOfMoneyExchanged') {
+    value = 'sum(price.netAmountEur)';
+  }
+  return value;
+}
+
 function createBidderNodes(transaction, networkSettings, networkQuery, networkName) {
   const bidderActorMapping = {};
   const valueQuery = settingsToValueQuery(networkSettings.nodeSize);
   const bidderNodesQuery = `SELECT bidder.name as label,
-    bidder[@rid] as \`@rid\`,
+    bidder[@rid] as bidderRID,
     ${valueQuery} as value,
-    median(bids.out('AppliedTo').bidsCount) as medianCompetition
+    median(out('AppliedTo').bidsCount) as medianCompetition
     FROM (
-      MATCH { class: Bidder, as: bidder },
-        { as: bidder }.out('Participates'){ class: Bid, as: bids },
-        ${_.join(queryToBidFilters(networkQuery), ',')}
-      RETURN bidder, bids
+      SELECT *, in('Participates') as bidder
+      FROM Bid
+      WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+      UNWIND bidder
     ) GROUP BY bidder;`;
   return config.db.query(bidderNodesQuery, { params: networkQuery })
     // I avoid using reduce here instead of map to run this in parralel
-    .then((bidderNodes) => Promise.map(bidderNodes, (bidderNode) => {
+    .then((bidderNodes) => Promise.map(bidderNodes, (node) => {
       const nodeAttrs = _.pick(
-        bidderNode,
+        node,
         ['label', 'value', 'medianCompetition'],
       );
       nodeAttrs.type = 'bidder';
       nodeAttrs.visible = true;
       nodeAttrs.id = uuidv4();
-      const actorName = createNetworkActor(transaction, nodeAttrs, bidderNode['@rid'], networkName);
-      bidderActorMapping[bidderNode['@rid']] = actorName;
+      const actorName = createNetworkActor(transaction, nodeAttrs, node.bidderRID, networkName);
+      bidderActorMapping[node.bidderRID] = actorName;
       return undefined;
     }))
     .then(() => bidderActorMapping);
@@ -130,27 +129,27 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
   const buyerActorMapping = {};
   const valueQuery = settingsToValueQuery(networkSettings.nodeSize);
   const buyerNodesQuery = `SELECT buyer.name as label,
-    buyer[@rid] as \`@rid\`,
+    buyer[@rid] as buyerRID,
     ${valueQuery} as value,
     buyer.address.country as country,
-    median(bids.out('AppliedTo').bidsCount) as medianCompetition
+    median(out('AppliedTo').bidsCount) as medianCompetition
     FROM (
-      MATCH { class: Buyer, as: buyer },
-        { as: buyer }.out('Awards'){ class: Bid, as: bids },
-        ${_.join(queryToBidFilters(networkQuery), ',')}
-      RETURN buyer, bids
+      SELECT *, in('Awards') as buyer
+      FROM Bid
+      WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+      UNWIND buyer
     ) GROUP BY buyer;`;
   return config.db.query(buyerNodesQuery, { params: networkQuery })
-    .then((buyerNodes) => Promise.map(buyerNodes, (buyerNode) => {
+    .then((buyerNodes) => Promise.map(buyerNodes, (node) => {
       const nodeAttrs = _.pick(
-        buyerNode,
+        node,
         ['label', 'value', 'medianCompetition', 'country'],
       );
       nodeAttrs.type = 'buyer';
       nodeAttrs.visible = true;
       nodeAttrs.id = uuidv4();
-      const actorName = createNetworkActor(transaction, nodeAttrs, buyerNode['@rid'], networkName);
-      buyerActorMapping[buyerNode['@rid']] = actorName;
+      const actorName = createNetworkActor(transaction, nodeAttrs, node.buyerRID, networkName);
+      buyerActorMapping[node.buyerRID] = actorName;
       return undefined;
     }))
     .then(() => buyerActorMapping);
@@ -181,11 +180,11 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
     bidder[@rid] as bidderRID,
     ${valueQuery} as value
     FROM (
-      MATCH { class: Bid,  as: bids },
-        ${_.join(queryToBidFilters(networkQuery), ',')},
-        { as: bids }.in('Awards'){ class: Buyer, as: buyer },
-        { as: bids }.in('Participates'){ class: Bidder, as: bidder }
-      RETURN bids, buyer, bidder
+      SELECT *, in('Participates') as bidder,
+      in('Awards') as buyer
+      FROM Bid
+      WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+      UNWIND bidder, buyer
     ) GROUP BY [buyer, bidder];`;
   return config.db.query(contractsEdgesQuery, { params: networkQuery })
     .then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
@@ -199,17 +198,24 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
     }));
 }
 
-function createPartnersEdges(transaction, actorClass, edgeToBidClass, networkQuery, networkActorsMapping) { // eslint-disable-line max-len
-  const partnersEdgesQuery = `SELECT actor[@rid] as actorRID,
-    partner[@rid] as partnerRID,
-    set(bids).size() as value
+function createPartnersEdges(transaction, edgeToBidClass, networkQuery, networkActorsMapping) {
+  const partnersEdgesQuery = `SELECT actorRID,
+    partnerRID,
+    set(bidRID).size() as value
     FROM (
-      MATCH { class: ${actorClass}, as: actor },
-        { as: actor }.out(${edgeToBidClass}){ class: Bid, as: bids },
-        ${_.join(queryToBidFilters(networkQuery), ',')},
-        { as: bids }.in(${edgeToBidClass}){ class: ${actorClass}, as: partner,
-          where: ($matched.actor != $currentMatch)}
-      RETURN bids, set(actor, partner) as pair, actor, partner
+      SELECT bidRID,
+      actorRID,
+      partnerRID,
+      set(actorRID, partnerRID) as pair
+      FROM (
+        SELECT @rid as bidRID,
+        in('${edgeToBidClass}') as actorRID,
+        in('${edgeToBidClass}') as partnerRID
+        FROM Bid
+        WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+        AND in('${edgeToBidClass}').size() > 1
+        UNWIND actorRID, partnerRID
+      ) WHERE actorRID != partnerRID
     ) GROUP BY pair;`;
   return config.db.query(partnersEdgesQuery, { params: networkQuery })
     .then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
