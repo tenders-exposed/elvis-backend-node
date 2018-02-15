@@ -52,6 +52,68 @@ test.serial('createNetwork creates network without nodes', async (t) => {
   t.is(networkParams.query, networkParams.query);
 });
 
+test.serial('createNetwork filters bids by query', async (t) => {
+  const queryBuyer = await fixtures.build('rawBuyer');
+  const queryBidder = await fixtures.build('rawBidder');
+  const bidders = await fixtures.buildMany('rawBidder', 2);
+  const buyer = await fixtures.build('rawBuyer');
+  const queryCpv = await fixtures.build('rawCpv');
+  const queryYear = 2017;
+  const queryCountry = 'CZ';
+  await fixtures.build('rawBidWithBidder', { bidders })
+    .then((bid) => fixtures.build('rawLot', {
+      bids: [bid],
+      awardDecisionDate: `${queryYear}-01-17`,
+    }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [queryBuyer],
+      lots: [rawLot],
+      cpvs: [queryCpv],
+      country: queryCountry,
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  await fixtures.build('rawBidWithBidder', { bidders: [queryBidder] })
+    .then((bid) => fixtures.build('rawLot', {
+      bids: [bid],
+      awardDecisionDate: `${queryYear}-11-12`,
+    }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: [buyer],
+      lots: [rawLot],
+      cpvs: [queryCpv],
+      country: queryCountry,
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  await fixtures.build('rawFullTender', {
+    country: 'NL',
+  })
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  const networkParams = {
+    query: {
+      countries: [queryCountry],
+      cpvs: [queryCpv.code],
+      years: [queryYear],
+      buyers: [queryBuyer.id],
+      bidders: [queryBidder.id],
+    },
+    settings: {
+      nodeSize: 'numberOfWinningBids',
+      edgeSize: 'numberOfWinningBids',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const networkActors = await config.db.query(
+    "SELECT *, in('ActingAs').id as actorID FROM NetworkActor WHERE out('PartOf').id=:networkID",
+    { params: { networkID: network.id } },
+  );
+  const expectedActors = _.concat(
+    _.map(bidders, 'id'),
+    [buyer.id, queryBidder.id, queryBuyer.id],
+  );
+  const involvedActors = _.map(networkActors, (node) => node.actorID[0]);
+  t.deepEqual(_.sortBy(involvedActors), _.sortBy(expectedActors));
+});
+
 test.serial('createNetwork raises error if query is empty', async (t) => {
   t.plan(3);
   const networkParams = {

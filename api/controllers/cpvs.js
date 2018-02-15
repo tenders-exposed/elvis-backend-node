@@ -30,7 +30,7 @@ function getTenderCpvs(req, res) {
     queryParams.bidders = swaggerParams.bidders;
   }
   if (actorQueries.length) {
-    queryCriteria.push(_.join(actorQueries, ' OR '));
+    queryCriteria.push(`(${_.join(actorQueries, ' OR ')})`);
   }
   const cpvsQuery = `SELECT cpv.code as code,
     cpv.xNumberDigits as xNumberDigits,

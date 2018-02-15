@@ -30,7 +30,7 @@ function getTenderCountries(req, res) {
     queryParams.bidders = swaggerParams.bidders;
   }
   if (actorQueries.length) {
-    queryCriteria.push(_.join(actorQueries, ' OR '));
+    queryCriteria.push(`(${_.join(actorQueries, ' OR ')})`);
   }
   const query = `SELECT *
     FROM Country
