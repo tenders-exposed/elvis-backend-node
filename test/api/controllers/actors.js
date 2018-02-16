@@ -45,6 +45,21 @@ test.serial('getTenderActors returns all actors by default', async (t) => {
   t.deepEqual(await expectedResponse([buyer, bidder]), res.body);
 });
 
+test.serial('getTenderActors limits actors to limit', async (t) => {
+  t.plan(2);
+  const buyer = await fixtures.build('rawBuyer', { '@class': 'Buyer' });
+  const secondBuyer = await fixtures.build('rawBuyer', { '@class': 'Buyer' });
+  await fixtures.build('rawTender', {
+    buyers: [buyer, secondBuyer],
+  })
+    .then((rawTender) => writers.writeTender(rawTender));
+  const res = await request(app)
+    .get('/tenders/actors?limit=1');
+
+  t.is(res.status, codes.SUCCESS);
+  t.deepEqual(await expectedResponse([buyer]), res.body);
+});
+
 test.serial('getTenderActors filters actors by cpvs', async (t) => {
   t.plan(2);
   const cpv = await fixtures.build('rawCpv');
