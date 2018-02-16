@@ -25,9 +25,7 @@ module.exports = (err, req, res) => {
     errorResponse.error_info = err.toString();
   }
 
-  if (config.env === 'development') {
-    console.error(errorResponse); // eslint-disable-line no-console
-  }
+  console.error(errorResponse); // eslint-disable-line no-console
   return res.status(errorResponse.status).json({
     errors: [
       _.pick(errorResponse, ['message']),

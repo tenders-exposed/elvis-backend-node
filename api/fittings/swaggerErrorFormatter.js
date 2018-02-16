@@ -20,6 +20,7 @@ module.exports = function create() {
     }
     const errorResponse = { errors };
     context.headers['Content-Type'] = 'application/json';
+    console.error(context.error); // eslint-disable-line no-console
     delete context.error;
     return next(null, JSON.stringify(errorResponse));
   };

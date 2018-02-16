@@ -198,6 +198,11 @@ paths:
           required: false
           type: string
           minLength: 2
+        - name: limit
+          in: query
+          description: Limit suggestions of actors
+          required: false
+          type: integer
         - name: cpvs
           in: query
           description: Get only the actors involved in tenders that have these CPVs - array of CPV codes
