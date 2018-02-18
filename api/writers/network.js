@@ -107,7 +107,9 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
       FROM Bid
       WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
       UNWIND bidder
-    ) GROUP BY bidder;`;
+    )
+    WHERE bidder IS NOT NULL
+    GROUP BY bidder;`;
   return config.db.query(bidderNodesQuery, { params: networkQuery })
     // I avoid using reduce here instead of map to run this in parralel
     .then((bidderNodes) => Promise.map(bidderNodes, (node) => {
@@ -138,7 +140,9 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
       FROM Bid
       WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
       UNWIND buyer
-    ) GROUP BY buyer;`;
+    )
+    WHERE buyer IS NOT NULL
+    GROUP BY buyer;`;
   return config.db.query(buyerNodesQuery, { params: networkQuery })
     .then((buyerNodes) => Promise.map(buyerNodes, (node) => {
       const nodeAttrs = _.pick(
@@ -185,7 +189,10 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
       FROM Bid
       WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
       UNWIND bidder, buyer
-    ) GROUP BY [buyer, bidder];`;
+    )
+    WHERE buyer IS NOT NULL
+    AND bidder IS NOT NULL
+    GROUP BY [buyer, bidder];`;
   return config.db.query(contractsEdgesQuery, { params: networkQuery })
     .then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
       const edgeAttrs = {

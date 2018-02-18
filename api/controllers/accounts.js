@@ -98,7 +98,7 @@ function deleteAccount(req, res) {
         .then(() => res.status(codes.NO_CONTENT).json())
         .catch((err) => formatError(err, req, res));
     }
-    throw codes.Unauthorized('This operation requires authorization.');
+    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
   });
 }
 
