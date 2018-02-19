@@ -118,7 +118,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
         ['label', 'value', 'medianCompetition'],
       );
       nodeAttrs.type = 'bidder';
-      nodeAttrs.visible = true;
+      nodeAttrs.active = true;
       nodeAttrs.id = uuidv4();
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.bidderRID, networkName);
       bidderActorMapping[node.bidderRID] = partnerName;
@@ -150,7 +150,7 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
         ['label', 'value', 'medianCompetition', 'country'],
       );
       nodeAttrs.type = 'buyer';
-      nodeAttrs.visible = true;
+      nodeAttrs.active = true;
       nodeAttrs.id = uuidv4();
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.buyerRID, networkName);
       buyerActorMapping[node.buyerRID] = partnerName;
@@ -197,7 +197,7 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
     .then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
       const edgeAttrs = {
         value: edge.value,
-        visible: true,
+        active: true,
       };
       const fromName = networkActorsMapping[edge.buyerRID];
       const toName = networkActorsMapping[edge.bidderRID];
@@ -228,7 +228,7 @@ function createPartnersEdges(transaction, edgeToBidClass, networkQuery, networkA
     .then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
       const edgeAttrs = {
         value: edge.value,
-        visible: true,
+        active: true,
       };
       const fromName = networkActorsMapping[edge.actorRID];
       const toName = networkActorsMapping[edge.partnerRID];
@@ -262,8 +262,8 @@ async function createCluster(networkID, clusterParams) {
     actorsIDsQuery,
     { params: { nodes: clusterParams.nodes, type: clusterParams.type } },
   ).then((networkActors) => _.map(networkActors, (networkActor) => {
-    if (networkActor.visible === false) {
-      throw codes.BadRequest(`Node with ID ${networkActor.id} can't be used in a cluster because it is disabled.`);
+    if (networkActor.active === false) {
+      throw codes.BadRequest(`Node with ID ${networkActor.id} can't be used in a cluster because it is deactivated.`);
     }
     return networkActor.in[0];
   }));
@@ -284,7 +284,7 @@ async function createCluster(networkID, clusterParams) {
     id: uuidv4(),
     label: clusterParams.label,
     type: clusterParams.type,
-    visible: true,
+    active: true,
   });
 
   const clusterName = recordName(clusterAttrs.id, 'ActorCluster');
@@ -304,7 +304,7 @@ async function createCluster(networkID, clusterParams) {
     createClusterIncludesEdges(transaction, network, clusterParams.nodes, clusterName),
   ])
     .then(() => Promise.map(clusterParams.nodes, (nodeID) =>
-      disableNetworkActor(transaction, network, nodeID)))
+      deactivateNetworkActor(transaction, network, nodeID)))
     .then(() => transaction.commit(2).return(`$${clusterName}`).one())
     .then(() => network);
 }
@@ -338,7 +338,7 @@ function createClusterPartnersEdges(transaction, edgeToBidClass, network, actorI
   ).then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
     const edgeAttrs = {
       value: edge.value,
-      visible: true,
+      active: true,
     };
     return createClusterActorEdge(transaction, 'Partners', edgeAttrs, clusterName, edge.clusterPartnerID, network.id);
   }));
@@ -366,7 +366,7 @@ function createClusterContractsEdges(transaction, edgeToBidClass, network, actor
   ).then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
     const edgeAttrs = {
       value: edge.value,
-      visible: true,
+      active: true,
     };
     return createClusterActorEdge(transaction, 'contracts', edgeAttrs, clusterName, edge.contractorID, network.id);
   }));
@@ -409,21 +409,21 @@ function createClusterIncludesEdges(transaction, network, nodeIDs, clusterName) 
       }));
 }
 
-function disableNetworkActor(transaction, network, networkActorID) {
+function deactivateNetworkActor(transaction, network, networkActorID) {
   const actorName = recordName(networkActorID, 'NetworkActor');
   transaction.let(actorName, (t) => {
     t.update('NetworkActor')
-      .set({ visible: false })
+      .set({ active: false })
       .where({ id: networkActorID })
       .return('AFTER');
   });
   return Promise.all([
-    disableNetworkActorEdges(transaction, networkActorID, 'Contracts'),
-    disableNetworkActorEdges(transaction, networkActorID, 'Partners'),
+    deactivateNetworkActorEdges(transaction, networkActorID, 'Contracts'),
+    deactivateNetworkActorEdges(transaction, networkActorID, 'Partners'),
   ]);
 }
 
-function disableNetworkActorEdges(transaction, networkActorID, edgeClass) {
+function deactivateNetworkActorEdges(transaction, networkActorID, edgeClass) {
   const actorEdgesQuery = `SELECT unionall(
     inE('${edgeClass}'),
     outE('${edgeClass}')
@@ -436,7 +436,7 @@ function disableNetworkActorEdges(transaction, networkActorID, edgeClass) {
       const edgeName = recordName(uuidv4(), edgeClass);
       transaction.let(edgeName, (t) => {
         t.update(edgeClass)
-          .set({ visible: false })
+          .set({ active: false })
           .where({ '@rid': edgeRID })
           .return('AFTER');
       });
@@ -458,6 +458,6 @@ module.exports = {
   createClusterActorEdge,
   createClusterContractsEdges,
   createClusterIncludesEdges,
-  disableNetworkActor,
-  disableNetworkActorEdges,
+  deactivateNetworkActor,
+  deactivateNetworkActorEdges,
 };
