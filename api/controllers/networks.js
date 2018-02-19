@@ -143,14 +143,16 @@ function formatNetwork(network) {
 
 function formatNode(networkActor) {
   const node = _.pick(networkActor, ['label', 'id', 'type', 'medianCompetition',
-    'value', 'country', 'visible']);
+    'value', 'country']);
   node.flags = {};
+  node.active = networkActor.visible;
   return node;
 }
 
 function formatEdge(networkEdge) {
-  const edge = _.pick(networkEdge, ['from', 'to', 'type', 'value', 'visible']);
+  const edge = _.pick(networkEdge, ['from', 'to', 'type', 'value']);
   edge.flags = {};
+  edge.active = networkEdge.visible;
   return edge;
 }
 
@@ -161,22 +163,28 @@ function formatNetworkWithRelated(network) {
       const nodesQuery = `SELECT *
         FROM NetworkActor
         WHERE out('PartOf').id=:networkID
-        AND visible=true;`;
+        AND @class='NetworkActor'`;
       const edgesQuery = (className) => `SELECT *,
         in.id as \`from\`,
         out.id as to,
         @class.toLowerCase() as type
         FROM ${className}
-        WHERE visible=true
-        AND out.out('PartOf').id=:networkID;`;
+        WHERE out.out('PartOf').id=:networkID;`;
+      const clustersQuery = `SELECT *,
+        out('Includes').id as nodes
+        FROM ActorCluster
+        WHERE out('PartOf').id=:networkID;`;
       return Promise.join(
         config.db.query(nodesQuery, { params: { networkID } }),
         config.db.query(edgesQuery('Contracts'), { params: { networkID } }),
         config.db.query(edgesQuery('Partners'), { params: { networkID } }),
-        (nodes, contractsEdges, partnersEdges) => {
+        config.db.query(clustersQuery, { params: { networkID } }),
+        (nodes, contractsEdges, partnersEdges, clusters) => {
           prettyNetwork.nodes = nodes.map((node) => formatNode(node));
           prettyNetwork.edges = _.concat(contractsEdges, partnersEdges)
             .map((edge) => formatEdge(edge));
+          prettyNetwork.clusters = clusters.map((cluster) =>
+            Object.assign(formatNode(cluster), { nodes: cluster.nodes }));
           return prettyNetwork;
         },
       );
