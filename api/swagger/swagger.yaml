@@ -723,6 +723,51 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /networks/{networkID}/clusters:
+    x-swagger-router-controller: clusters
+    post:
+      tags:
+        - network
+      description: Create a cluster
+      operationId: createCluster
+      parameters:
+        - name: Authorization
+          type: string
+          in: header
+          description: Access token of the user who owns the network
+          required: false
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network that should be deleted
+          required: true
+        - name: body
+          in: body
+          description: Cluster params
+          required: true
+          schema:
+            $ref: "#/definitions/CreateClusterRequest"
+      responses:
+        "201":
+          description: Successfully created created cluster. This also changes edges and nodes so the whole network is returned
+          schema:
+            $ref: "#/definitions/NetworkResponse"
+        "400":
+          description: Bad request ['Wrong access token.', 'Network "query" can\'t be empty.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 definitions:
   AccountCredentials:
     type: object
@@ -795,6 +840,32 @@ definitions:
       refreshToken:
         type: string
         description: Refresh token with long life
+  CreateClusterRequest:
+    type: object
+    properties:
+      cluster:
+        type: object
+        required:
+          - label
+          - type
+          - nodes
+        properties:
+          label:
+            type: string
+            description: Label of the node i.e. name of the cluster
+          type:
+            type: string
+            description: Node type
+            enum:
+              - bidder
+              - buyer
+          nodes:
+            type: array
+            description: Array of node IDs
+            items:
+              type: string
+              description: Node ID
+              format: uuid
   CreateNetworkRequest:
     type: object
     properties:
@@ -895,6 +966,19 @@ definitions:
           type: array
           items:
             $ref: "#/definitions/NetworkEdge"
+        clusters:
+          type: array
+          items:
+            $ref: "#/definitions/NetworkCluster"
+        count:
+          type: object
+          properties:
+            nodes:
+              type: integer
+              description: Number of nodes in the network
+            edges:
+              type: integer
+              description: Number of edges in the network
   NetworkSettings:
     type: object
     description: Network settings
@@ -978,13 +1062,23 @@ definitions:
       medianCompetition:
         type: integer
         description: Median number of bidders in this actor's bids
-      visible:
+      active:
         type: boolean
-        description: Is the node visible
-      flags:
-        type: object
-        description: Red flags of the node
-        default: {}
+        description: If the node is part of a cluster it is inactive
+  NetworkCluster:
+    allOf:
+    - $ref: "#/definitions/NetworkNode"
+    - type: object
+      required:
+        - nodes
+      properties:
+        nodes:
+          type: array
+          description: Array of node IDs
+          items:
+            type: string
+            description: Node ID
+            format: uuid
   NetworkEdge:
     type: object
     required:
@@ -1010,13 +1104,9 @@ definitions:
       to:
         type: string
         description: ID of the receiving node
-      visible:
+      active:
         type: boolean
-        description: Is the edge visible
-      flags:
-        type: object
-        description: Red flags of the node
-        default: {}
+        description: If the edge is attached to an inactive node it is inactive
   CpvIndex:
     type: object
     properties:
@@ -1107,4 +1197,3 @@ definitions:
           properties:
             message:
               type: string
-              description: Error message
