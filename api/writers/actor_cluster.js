@@ -36,6 +36,7 @@ async function createCluster(networkID, clusterParams) {
       FROM Bid
       WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
       AND in('${edgeToBidClass}').id in :actorIDs
+      AND isWinning=true
     );`;
   const clusterAttrs = await config.db.query(
     clusterQuery,
@@ -66,8 +67,9 @@ async function createCluster(networkID, clusterParams) {
   ])
     .then(() => Promise.map(clusterParams.nodes, (nodeID) =>
       deactivateNetworkActor(transaction, network, nodeID)))
-    .then(() => transaction.commit(2).return(`$${clusterName}`).one())
-    .then(() => network);
+    .then(() => transaction.commit(2)
+      .return(`$${clusterName}`)
+      .one());
 }
 
 function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clusterName) {
@@ -88,6 +90,7 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
           WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
           AND in('${edgeToBidClass}').id in :actorIDs
           AND in('${edgeToBidClass}').size() > 1
+          AND isWinning=true
           UNWIND actor, partner
         ) WHERE actor != partner
       ) WHERE difference(pairIDs, :actorIDs).size() > 0
@@ -117,7 +120,8 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
       FROM Bid
       WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
       AND in('${edgeToBidClass}').id in :actorIDs
-      UNWIND contractor, clusterActor
+      AND isWinning=true
+      UNWIND contractor
     ) WHERE contractor IS NOT NULL
     AND clusterActor IS NOT NULL
     GROUP BY contractor;`;

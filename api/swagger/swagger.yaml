@@ -724,7 +724,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /networks/{networkID}/clusters:
-    x-swagger-router-controller: clusters
+    x-swagger-router-controller: actor_clusters
     post:
       tags:
         - network
