@@ -1,8 +1,8 @@
 'use strict';
 
 const _ = require('lodash');
-const Promise = require('bluebird');
 
+const config = require('../../config/default');
 const writers = require('../writers/actor_cluster');
 const codes = require('../helpers/codes');
 const validateToken = require('../middlewares/validateToken');
@@ -15,6 +15,10 @@ function createCluster(req, res) {
   return validateToken(req, res, () => {
     if (_.isUndefined(req.user) === false) {
       return writers.createCluster(networkID, clusterParams)
+        .then(() => config.db.select()
+          .from('Network')
+          .where({ id: networkID })
+          .one())
         .then((network) => networkController.formatNetworkWithRelated(network))
         .then((network) => res.status(codes.CREATED).json({
           network,

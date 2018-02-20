@@ -374,3 +374,42 @@ test.serial('createNetwork uses number of shared bids for partners edge size ', 
   t.is(partnersEdges.length, 1);
   t.is(partnersEdges[0].value, 3);
 });
+
+test.serial('createNetwork calculates medianCompetition for nodes', async (t) => {
+  const buyers = await fixtures.buildMany('rawBuyer', 3);
+  await Promise.join(
+    fixtures.build('rawBidWithBidder', { isWinning: true }),
+    fixtures.build('rawBidWithBidder', { isWinning: false }),
+    (loserBid, winningBid) => [loserBid, winningBid],
+  )
+    .then((bids) => fixtures.build('rawLot', { bids }))
+    .then((rawLot) => fixtures.build('rawTender', {
+      buyers: _.take(buyers, 2),
+      lots: [rawLot],
+      country: 'CZ',
+    }))
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  await fixtures.build('rawFullTender', {
+    buyers: _.takeRight(buyers, 2),
+    country: 'CZ',
+  })
+    .then((rawTender) => tenderWriters.writeTender(rawTender));
+  const networkParams = {
+    query: {
+      countries: ['CZ'],
+    },
+    settings: {
+      nodeSize: 'amountOfMoneyExchanged',
+      edgeSize: 'amountOfMoneyExchanged',
+    },
+  };
+  const network = await networkWriters.createNetwork(networkParams, undefined);
+  const networkBuyers = await config.db.select()
+    .from('NetworkActor')
+    .where({
+      "out('PartOf').id": network.id,
+      type: 'buyer',
+    })
+    .all();
+  t.deepEqual(_.sortBy(_.map(networkBuyers, 'medianCompetition')), [1, 1.5, 2]);
+});

@@ -106,6 +106,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
       SELECT *, in('Participates') as bidder
       FROM Bid
       WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+      AND isWinning=true
       UNWIND bidder
     )
     WHERE bidder IS NOT NULL
@@ -139,6 +140,7 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
       SELECT *, in('Awards') as buyer
       FROM Bid
       WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+      AND isWinning=true
       UNWIND buyer
     )
     WHERE buyer IS NOT NULL
@@ -188,6 +190,7 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
       in('Awards') as buyer
       FROM Bid
       WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+      AND isWinning=true
       UNWIND bidder, buyer
     )
     WHERE buyer IS NOT NULL
@@ -220,6 +223,7 @@ function createPartnersEdges(transaction, edgeToBidClass, networkQuery, networkA
         in('${edgeToBidClass}') as partnerRID
         FROM Bid
         WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+        AND isWinning=true
         AND in('${edgeToBidClass}').size() > 1
         UNWIND actorRID, partnerRID
       ) WHERE actorRID != partnerRID
@@ -256,4 +260,7 @@ module.exports = {
   createOwnsEdge,
   createNetworkActor,
   createNetworkEdge,
+  settingsToValueQuery,
+  queryToBidFilters,
+  recordName,
 };
