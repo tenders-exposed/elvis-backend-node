@@ -143,14 +143,16 @@ function formatNetwork(network) {
 
 function formatNode(networkActor) {
   const node = _.pick(networkActor, ['label', 'id', 'type', 'medianCompetition',
-    'value', 'country', 'active']);
+    'value', 'country']);
   node.flags = {};
+  node.hidden = !networkActor.active;
   return node;
 }
 
 function formatEdge(networkEdge) {
-  const edge = _.pick(networkEdge, ['from', 'to', 'type', 'value', 'active']);
+  const edge = _.pick(networkEdge, ['from', 'to', 'type', 'value']);
   edge.flags = {};
+  edge.hidden = !networkEdge.active;
   return edge;
 }
 

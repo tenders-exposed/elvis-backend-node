@@ -7,7 +7,6 @@ const writers = require('../writers/actor_cluster');
 const codes = require('../helpers/codes');
 const validateToken = require('../middlewares/validateToken');
 const formatError = require('../helpers/errorFormatter');
-const networkController = require('./networks');
 
 function createCluster(req, res) {
   const networkID = req.swagger.params.networkID.value;
@@ -15,13 +14,9 @@ function createCluster(req, res) {
   return validateToken(req, res, () => {
     if (_.isUndefined(req.user) === false) {
       return writers.createCluster(networkID, clusterParams)
-        .then(() => config.db.select()
-          .from('Network')
-          .where({ id: networkID })
-          .one())
-        .then((network) => networkController.formatNetworkWithRelated(network))
-        .then((network) => res.status(codes.CREATED).json({
-          network,
+        .then((cluster) => formatCluster(cluster))
+        .then((cluster) => res.status(codes.CREATED).json({
+          cluster,
         }))
         .catch((err) => formatError(err, req, res));
     }
@@ -29,7 +24,23 @@ function createCluster(req, res) {
   });
 }
 
+function formatCluster(networkCluster) {
+  console.log(networkCluster);
+  const cluster = _.pick(networkCluster, ['label', 'id', 'type', 'medianCompetition',
+    'value', 'country']);
+  cluster.flags = {};
+  cluster.hidden = !networkCluster.active;
+  return config.db.select("expand(out('Includes'))")
+    .from('ActorCluster')
+    .where({ id: networkCluster.id })
+    .all()
+    .then((nodes) => _.map(nodes, 'id'))
+    .then((nodes) => {
+      cluster.nodes = nodes;
+      return cluster;
+    });
+}
+
 module.exports = {
   createCluster,
 };
-
