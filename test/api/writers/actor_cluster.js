@@ -45,7 +45,7 @@ async function createNetwork() {
   return networkWriters.createNetwork(networkParams, undefined);
 }
 
-test.serial('createCluster creates cluster with no nodes', async (t) => {
+test.serial('createCluster raises for clusters with no nodes', async (t) => {
   t.plan(3);
   const network = await createNetwork();
   const clusterParams = {
@@ -53,18 +53,26 @@ test.serial('createCluster creates cluster with no nodes', async (t) => {
     type: 'buyer',
     nodes: [],
   };
-  const cluster = await clusterWriters.createCluster(network.id, clusterParams);
-  t.not(cluster['@rid'], undefined);
-  t.is(cluster.label, clusterParams.label);
-  t.is(cluster.type, clusterParams.type);
+  const error = await t.throws(clusterWriters.createCluster(network.id, clusterParams));
+  t.regex(error.message, /node/i);
+  t.regex(error.message, /found/i);
 });
 
 test.serial('createCluster links cluster to network', async (t) => {
   const network = await createNetwork();
+  const clusterBuyersQuery = `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND type=:type
+    LIMIT 2;`;
+  const clusterBuyers = await config.db.query(
+    clusterBuyersQuery,
+    { params: { networkID: network.id, type: 'buyer' } },
+  );
   const clusterParams = {
     label: 'actors crew',
     type: 'buyer',
-    nodes: [],
+    nodes: _.map(clusterBuyers, 'id'),
   };
   const cluster = await clusterWriters.createCluster(network.id, clusterParams);
   const networkLinks = await config.db.query(

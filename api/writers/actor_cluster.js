@@ -14,6 +14,9 @@ async function createCluster(networkID, clusterParams) {
     .from('Network')
     .where({ id: networkID })
     .one();
+  if (_.isUndefined(network) === true) {
+    throw codes.NotFound(`Network with \`id\` ${networkID} was not found.`);
+  }
   const actorsIDsQuery = `SELECT *,
     in('ActingAs').id
     FROM NetworkActor
@@ -24,11 +27,14 @@ async function createCluster(networkID, clusterParams) {
     { params: { nodes: clusterParams.nodes, type: clusterParams.type } },
   ).then((networkActors) => _.map(networkActors, (networkActor) => {
     if (networkActor.active === false) {
-      throw codes.BadRequest(`Node with ID ${networkActor.id} can't be used in a cluster because it is deactivated.`);
+      throw codes.BadRequest(`Node with \`id\` ${networkActor.id} can't be used in a cluster because it is deactivated.`);
     }
     return networkActor.in[0];
   }));
 
+  if (_.isEmpty(actorIDs) === true) {
+    throw codes.BadRequest('No nodes with `id` and `type` you provided were found.');
+  }
   const clusterQuery = `SELECT count(*) as value,
     median(out('AppliedTo').bidsCount) as medianCompetition
     FROM (

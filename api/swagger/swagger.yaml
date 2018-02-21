@@ -73,7 +73,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/CpvIndex"
+            $ref: "#/definitions/CpvIndexResponse"
         "400":
           description: Bad request [Request validation failed (wrong param type)]
           schema:
@@ -124,7 +124,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/CountryIndex"
+            $ref: "#/definitions/CountryIndexResponse"
         "400":
           description: Bad request [Request validation failed (wrong param type)]
           schema:
@@ -175,7 +175,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/YearIndex"
+            $ref: "#/definitions/YearIndexResponse"
         "400":
           description: Bad request [Request validation failed (wrong param type)]
           schema:
@@ -228,7 +228,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/ActorIndex"
+            $ref: "#/definitions/ActorIndexResponse"
         "400":
           description: Bad request [Request validation failed (wrong param type)]
           schema:
@@ -594,7 +594,7 @@ paths:
         "200":
           description: List networks
           schema:
-            $ref: "#/definitions/NetworkIndex"
+            $ref: "#/definitions/NetworkIndexResponse"
         "400":
           description: Bad request ['Wrong access token.']
           schema:
@@ -651,7 +651,7 @@ paths:
         - name: networkID
           type: string
           in: path
-          description: ID of the network that should be retrieved
+          description: ID of the network that should be updated
           required: true
         - name: body
           in: body
@@ -739,7 +739,7 @@ paths:
         - name: networkID
           type: string
           in: path
-          description: ID of the network that should be deleted
+          description: ID of the network cluser will be part of
           required: true
         - name: body
           in: body
@@ -749,9 +749,9 @@ paths:
             $ref: "#/definitions/CreateClusterRequest"
       responses:
         "201":
-          description: Successfully created created cluster. This also changes edges and nodes so the whole network is returned
+          description: Successfully created created cluster. This makes the nodes involved in the cluster and their edges hidden so GET `/network/{ID}` to see all changes.
           schema:
-            $ref: "#/definitions/NetworkResponse"
+            $ref: "#/definitions/NetworkClusterResponse"
         "400":
           description: Bad request ['Wrong access token.', 'Network "query" can\'t be empty.']
           schema:
@@ -840,6 +840,26 @@ definitions:
       refreshToken:
         type: string
         description: Refresh token with long life
+  CreateNetworkRequest:
+    type: object
+    properties:
+      network:
+        type: object
+        required:
+          - query
+          - settings
+        additionalProperties: false
+        properties:
+          query:
+            $ref: "#/definitions/NetworkQuery"
+          settings:
+            $ref: "#/definitions/NetworkSettings"
+          name:
+            type: string
+            description: Name of the network
+          synopsis:
+            type: string
+            description: Short description of the network
   CreateClusterRequest:
     type: object
     properties:
@@ -866,26 +886,6 @@ definitions:
               type: string
               description: Node ID
               format: uuid
-  CreateNetworkRequest:
-    type: object
-    properties:
-      network:
-        type: object
-        required:
-          - query
-          - settings
-        additionalProperties: false
-        properties:
-          query:
-            $ref: "#/definitions/NetworkQuery"
-          settings:
-            $ref: "#/definitions/NetworkSettings"
-          name:
-            type: string
-            description: Name of the network
-          synopsis:
-            type: string
-            description: Short description of the network
   UpdateNetworkRequest:
     type: object
     properties:
@@ -902,7 +902,12 @@ definitions:
     properties:
       network:
         $ref: "#/definitions/NetworkWithRelated"
-  NetworkIndex:
+  NetworkClusterResponse:
+    type: object
+    properties:
+      cluster:
+        $ref: "#/definitions/NetworkCluster"
+  NetworkIndexResponse:
     type: object
     properties:
       networks:
@@ -1062,7 +1067,7 @@ definitions:
       medianCompetition:
         type: integer
         description: Median number of bidders in this actor's bids
-      active:
+      hidden:
         type: boolean
         description: If the node is part of a cluster it is inactive
   NetworkCluster:
@@ -1104,10 +1109,10 @@ definitions:
       to:
         type: string
         description: ID of the receiving node
-      active:
+      hidden:
         type: boolean
         description: If the edge is attached to an inactive node it is inactive
-  CpvIndex:
+  CpvIndexResponse:
     type: object
     properties:
       cpvs:
@@ -1132,7 +1137,7 @@ definitions:
       xNumberBids:
         type: integer
         description: Number of bids with this CPV
-  CountryIndex:
+  CountryIndexResponse:
     type: object
     properties:
       countries:
@@ -1150,14 +1155,14 @@ definitions:
       name:
         type: string
         description: Full name of the country
-  YearIndex:
+  YearIndexResponse:
     type: object
     properties:
       years:
         type: array
         items:
           type: integer
-  ActorIndex:
+  ActorIndexResponse:
     type: object
     properties:
       actors:
