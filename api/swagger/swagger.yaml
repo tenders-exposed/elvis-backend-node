@@ -753,7 +753,61 @@ paths:
           schema:
             $ref: "#/definitions/NetworkClusterResponse"
         "400":
-          description: Bad request ['Wrong access token.', 'Network "query" can\'t be empty.']
+          description: Bad request ['Wrong access token.', 'Node with ID can't be used in a cluster because it is deactivated']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /networks/{networkID}/clusters/{clusterID}:
+    x-swagger-router-controller: actor_clusters
+    patch:
+      tags:
+        - network
+      description: Update cluster
+      operationId: updateCluster
+      parameters:
+        - name: Authorization
+          type: string
+          in: header
+          description: Access token of the user who owns the network
+          required: true
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network cluster is part of
+          required: true
+        - name: clusterID
+          type: string
+          in: path
+          description: ID of the custer that should be updated
+          required: true
+        - name: body
+          in: body
+          description: Cluster params
+          required: true
+          schema:
+            $ref: "#/definitions/UpdateClusterRequest"
+      responses:
+        "200":
+          description: Successfully updated cluster. This makes the nodes involved in the cluster and their edges hidden so GET `/network/{ID}` to see all changes.
+          schema:
+            $ref: "#/definitions/NetworkClusterResponse"
+        "404":
+          description: Cluster/network not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "400":
+          description: Bad request ['Wrong access token.', 'Node with ID can't be used in a cluster because it is deactivated']
           schema:
             $ref: "#/definitions/ErrorResponse"
         "401":
@@ -869,6 +923,28 @@ definitions:
           - label
           - type
           - nodes
+        properties:
+          label:
+            type: string
+            description: Label of the node i.e. name of the cluster
+          type:
+            type: string
+            description: Node type
+            enum:
+              - bidder
+              - buyer
+          nodes:
+            type: array
+            description: Array of node IDs
+            items:
+              type: string
+              description: Node ID
+              format: uuid
+  UpdateClusterRequest:
+    type: object
+    properties:
+      cluster:
+        type: object
         properties:
           label:
             type: string
