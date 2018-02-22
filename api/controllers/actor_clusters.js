@@ -24,10 +24,25 @@ function createCluster(req, res) {
   });
 }
 
+function updateCluster(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  const clusterID = req.swagger.params.clusterID.value;
+  const clusterParams = req.swagger.params.body.value.cluster;
+  return validateToken(req, res, () => {
+    if (_.isUndefined(req.user) === false) {
+      return writers.updateCluster(networkID, clusterID, clusterParams)
+        .then((cluster) => formatCluster(cluster))
+        .then((cluster) => res.status(codes.SUCCESS).json({
+          cluster,
+        }))
+        .catch((err) => formatError(err, req, res));
+    }
+    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+  });
+}
+
 function formatCluster(networkCluster) {
-  console.log(networkCluster);
-  const cluster = _.pick(networkCluster, ['label', 'id', 'type', 'medianCompetition',
-    'value', 'country']);
+  const cluster = _.pick(networkCluster, ['label', 'id', 'type', 'medianCompetition', 'value']);
   cluster.flags = {};
   cluster.hidden = !networkCluster.active;
   return config.db.select("expand(out('Includes'))")
@@ -43,4 +58,5 @@ function formatCluster(networkCluster) {
 
 module.exports = {
   createCluster,
+  updateCluster,
 };

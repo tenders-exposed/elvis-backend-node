@@ -10,51 +10,18 @@ const networkWriters = require('./network');
 
 async function createCluster(networkID, clusterParams) {
   const edgeToBidClass = clusterParams.type === 'buyer' ? 'Awards' : 'Participates';
-  const network = await config.db.select()
-    .from('Network')
-    .where({ id: networkID })
-    .one();
-  if (_.isUndefined(network) === true) {
-    throw codes.NotFound(`Network with \`id\` ${networkID} was not found.`);
-  }
-  const actorsIDsQuery = `SELECT *,
-    in('ActingAs').id
-    FROM NetworkActor
-    WHERE id in :nodes
-    AND type=:type;`;
-  const actorIDs = await config.db.query(
-    actorsIDsQuery,
-    { params: { nodes: clusterParams.nodes, type: clusterParams.type } },
-  ).then((networkActors) => _.map(networkActors, (networkActor) => {
-    if (networkActor.active === false) {
-      throw codes.BadRequest(`Node with \`id\` ${networkActor.id} can't be used in a cluster because it is deactivated.`);
-    }
-    return networkActor.in[0];
-  }));
+  const network = await retrieveNetwork(networkID);
+  const actorIDs = await retrieveActorIDs(clusterParams.nodes, clusterParams.type);
 
-  if (_.isEmpty(actorIDs) === true) {
-    throw codes.BadRequest('No nodes with `id` and `type` you provided were found.');
-  }
-  const clusterQuery = `SELECT count(*) as value,
-    median(out('AppliedTo').bidsCount) as medianCompetition
-    FROM (
-      SELECT *
-      FROM Bid
-      WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
-      AND in('${edgeToBidClass}').id in :actorIDs
-      AND isWinning=true
-    );`;
-  const clusterAttrs = await config.db.query(
-    clusterQuery,
-    { params: Object.assign(network.query, { actorIDs }) },
-  ).then((results) => _.pick(results[0], ['value', 'medianCompetition']));
-  Object.assign(clusterAttrs, {
+  const calcuatedAttrs = await calculateCluster(edgeToBidClass, network, actorIDs);
+  const clusterAttrs = {
     id: uuidv4(),
     label: clusterParams.label,
     type: clusterParams.type,
     active: true,
-  });
-
+    value: calcuatedAttrs.value,
+    medianCompetition: calcuatedAttrs.medianCompetition,
+  };
   const clusterName = networkWriters.recordName(clusterAttrs.id, 'ActorCluster');
   const transaction = config.db.let(clusterName, (t) => {
     t.create('vertex', 'ActorCluster')
@@ -71,11 +38,155 @@ async function createCluster(networkID, clusterParams) {
     createContractsEdges(transaction, edgeToBidClass, network, actorIDs, clusterName),
     createIncludesEdges(transaction, network, clusterParams.nodes, clusterName),
   ])
-    .then(() => Promise.map(clusterParams.nodes, (nodeID) =>
-      deactivateNetworkActor(transaction, network, nodeID)))
+    .then(() => Promise.map(clusterParams.nodes, (networkActorID) =>
+      updateClusterActor(transaction, network, networkActorID, false)))
     .then(() => transaction.commit(2)
       .return(`$${clusterName}`)
       .one());
+}
+
+async function updateCluster(networkID, clusterID, clusterParams) {
+  const network = await retrieveNetwork(networkID);
+  const cluster = await retrieveCluster(networkID, clusterID);
+  const clusterAttrs = {
+    id: cluster.id,
+    type: clusterParams.type || cluster.type,
+    label: clusterParams.label || cluster.label,
+  };
+  const edgeToBidClass = clusterAttrs.type === 'buyer' ? 'Awards' : 'Participates';
+  const actorIDs = await retrieveActorIDs(
+    clusterParams.nodes || cluster.nodes,
+    clusterAttrs.type,
+    clusterAttrs.id,
+  );
+
+  if (clusterParams.type || clusterParams.nodes) {
+    const calcuatedAttrs = await calculateCluster(edgeToBidClass, network, actorIDs);
+    Object.assign(clusterAttrs, {
+      value: calcuatedAttrs.value,
+      medianCompetition: calcuatedAttrs.medianCompetition,
+    });
+  }
+
+  const clusterName = networkWriters.recordName(cluster.id, 'ActorCluster');
+  const transaction = config.db.let(clusterName, (t) => {
+    t.update('ActorCluster')
+      .set(clusterAttrs)
+      .where({ '@rid': cluster['@rid'] })
+      .return('AFTER');
+  });
+  if (clusterParams.nodes) {
+    const removedNodes = _.difference(cluster.nodes, clusterParams.nodes);
+    if (removedNodes.length) {
+      await Promise.map(removedNodes, (networkActorID) =>
+        updateClusterActor(transaction, network, networkActorID, true));
+    }
+  }
+
+  if (clusterParams.type || clusterParams.nodes) {
+    await removeClusterEdges(transaction, cluster);
+    await Promise.all([
+      createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clusterName),
+      createContractsEdges(transaction, edgeToBidClass, network, actorIDs, clusterName),
+      createIncludesEdges(transaction, network, clusterParams.nodes, clusterName),
+    ])
+      .then(() => Promise.map(clusterParams.nodes, (networkActorID) =>
+        updateClusterActor(transaction, network, networkActorID, false)));
+  }
+
+  return transaction.commit(2).return(`$${clusterName}`).one();
+}
+
+function calculateCluster(edgeToBidClass, network, actorIDs) {
+  const clusterQuery = `SELECT count(*) as value,
+  median(out('AppliedTo').bidsCount) as medianCompetition
+  FROM (
+    SELECT *
+    FROM Bid
+    WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
+    AND in('${edgeToBidClass}').id in :actorIDs
+    AND isWinning=true
+  );`;
+  return config.db.query(
+    clusterQuery,
+    { params: Object.assign({}, network.query, { actorIDs }) },
+  ).then((results) => _.pick(results[0], ['value', 'medianCompetition']));
+}
+
+function retrieveActorIDs(networkActorIDs, clusterType, clusterID) {
+  const actorsIDsQuery = `SELECT *,
+    in('ActingAs').id as actorIDs,
+    in('Includes').id as clusterIDs
+    FROM NetworkActor
+    WHERE id in :nodes
+    AND type=:type;`;
+  return config.db.query(
+    actorsIDsQuery,
+    { params: { nodes: networkActorIDs, type: clusterType } },
+  )
+    .then((networkActors) => {
+      if (_.isEmpty(networkActors) === true) {
+        throw codes.BadRequest('No nodes with `id` and `type` you provided were found.');
+      }
+      return _.map(networkActors, (networkActor) => {
+        if (networkActor.active === false) {
+          if (_.isUndefined(clusterID) || _.includes(networkActor.clusterIDs, clusterID) === false) {
+            throw codes.BadRequest(`Node with \`id\` ${networkActor.id} can't be used because it is already part of another cluster.`);
+          }
+        }
+        return networkActor.actorIDs[0];
+      });
+    });
+}
+
+function retrieveCluster(networkID, clusterID) {
+  const clusterQuery = `SELECT *,
+    out('Includes').id as nodes
+    FROM  ActorCluster
+    WHERE id=:clusterID
+    AND out('PartOf').id=:networkID`;
+  return config.db.query(
+    clusterQuery,
+    { params: { clusterID, networkID } },
+  ).then((result) => {
+    if (_.isEmpty(result) === true) {
+      throw codes.NotFound(`Cluster with \`id\` ${clusterID} was not found in the network with id ${networkID}}.`);
+    }
+    return result[0];
+  });
+}
+
+function retrieveNetwork(networkID) {
+  return config.db.select()
+    .from('Network')
+    .where({ id: networkID })
+    .one()
+    .then((network) => {
+      if (_.isUndefined(network) === true) {
+        throw codes.NotFound(`Network with \`id\` ${networkID} was not found.`);
+      }
+      return network;
+    });
+}
+
+function removeClusterEdges(transaction, cluster) {
+  const edgesQuery = `SELECT expand(unionall(
+    bothE('Partners'),
+    bothE('Contracts'),
+    bothE('Includes')
+  )) AS edges
+  FROM ActorCluster
+  WHERE id=:clusterID
+  UNWIND edges`;
+  return config.db.query(edgesQuery, { params: { clusterID: cluster.id } })
+    .then((edges) => Promise.map(edges, (edge) => {
+      const edgeName = `delete${networkWriters.recordName(uuidv4(), 'NetworkEdge')}`;
+      transaction.let(edgeName, (t) => {
+        t.delete('edge', edge['@class'])
+          .where({ '@rid': edge['@rid'] });
+      });
+      return edgeName;
+    }));
 }
 
 function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clusterName) {
@@ -99,12 +210,12 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
           AND isWinning=true
           UNWIND actor, partner
         ) WHERE actor != partner
-      ) WHERE difference(pairIDs, :actorIDs).size() > 0
+      ) WHERE difference(pairIDs, :actorIDs).size() = 1
       GROUP BY pairRIDs
     ) GROUP BY outsider;`;
   return config.db.query(
     clusterPartnersQuery,
-    { params: Object.assign(network.query, { actorIDs }) },
+    { params: Object.assign({}, network.query, { actorIDs }) },
   ).then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
     const edgeAttrs = {
       value: edge.value,
@@ -133,7 +244,7 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
     GROUP BY contractor;`;
   return config.db.query(
     clusterContractsQuery,
-    { params: Object.assign(network.query, { actorIDs }) },
+    { params: Object.assign({}, network.query, { actorIDs }) },
   ).then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
     const edgeAttrs = {
       value: edge.value,
@@ -180,21 +291,21 @@ function createIncludesEdges(transaction, network, nodeIDs, clusterName) {
       }));
 }
 
-function deactivateNetworkActor(transaction, network, networkActorID) {
+function updateClusterActor(transaction, network, networkActorID, active) {
   const actorName = networkWriters.recordName(networkActorID, 'NetworkActor');
   transaction.let(actorName, (t) => {
     t.update('NetworkActor')
-      .set({ active: false })
+      .set({ active })
       .where({ id: networkActorID })
       .return('AFTER');
   });
   return Promise.all([
-    deactivateNetworkActorEdges(transaction, networkActorID, 'Contracts'),
-    deactivateNetworkActorEdges(transaction, networkActorID, 'Partners'),
+    updateClusterActorEdges(transaction, networkActorID, 'Contracts', active),
+    updateClusterActorEdges(transaction, networkActorID, 'Partners', active),
   ]);
 }
 
-function deactivateNetworkActorEdges(transaction, networkActorID, edgeClass) {
+function updateClusterActorEdges(transaction, networkActorID, edgeClass, active) {
   const actorEdgesQuery = `SELECT unionall(
     inE('${edgeClass}'),
     outE('${edgeClass}')
@@ -207,7 +318,7 @@ function deactivateNetworkActorEdges(transaction, networkActorID, edgeClass) {
       const edgeName = networkWriters.recordName(uuidv4(), edgeClass);
       transaction.let(edgeName, (t) => {
         t.update(edgeClass)
-          .set({ active: false })
+          .set({ active })
           .where({ '@rid': edgeRID })
           .return('AFTER');
       });
@@ -217,10 +328,11 @@ function deactivateNetworkActorEdges(transaction, networkActorID, edgeClass) {
 
 module.exports = {
   createCluster,
+  updateCluster,
   createPartnersEdges,
   createContractsEdges,
   createNetworkEdge,
   createIncludesEdges,
-  deactivateNetworkActor,
-  deactivateNetworkActorEdges,
+  updateClusterActor,
+  updateClusterActorEdges,
 };
