@@ -165,8 +165,8 @@ function formatNetworkWithRelated(network) {
         WHERE out('PartOf').id=:networkID
         AND @class='NetworkActor'`;
       const edgesQuery = (className) => `SELECT *,
-        in.id as \`from\`,
-        out.id as to,
+        out.id as \`from\`,
+        in.id as to,
         @class.toLowerCase() as type
         FROM ${className}
         WHERE out.out('PartOf').id=:networkID;`;

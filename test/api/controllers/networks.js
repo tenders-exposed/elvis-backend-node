@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('lodash');
 const test = require('ava').test;
 const Promise = require('bluebird');
 const request = require('supertest');
@@ -49,7 +50,7 @@ test.serial('createNetwork succeeds with empty nodes and edges', async (t) => {
 });
 
 test.serial('createNetwork returns network with nodes and edges', async (t) => {
-  t.plan(3);
+  t.plan(7);
   const buyer = await fixtures.build('rawBuyer');
   const bidders = await fixtures.buildMany('rawBidder', 2);
   await fixtures.build('rawBidWithBidder', { bidders })
@@ -78,8 +79,26 @@ test.serial('createNetwork returns network with nodes and edges', async (t) => {
     .post('/networks')
     .send(networkParams);
   t.is(res.status, codes.CREATED);
-  t.is(res.body.network.nodes.length, 3);
-  t.is(res.body.network.edges.length, 3);
+  const bidderNodesIDs = _.map(_.filter(res.body.network.nodes, { type: 'bidder' }), 'id');
+  const buyerNodeIDs = _.map(_.filter(res.body.network.nodes, { type: 'buyer' }), 'id');
+  t.is(bidderNodesIDs.length, 2);
+  t.is(buyerNodeIDs.length, 1);
+  t.deepEqual(
+    _.uniq(_.map(_.filter(res.body.network.edges, { type: 'contracts' }), 'from')),
+    buyerNodeIDs,
+  );
+  t.deepEqual(
+    _.sortBy(_.uniq(_.map(_.filter(res.body.network.edges, { type: 'contracts' }), 'to'))),
+    _.sortBy(bidderNodesIDs),
+  );
+  t.true(_.isEmpty(_.difference(
+    _.map(_.filter(res.body.network.edges, { type: 'partners' }), 'from'),
+    bidderNodesIDs,
+  )));
+  t.true(_.isEmpty(_.difference(
+    _.map(_.filter(res.body.network.edges, { type: 'partners' }), 'to'),
+    bidderNodesIDs,
+  )));
 });
 
 test.serial('createNetwork links network to authenticated user', async (t) => {
@@ -197,7 +216,10 @@ test.serial('getNetworks returns a user\'s networks', async (t) => {
 
   const networks = await Promise.map(userNetworks, (network) =>
     networkController.formatNetwork(network));
-  t.deepEqual(res.body, { networks });
+  t.deepEqual(
+    _.sortBy(res.body.networks),
+    _.sortBy(networks),
+  );
 });
 
 test.serial('getNetworks fails if authorization is not provided', async (t) => {

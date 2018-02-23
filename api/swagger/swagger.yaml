@@ -1185,7 +1185,8 @@ definitions:
         type: string
         description: ISO 3166-1 alpha-2 country code
       medianCompetition:
-        type: integer
+        type: number
+        format: double
         description: Median number of bidders in this actor's bids
       hidden:
         type: boolean
