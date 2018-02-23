@@ -41,6 +41,19 @@ function updateCluster(req, res) {
   });
 }
 
+function deleteCluster(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  const clusterID = req.swagger.params.clusterID.value;
+  return validateToken(req, res, () => {
+    if (_.isUndefined(req.user) === false) {
+      return writers.deleteCluster(networkID, clusterID)
+        .then(() => res.status(codes.NO_CONTENT).json())
+        .catch((err) => formatError(err, req, res));
+    }
+    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+  });
+}
+
 function formatCluster(networkCluster) {
   const cluster = _.pick(networkCluster, ['label', 'id', 'type', 'medianCompetition', 'value']);
   cluster.flags = {};
@@ -59,4 +72,5 @@ function formatCluster(networkCluster) {
 module.exports = {
   createCluster,
   updateCluster,
+  deleteCluster,
 };
