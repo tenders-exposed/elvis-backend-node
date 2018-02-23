@@ -97,6 +97,19 @@ async function updateCluster(networkID, clusterID, clusterParams) {
   return transaction.commit(2).return(`$${clusterName}`).one();
 }
 
+async function deleteCluster(networkID, clusterID) {
+  const network = await retrieveNetwork(networkID);
+  const cluster = await retrieveCluster(networkID, clusterID);
+  const clusterName = networkWriters.recordName(cluster.id, 'ActorCluster');
+  const transaction = config.db.let(clusterName, (t) => {
+    t.delete('vertex', 'ActorCluster')
+      .where({ '@rid': cluster['@rid'] });
+  });
+  await Promise.map(cluster.nodes, (networkActorID) =>
+    updateClusterActor(transaction, network, networkActorID, true));
+  return transaction.commit(2).return(`$${clusterName}`).one();
+}
+
 function calculateCluster(edgeToBidClass, network, actorIDs) {
   const clusterQuery = `SELECT count(*) as value,
   median(out('AppliedTo').bidsCount) as medianCompetition
@@ -167,26 +180,6 @@ function retrieveNetwork(networkID) {
       }
       return network;
     });
-}
-
-function removeClusterEdges(transaction, cluster) {
-  const edgesQuery = `SELECT expand(unionall(
-    bothE('Partners'),
-    bothE('Contracts'),
-    bothE('Includes')
-  )) AS edges
-  FROM ActorCluster
-  WHERE id=:clusterID
-  UNWIND edges`;
-  return config.db.query(edgesQuery, { params: { clusterID: cluster.id } })
-    .then((edges) => Promise.map(edges, (edge) => {
-      const edgeName = `delete${networkWriters.recordName(uuidv4(), 'NetworkEdge')}`;
-      transaction.let(edgeName, (t) => {
-        t.delete('edge', edge['@class'])
-          .where({ '@rid': edge['@rid'] });
-      });
-      return edgeName;
-    }));
 }
 
 function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clusterName) {
@@ -326,13 +319,38 @@ function updateClusterActorEdges(transaction, networkActorID, edgeClass, active)
     }));
 }
 
+function removeClusterEdges(transaction, cluster) {
+  const edgesQuery = `SELECT expand(unionall(
+    bothE('Partners'),
+    bothE('Contracts'),
+    bothE('Includes')
+  )) AS edges
+  FROM ActorCluster
+  WHERE id=:clusterID
+  UNWIND edges`;
+  return config.db.query(edgesQuery, { params: { clusterID: cluster.id } })
+    .then((edges) => Promise.map(edges, (edge) => {
+      const edgeName = `delete${networkWriters.recordName(uuidv4(), 'NetworkEdge')}`;
+      transaction.let(edgeName, (t) => {
+        t.delete('edge', edge['@class'])
+          .where({ '@rid': edge['@rid'] });
+      });
+      return edgeName;
+    }));
+}
+
 module.exports = {
   createCluster,
   updateCluster,
+  deleteCluster,
   createPartnersEdges,
   createContractsEdges,
   createNetworkEdge,
   createIncludesEdges,
+  retrieveNetwork,
+  retrieveCluster,
+  retrieveActorIDs,
   updateClusterActor,
   updateClusterActorEdges,
+  removeClusterEdges,
 };
