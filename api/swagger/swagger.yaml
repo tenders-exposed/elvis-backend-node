@@ -822,6 +822,50 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+    delete:
+      tags:
+        - network
+      description: Delete cluster
+      operationId: deleteCluster
+      parameters:
+        - name: Authorization
+          type: string
+          in: header
+          description: Access token of the user who owns the network
+          required: true
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network cluster is part of
+          required: true
+        - name: clusterID
+          type: string
+          in: path
+          description: ID of the custer that should be deleted
+          required: true
+      responses:
+        "204":
+          description: Successfully deleted This makes the nodes involved in the cluster and their edges visible again so GET `/network/{ID}` to see all changes.
+        "404":
+          description: Cluster/network not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "400":
+          description: Bad request ['Wrong access token.', 'Node with ID can't be used in a cluster because it is deactivated']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 definitions:
   AccountCredentials:
     type: object
