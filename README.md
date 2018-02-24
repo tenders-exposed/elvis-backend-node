@@ -4,7 +4,7 @@
 
 Search and visualize public procurements for EU countries http://tenders.exposed/
 
-Previously, elvis.tenders.exposed was powered by tenders-exposed/elvis-backend but we decided to rewrite it completely because:
+Previously, tenders.exposed was powered by tenders-exposed/elvis-backend but we decided to rewrite it completely because:
 
 * the previous architecture based on MongoDB didn't allow us to efficiently implement clustering and splitting nodes
 * the data provider changed and the data structure along with it

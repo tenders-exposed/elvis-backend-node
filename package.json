@@ -1,7 +1,7 @@
 {
   "name": "elvis-api",
   "version": "1.0.0",
-  "description": "Search and visualize public procurements for EU countries http://elvis.tenders.exposed/",
+  "description": "Search and visualize public procurements for EU countries http://tenders.exposed/",
   "main": "server.js",
   "devDependencies": {
     "ava": "^0.23.0",
