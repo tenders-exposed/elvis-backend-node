@@ -143,7 +143,7 @@ function retrieveActorIDs(networkActorIDs, clusterType, clusterID) {
       }
       return _.map(networkActors, (networkActor) => {
         if (networkActor.active === false) {
-          if (_.isUndefined(clusterID) || _.includes(networkActor.clusterIDs, clusterID) === false) {
+          if (_.isUndefined(clusterID) || !_.includes(networkActor.clusterIDs, clusterID)) {
             throw codes.BadRequest(`Node with \`id\` ${networkActor.id} can't be used because it is already part of another cluster.`);
           }
         }
