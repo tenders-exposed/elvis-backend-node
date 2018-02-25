@@ -57,7 +57,7 @@ test.serial('getTenderActors limits actors to limit', async (t) => {
     .get('/tenders/actors?limit=1');
 
   t.is(res.status, codes.SUCCESS);
-  t.deepEqual(await expectedResponse([buyer]), res.body);
+  t.is(res.body.actors.length, 1);
 });
 
 test.serial('getTenderActors filters actors by cpvs', async (t) => {
