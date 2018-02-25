@@ -217,8 +217,8 @@ test.serial('getNetworks returns a user\'s networks', async (t) => {
   const networks = await Promise.map(userNetworks, (network) =>
     networkController.formatNetwork(network));
   t.deepEqual(
-    _.sortBy(res.body.networks),
-    _.sortBy(networks),
+    _.sortBy(res.body.networks, 'id'),
+    _.sortBy(networks, 'id'),
   );
 });
 
