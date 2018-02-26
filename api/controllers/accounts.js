@@ -48,7 +48,7 @@ function createAccount(req, res) {
         return new MailGun().sendEmail({
           to: userEmail,
           subject: 'Registration',
-          text: `Thanks for registration. To activate your account follow this link: ${config.activation.externalUrl}?t=${token} \n or this link to activate through the API: ${config.activation.url}?t=${token}`,
+          text: `Thanks for registration. To activate your account follow this link: ${config.activation.externalUrl}${token} \n or this link to activate through the API: ${config.activation.url}?t=${token}`,
         });
       }
       return null;
@@ -199,7 +199,7 @@ function forgotPassword(req, res) {
         return new MailGun().sendEmail({
           to: email,
           subject: 'Forgot password',
-          text: `To reset your password please follow this link: ${config.password.reset.externalUrl}?resetPasswordToken=${token} \n or make a POST on ${config.password.reset.url} including the token.`,
+          text: `To reset your password please follow this link: ${config.password.reset.externalUrl}${token} \n or make a POST on ${config.password.reset.url} including the token.`,
         });
       }
       return null;
