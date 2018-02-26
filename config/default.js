@@ -7,14 +7,12 @@ const YAML = require('yamljs');
 // API
 const config = {
   env: process.env.NODE_ENV || 'development',
-  protocol: process.env.PROTOCOL || 'http',
-  host: process.env.HOST || '127.0.0.1',
   port: process.env.PORT || 10010,
+  baseUrl: process.env.BASE_URL,
   session: {
     secret: process.env.SESSION_SECRET,
   },
 };
-config.baseUrl = `${config.protocol}://${config.host}:${config.port}`;
 
 // OrientDB
 const orientDBConfig = {
@@ -86,7 +84,6 @@ config.password = {
     externalUrl: process.env.PASSWORD_RESET_URL,
   },
 };
-config.password.reset.link = `${config.baseUrl}${config.password.reset.route}`;
 
 // Mail
 config.mailgun = {

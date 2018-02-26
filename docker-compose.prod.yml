@@ -1,6 +1,9 @@
 version: '3'
 services:
   elvis_api:
+    hostname: api.tenders.exposed
+    environment:
+      - BASE_URL=https://api.tenders.exposed
     ports:
       - "10011:10010"
   orientdb:
