@@ -197,6 +197,8 @@ module.exports = {
   updateNetwork,
   getNetwork,
   getNetworks,
+  formatNode,
+  formatEdge,
   formatNetwork,
   formatNetworkWithRelated,
 };
