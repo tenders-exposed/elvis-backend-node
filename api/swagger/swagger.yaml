@@ -727,7 +727,7 @@ paths:
     x-swagger-router-controller: actor_clusters
     post:
       tags:
-        - network
+        - network cluster
       description: Create a cluster
       operationId: createCluster
       parameters:
@@ -772,7 +772,7 @@ paths:
     x-swagger-router-controller: actor_clusters
     patch:
       tags:
-        - network
+        - network cluster
       description: Update cluster
       operationId: updateCluster
       parameters:
@@ -824,7 +824,7 @@ paths:
             $ref: "#/definitions/ErrorResponse"
     delete:
       tags:
-        - network
+        - network cluster
       description: Delete cluster
       operationId: deleteCluster
       parameters:
@@ -851,11 +851,50 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
         "400":
-          description: Bad request ['Wrong access token.', 'Node with ID can't be used in a cluster because it is deactivated']
+          description: Bad request ['Wrong access token.']
           schema:
             $ref: "#/definitions/ErrorResponse"
         "401":
           description: Unauthorized ['No Access Token.', 'Access token expired.']
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /networks/{networkID}/nodes/{nodeID}:
+    x-swagger-router-controller: network_actors
+    get:
+      tags:
+        - network node
+      description: Get node details
+      operationId: getNetworkActor
+      parameters:
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network the node is part of
+          required: true
+        - name: nodeID
+          type: string
+          in: path
+          description: ID of the node that should be retrieved
+          required: true
+      responses:
+        "200":
+          description: Node details returned
+          schema:
+            $ref: "#/definitions/NetworkNodeResponse"
+        "404":
+          description: Network/node not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "400":
+          description: Bad request
           schema:
             $ref: "#/definitions/ErrorResponse"
         "500":
@@ -1034,6 +1073,11 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Network"
+  NetworkNodeResponse:
+    type: object
+    properties:
+      node:
+        $ref: "#/definitions/NodeDetails"
   Network:
     type: object
     required:
@@ -1156,31 +1200,26 @@ definitions:
         items:
           type: string
           description: CPV code
-  NetworkNode:
+  BaseNode:
     type: object
     required:
-      - label
       - id
+      - label
       - type
-      - value
     properties:
-      label:
-        type: string
-        description: Label of the node i.e. name of bidder/buyer
       id:
         type: string
         format: uuid
         description: ID of the node i.e. UUID of bidder/buyer the node represents
+      label:
+        type: string
+        description: Label of the node i.e. name of bidder/buyer
       type:
         type: string
         description: Node type
         enum:
           - bidder
           - buyer
-      value:
-        type: number
-        format: double
-        description: Number of winning bids/amount of money exchanged depending on network settings
       country:
         type: string
         description: ISO 3166-1 alpha-2 country code
@@ -1188,9 +1227,49 @@ definitions:
         type: number
         format: double
         description: Median number of bidders in this actor's bids
-      hidden:
-        type: boolean
-        description: If the node is part of a cluster it is inactive
+  NetworkNode:
+    allOf:
+    - $ref: "#/definitions/BaseNode"
+    - type: object
+      required:
+        - value
+        - hidden
+      properties:
+        value:
+          type: number
+          format: double
+          description: Number of winning bids/amount of money exchanged depending on network settings
+        hidden:
+          type: boolean
+          description: If the node is part of a cluster it is inactive
+  NodeDetails:
+    allOf:
+    - $ref: "#/definitions/BaseNode"
+    - type: object
+      properties:
+        numberOfWinningBids:
+          type: integer
+          description: How many bids has this actor won?
+        amountOfMoneyExchanged:
+          type: number
+          format: double
+          description: Total amount of money exchanged by this actor
+        percentValuesMissing:
+          type: number
+          format: double
+          description: What percent of this actor's bids have the value undisclosed
+        winningBids:
+          type: array
+          description: The winning bids of this actor
+          items:
+            $ref: "#/definitions/Bid"
+        nodes:
+          type: array
+          description: If the node is a cluster this array will contain the IDs of its nodes
+          items:
+            type: string
+            description: Node ID
+            format: uuid
   NetworkCluster:
     allOf:
     - $ref: "#/definitions/NetworkNode"
@@ -1200,7 +1279,7 @@ definitions:
       properties:
         nodes:
           type: array
-          description: Array of node IDs
+          description: Array of IDs of nodes that make up the cluster
           items:
             type: string
             description: Node ID
@@ -1233,6 +1312,99 @@ definitions:
       hidden:
         type: boolean
         description: If the edge is attached to an inactive node it is inactive
+  Bid:
+    type: object
+    description: The bid applied to win a certain lot
+    properties:
+      value:
+        type: number
+        format: double
+        description: Value of the bid in EURO
+      isWinning:
+        type: boolean
+        description: Did this bid won the lot?
+      TEDCANID:
+        type: string
+        description: ID of the Contract Award Notice on ted.europa.eu
+      isSubcontracted:
+        type: boolean
+        description: Did the winner subcontract another company for this bid?
+      lot:
+        $ref:  "#/definitions/Lot"
+      bidders:
+        type: array
+        items:
+          allOf:
+          - $ref: "#/definitions/Actor"
+          - type: object
+            properties:
+              nodeID:
+                type: string
+                description: ID of the node corresponding to this actor in the Network
+                format: uuid
+  Lot:
+    type: object
+    description: The lot that comprises a certain tender
+    properties:
+      title:
+        type: string
+        description : The title given to the lot by buyers
+      description:
+        type: string
+        description: Description provided by buyers
+      bidsCount:
+        type: integer
+        description: How many bids were applied for this lot?
+      awardDecisionDate:
+        type: string
+        format: date
+        description: Date when the lot was awarded
+      selectionMethod:
+        type: string
+        description: What method was applied to select the winning bid?
+      tender:
+        $ref: "#/definitions/Tender"
+  Tender:
+    type: object
+    description: The tender lots and bids are part of
+    properties:
+      id:
+        type: string
+        description: ID of the tender, equivalent to Digiwhist
+      TEDCNID:
+        type: string
+        description: ID of the Contract Notice on ted.europa.eu
+      title:
+        type: string
+        description: Title of the tender
+      titleEnglish:
+        type: string
+        description: Title of the tender in Enghish
+      description:
+        type: string
+        description: Description of the tender
+      isEUFunded:
+        type: boolean
+        description: Is the tender founded completely or partially by EU?
+      isCoveredByGpa:
+        type: boolean
+        description: Is the tender covered by GPA?
+      isFrameworkAgreement:
+        type: boolean
+        description: Is the tender part of a framework agreeement?
+      procedureType:
+        type: string
+      buyers:
+        type: array
+        items:
+          allOf:
+          - $ref: "#/definitions/Actor"
+          - type: object
+            properties:
+              nodeID:
+                type: string
+                description: ID of the node corresponding to this actor in the Network
+                format: uuid
   CpvIndexResponse:
     type: object
     properties:
@@ -1297,7 +1469,7 @@ definitions:
     properties:
       id:
         type: string
-        description: Actor id
+        description: Actor id, equivalent to Digiwhist
         format: uuid
       name:
         type: string
