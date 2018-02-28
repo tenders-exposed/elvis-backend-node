@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const moment = require('moment');
 const helpers = require('./helpers');
 const priceExtractor = require('./price');
 const indicatorExtractor = require('./indicator');
@@ -14,7 +15,7 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
     country: tenderAttrs.country,
     isFrameworkAgreement: tenderAttrs.isFrameworkAgreement,
     isCoveredByGpa: tenderAttrs.isCoveredByGpa,
-    nationalProcedureType: tenderAttrs.nationalProcedureType,
+    procedureType: tenderAttrs.procedureType,
     finalPrice: priceExtractor.extractPrice(tenderAttrs.finalPrice),
     isWholeTenderCancelled: tenderAttrs.isWholeTenderCancelled,
     xIsEuFunded: assertIsEuFunded(tenderAttrs),
@@ -22,11 +23,11 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
     indicators: _
       .filter(indicators, { relatedEntityId: tenderAttrs.id })
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
-    xTEDCNID: _.chain(publications)
-      .filter({ formType: 'CONTRACT_NOTICE' })
-      .head()
-      .get('sourceId')
-      .value(),
+    xTEDCNID: _.get(
+      _.head(_.filter(publications, { formType: 'CONTRACT_NOTICE' })),
+      'sourceId',
+    ),
+    year: extractYear(publications),
   };
 }
 
@@ -40,6 +41,24 @@ function assertIsEuFunded(tenderAttrs) {
   return isEuFunded;
 }
 
+function extractYear(publications) {
+  let year;
+  const noticePubDate = _.get(
+    _.head(_.filter(publications, { formType: 'CONTRACT_NOTICE' })),
+    'publicationDate',
+  );
+  const awardPubDate = _.get(
+    _.head(_.filter(publications, { formType: 'CONTRACT_AWARD' })),
+    'publicationDate',
+  );
+  if (_.isUndefined(awardPubDate) === false) {
+    year = moment(awardPubDate).year();
+  }
+  if (_.isUndefined(noticePubDate) === false) {
+    year = moment(noticePubDate).year();
+  }
+  return year;
+}
 module.exports = {
   extractTender,
 };

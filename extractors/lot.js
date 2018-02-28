@@ -12,6 +12,7 @@ function extractLot(lotAttrs) {
     validBidsCount: lotAttrs.validBidsCount,
     awardDecisionDate: lotAttrs.awardDecisionDate,
     awardCriteria: lotAttrs.awardCriteria,
+    selectionMethod: lotAttrs.selectionMethod,
     addressOfImplementation: lotAttrs.addressOfImplementation,
     status: lotAttrs.status,
     estimatedPrice: priceExtractor.extractPrice(lotAttrs.estimatedPrice),

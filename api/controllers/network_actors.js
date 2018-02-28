@@ -99,7 +99,7 @@ function retrieveBidWithRelated(bidRID, network) {
     .then((result) => {
       const bid = _.pick(result, ['isWinning', 'isSubcontracted']);
       bid.TEDCANID = result.xTEDCANID;
-      bid.value = result.price.netAmountEur || undefined;
+      bid.value = _.get(result, 'price.netAmountEur', undefined);
       const lot = _.filter(
         _.valuesIn(result.out_AppliedTo._prefetchedRecords),
         { '@class': 'Lot' },
@@ -108,12 +108,19 @@ function retrieveBidWithRelated(bidRID, network) {
         _.valuesIn(result.out_AppliedTo._prefetchedRecords),
         { '@class': 'Tender' },
       )[0];
-      bid.lot = _.pick(lot, ['title', 'description', 'bidsCount']);
+      bid.lot = _.pick(lot, ['title', 'description', 'bidsCount', 'selectionMethod']);
       bid.lot.awardDecisionDate = moment(lot.awardDecisionDate).format('YYYY-MM-DD');
+      bid.lot.addressOfImplementation = _.pick(
+        lot.addressOfImplementation,
+        ['rawAddress', 'nuts', 'city', 'country', 'street'],
+      );
+      bid.lot.estimatedValue = _.get(lot, 'estimatedPrice.netAmountEur', undefined);
       bid.lot.tender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description',
-        'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType']);
+        'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year']);
       bid.lot.tender.isEUFunded = tender.xIsEuFunded;
       bid.lot.tender.TEDCNID = tender.xTEDCNID;
+      bid.lot.tender.finalValue = _.get(tender, 'finalPrice.netAmountEur', undefined);
+
       const bidders = _.filter(
         _.valuesIn(_.get(result, 'in_Participates._prefetchedRecords')),
         { '@class': 'Bidder' },
