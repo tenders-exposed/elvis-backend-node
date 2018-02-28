@@ -111,7 +111,8 @@ async function deleteCluster(networkID, clusterID) {
 }
 
 function calculateCluster(edgeToBidClass, network, actorIDs) {
-  const clusterQuery = `SELECT count(*) as value,
+  const valueQuery = networkWriters.settingsToValueQuery(network.settings.nodeSize);
+  const clusterQuery = `SELECT ${valueQuery} as value,
   median(out('AppliedTo').bidsCount) as medianCompetition
   FROM (
     SELECT *
@@ -127,14 +128,14 @@ function calculateCluster(edgeToBidClass, network, actorIDs) {
 }
 
 function retrieveActorIDs(networkActorIDs, clusterType, clusterID) {
-  const actorsIDsQuery = `SELECT *,
+  const actorIDsQuery = `SELECT *,
     in('ActingAs').id as actorIDs,
     in('Includes').id as clusterIDs
     FROM NetworkActor
     WHERE id in :nodes
     AND type=:type;`;
   return config.db.query(
-    actorsIDsQuery,
+    actorIDsQuery,
     { params: { nodes: networkActorIDs, type: clusterType } },
   )
     .then((networkActors) => {
@@ -343,6 +344,7 @@ module.exports = {
   createCluster,
   updateCluster,
   deleteCluster,
+  calculateCluster,
   createPartnersEdges,
   createContractsEdges,
   createNetworkEdge,
