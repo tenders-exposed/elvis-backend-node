@@ -23,6 +23,36 @@ test('extractTender returns null if there is no publication', async (t) => {
   );
 });
 
+test('extractTender extracts year from contract notice if available', async (t) => {
+  const publication = await fixtures.build('rawContractNotice', {
+    publicationDate: '2015-11-03',
+  });
+  const rawTender = await fixtures.build('rawTender');
+  t.is(
+    tenderExtractor.extractTender(rawTender, [], [publication]).year,
+    2015,
+  );
+});
+
+test('extractTender extracts year from contract award notice if contract notice is not available', async (t) => {
+  const publication = await fixtures.build('rawContractAwardNotice', {
+    publicationDate: '2014-11-03',
+  });
+  const rawTender = await fixtures.build('rawTender');
+  t.is(
+    tenderExtractor.extractTender(rawTender, [], [publication]).year,
+    2014,
+  );
+});
+
+test('extractTender return undefined if no relevant publication is available', async (t) => {
+  const rawTender = await fixtures.build('rawTender');
+  t.is(
+    tenderExtractor.extractTender(rawTender, [], []).year,
+    undefined,
+  );
+});
+
 test('extractTender filters indicators that match by id', async (t) => {
   const rawTender = await fixtures.build('rawTender');
   const indicators = await fixtures.buildMany('rawIndicator', 5);

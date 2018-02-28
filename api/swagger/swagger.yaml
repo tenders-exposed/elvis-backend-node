@@ -1362,6 +1362,12 @@ definitions:
       selectionMethod:
         type: string
         description: What method was applied to select the winning bid?
+      estimatedValue:
+        type: number
+        format: double
+        description: Estimated value of the lot in EURO
+      addressOfImplementation:
+        $ref: "#/definitions/Address"
       tender:
         $ref: "#/definitions/Tender"
   Tender:
@@ -1371,6 +1377,9 @@ definitions:
       id:
         type: string
         description: ID of the tender, equivalent to Digiwhist
+      year:
+        type: integer
+        description: Year when the contract notice or contract award notice was published
       TEDCNID:
         type: string
         description: ID of the Contract Notice on ted.europa.eu
@@ -1394,6 +1403,10 @@ definitions:
         description: Is the tender part of a framework agreeement?
       procedureType:
         type: string
+      finalValue:
+        type: number
+        format: double
+        description: Total value of all the winning bids in the tender
       buyers:
         type: array
         items:
@@ -1480,6 +1493,26 @@ definitions:
         enum:
           - bidder
           - buyer
+  Address:
+    type: object
+    properties:
+      rawAddress:
+        type: string
+        description: Raw string for unstructured address
+      street:
+        type: string
+        description: Street including numbers
+      city:
+        type: string
+      country:
+        type: string
+        description: ISO 3166-1 alpha-2 country code
+      nuts:
+        type: array
+        description: Array of Nuts
+        items:
+          type: string
+          description: Original Nuts code of region
   ErrorResponse:
     type: object
     required:

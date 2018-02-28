@@ -122,11 +122,13 @@ factory.extend('rawTender', 'rawFullTender', {
 });
 
 factory.define('rawContractNotice', Object, {
+  publicationDate: '2017-09-15',
   sourceId: '2015/S 006-hocuspocus',
   formType: 'CONTRACT_NOTICE',
 });
 
 factory.define('rawContractAwardNotice', Object, {
+  publicationDate: '2017-09-15',
   sourceId: '2015/S 006-preparatus',
   formType: 'CONTRACT_AWARD',
 });
