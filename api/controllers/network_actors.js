@@ -76,7 +76,7 @@ function formatNetworkActor(network, networkActor) {
       const details = result[0];
       Object.assign(node, _.pick(details, ['numberOfWinningBids', 'amountOfMoneyExchanged']));
       node.percentValuesMissing = 100 - (
-        (details.numberOfAvailablePrices * 100) / details.numberOfWinningBids
+        (_.get(details, 'numberOfAvailablePrices', 0) * 100) / details.numberOfWinningBids
       );
       return Promise.map(details.bidRIDs, (bidRID) => retrieveBidWithRelated(bidRID, network));
     })
