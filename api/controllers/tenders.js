@@ -25,7 +25,7 @@ function getNetworkTender(req, res) {
 
 function formatTender(network, tender) {
   const formattedTender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description',
-    'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year']);
+    'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year', 'country']);
   formattedTender.isEUFunded = tender.xIsEuFunded;
   formattedTender.TEDCNID = tender.xTEDCNID;
   formattedTender.finalValue = _.get(tender, 'finalPrice.netAmountEur') || undefined;
