@@ -41,7 +41,8 @@ function getTenderCpvs(req, res) {
         FROM Bid
         ${queryCriteria.length ? ` WHERE ${_.join(queryCriteria, ' AND ')}` : ''}
       UNWIND cpv
-    ) GROUP BY cpv
+    ) WHERE cpv.code IS NOT NULL
+    GROUP BY cpv
     ORDER BY code asc;`;
   return config.db.query(cpvsQuery, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
