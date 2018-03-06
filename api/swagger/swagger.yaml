@@ -1445,6 +1445,8 @@ definitions:
   Lot:
     type: object
     description: The lot that comprises a certain tender
+    required:
+      - bidsCount
     properties:
       title:
         type: string
@@ -1471,10 +1473,16 @@ definitions:
   Tender:
     type: object
     description: The tender lots and bids are part of
+    required:
+      - id
+      - country
     properties:
       id:
         type: string
         description: ID of the tender, equivalent to Digiwhist
+      country:
+        type: string
+        description: ISO 3166-1 alpha-2 country code of the country under whose juristiction the tender took place
       year:
         type: integer
         description: Year when the contract notice or contract award notice was published

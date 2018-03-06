@@ -116,7 +116,7 @@ function retrieveBidWithRelated(bidRID, network) {
       );
       bid.lot.estimatedValue = _.get(lot, 'estimatedPrice.netAmountEur') || undefined;
       bid.lot.tender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description',
-        'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year']);
+        'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year', 'country']);
       bid.lot.tender.isEUFunded = tender.xIsEuFunded;
       bid.lot.tender.TEDCNID = tender.xTEDCNID;
       bid.lot.tender.finalValue = _.get(tender, 'finalPrice.netAmountEur') || undefined;
