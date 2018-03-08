@@ -151,6 +151,7 @@ function formatNode(networkActor) {
 
 function formatEdge(networkEdge) {
   const edge = _.pick(networkEdge, ['from', 'to', 'type', 'value']);
+  edge.id = networkEdge.uuid;
   edge.flags = {};
   edge.hidden = !networkEdge.active;
   return edge;
