@@ -1,12 +1,14 @@
 'use strict';
 
 const _ = require('lodash');
-
+const Promise = require('bluebird');
 const config = require('../../config/default');
 const writers = require('../writers/actor_cluster');
 const codes = require('../helpers/codes');
 const validateToken = require('../middlewares/validateToken');
 const formatError = require('../helpers/errorFormatter');
+const clusterWriters = require('../writers/actor_cluster');
+const networkActorController = require('./network_actors');
 
 function createCluster(req, res) {
   const networkID = req.swagger.params.networkID.value;
@@ -54,6 +56,21 @@ function deleteCluster(req, res) {
   });
 }
 
+function getCluster(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  const clusterID = req.swagger.params.clusterID.value;
+  return Promise.join(
+    clusterWriters.retrieveNetwork(networkID),
+    clusterWriters.retrieveCluster(networkID, clusterID),
+    (network, networkCluster) =>
+      networkActorController.formatNetworkActor(network, networkCluster),
+  )
+    .then((cluster) => res.status(codes.SUCCESS).json({
+      cluster,
+    }))
+    .catch((err) => formatError(err, req, res));
+}
+
 function formatCluster(networkCluster) {
   const cluster = _.pick(networkCluster, ['label', 'id', 'type', 'medianCompetition', 'value']);
   cluster.flags = {};
@@ -73,4 +90,5 @@ module.exports = {
   createCluster,
   updateCluster,
   deleteCluster,
+  getCluster,
 };
