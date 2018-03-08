@@ -164,4 +164,7 @@ function formatActor(actor, network) {
 
 module.exports = {
   getNetworkActor,
+  retrieveBidWithRelated,
+  formatActor,
+  formatNetworkActor,
 };
