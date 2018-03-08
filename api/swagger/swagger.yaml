@@ -770,6 +770,43 @@ paths:
             $ref: "#/definitions/ErrorResponse"
   /networks/{networkID}/clusters/{clusterID}:
     x-swagger-router-controller: actor_clusters
+    get:
+      tags:
+        - network cluster
+      description: Get cluster details
+      operationId: getCluster
+      parameters:
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network the node is part of
+          required: true
+        - name: clusterID
+          type: string
+          in: path
+          description: ID of the cluster that should be retrieved
+          required: true
+      responses:
+        "200":
+          description: Cluster details returned
+          schema:
+            $ref: "#/definitions/NetworkClusterDetailsResponse"
+        "404":
+          description: Network/cluster not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "400":
+          description: Bad request
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
     patch:
       tags:
         - network cluster
@@ -952,7 +989,7 @@ paths:
     x-swagger-router-controller: tenders
     get:
       tags:
-        - network node
+        - network tender
       description: Get tender details with network nodes as bidders and buyers
       operationId: getNetworkTender
       parameters:
@@ -1160,6 +1197,11 @@ definitions:
     properties:
       node:
         $ref: "#/definitions/NodeDetails"
+  NetworkClusterDetailsResponse:
+    type: object
+    properties:
+      cluster:
+        $ref: "#/definitions/ClusterDetails"
   NetworkEdgeResponse:
     type: object
     properties:
@@ -1366,19 +1408,24 @@ definitions:
                     properties:
                       tender:
                         $ref: "#/definitions/Tender"
-        nodes:
-          type: array
-          description: If the node is a cluster this array will contain the IDs of its nodes
-          items:
-            type: string
-            description: Node ID
-            format: uuid
   NetworkCluster:
     allOf:
     - $ref: "#/definitions/NetworkNode"
     - type: object
       required:
         - nodes
+      properties:
+        nodes:
+          type: array
+          description: Array of IDs of nodes that make up the cluster
+          items:
+            type: string
+            description: Node ID
+            format: uuid
+  ClusterDetails:
+    allOf:
+    - $ref: "#/definitions/NodeDetails"
+    - type: object
       properties:
         nodes:
           type: array
