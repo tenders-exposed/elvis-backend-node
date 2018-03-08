@@ -199,6 +199,7 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
   return config.db.query(contractsEdgesQuery, { params: networkQuery })
     .then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
       const edgeAttrs = {
+        uuid: uuidv4(),
         value: edge.value,
         active: true,
       };
@@ -231,6 +232,7 @@ function createPartnersEdges(transaction, edgeToBidClass, networkQuery, networkA
   return config.db.query(partnersEdgesQuery, { params: networkQuery })
     .then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
       const edgeAttrs = {
+        uuid: uuidv4(),
         value: edge.value,
         active: true,
       };
