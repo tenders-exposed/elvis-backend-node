@@ -212,6 +212,7 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
     { params: Object.assign({}, network.query, { actorIDs }) },
   ).then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
     const edgeAttrs = {
+      uuid: uuidv4(),
       value: edge.value,
       active: true,
     };
@@ -241,6 +242,7 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
     { params: Object.assign({}, network.query, { actorIDs }) },
   ).then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
     const edgeAttrs = {
+      uuid: uuidv4(),
       value: edge.value,
       active: true,
     };
