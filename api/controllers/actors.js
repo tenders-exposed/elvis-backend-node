@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const codes = require('../helpers/codes');
 const config = require('../../config/default');
 const formatError = require('../helpers/errorFormatter');
+const actorSerializer = require('../serializers/actor');
 
 function getTenderActors(req, res) {
   const swaggerParams = _.pickBy(
@@ -12,8 +13,8 @@ function getTenderActors(req, res) {
     (val) => !(_.isUndefined(val)),
   );
   return Promise.join(
-    getActors(swaggerParams, 'Buyer', 'Awards'),
-    getActors(swaggerParams, 'Bidder', 'Participates'),
+    retrieveActors(swaggerParams, 'Buyer', 'Awards'),
+    retrieveActors(swaggerParams, 'Bidder', 'Participates'),
     (buyers, bidders) => _
       .chain(buyers)
       .concat(bidders)
@@ -27,12 +28,12 @@ function getTenderActors(req, res) {
       return results;
     })
     .then((results) => res.status(codes.SUCCESS).json({
-      actors: _.map(results, (buyer) => formatActor(buyer)),
+      actors: _.map(results, (actor) => actorSerializer.formatActor(actor)),
     }))
     .catch((err) => formatError(err, req, res));
 }
 
-function getActors(swaggerParams, actorClass, edgeToBidClass) {
+function retrieveActors(swaggerParams, actorClass, edgeToBidClass) {
   // Get only actors involved in bids
   const queryParams = {};
   const queryCriteria = [];
@@ -64,14 +65,7 @@ function getActors(swaggerParams, actorClass, edgeToBidClass) {
   return config.db.query(query, { params: queryParams });
 }
 
-function formatActor(buyerNode) {
-  const buyerResponse = _.pick(buyerNode, ['name', 'id']);
-  buyerResponse.type = _.toLower(buyerNode['@class']);
-  return buyerResponse;
-}
-
 module.exports = {
   getTenderActors,
-  formatActor,
-  getActors,
+  retrieveActors,
 };

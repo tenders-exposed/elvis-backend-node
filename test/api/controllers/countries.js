@@ -6,7 +6,7 @@ const test = require('ava').test;
 const writers = require('../../../api/writers/tender');
 const codes = require('../../../api/helpers/codes');
 const config = require('../../../config/default');
-const controller = require('../../../api/controllers/countries');
+const countrySerializer = require('../../../api/serializers/country');
 const helpers = require('../../helpers');
 const app = require('../../../server');
 const fixtures = require('../../fixtures');
@@ -20,7 +20,7 @@ function expectedResponse(countryCode) {
     .where({ code: countryCode })
     .all()
     .then((countries) => ({
-      countries: _.map(countries, (country) => controller.formatCountry(country)),
+      countries: _.map(countries, (country) => countrySerializer.formatCountry(country)),
     }));
 }
 test.serial('getTenderCountries returns empty array if there are no bids', async (t) => {

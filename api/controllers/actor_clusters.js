@@ -2,13 +2,13 @@
 
 const _ = require('lodash');
 const Promise = require('bluebird');
-const config = require('../../config/default');
+
 const writers = require('../writers/actor_cluster');
 const codes = require('../helpers/codes');
 const validateToken = require('../middlewares/validateToken');
 const formatError = require('../helpers/errorFormatter');
 const clusterWriters = require('../writers/actor_cluster');
-const networkActorController = require('./network_actors');
+const clusterSerializer = require('../serializers/actor_cluster');
 
 function createCluster(req, res) {
   const networkID = req.swagger.params.networkID.value;
@@ -16,7 +16,7 @@ function createCluster(req, res) {
   return validateToken(req, res, () => {
     if (_.isUndefined(req.user) === false) {
       return writers.createCluster(networkID, clusterParams)
-        .then((cluster) => formatCluster(cluster))
+        .then((cluster) => clusterSerializer.formatCluster(cluster))
         .then((cluster) => res.status(codes.CREATED).json({
           cluster,
         }))
@@ -33,7 +33,7 @@ function updateCluster(req, res) {
   return validateToken(req, res, () => {
     if (_.isUndefined(req.user) === false) {
       return writers.updateCluster(networkID, clusterID, clusterParams)
-        .then((cluster) => formatCluster(cluster))
+        .then((cluster) => clusterSerializer.formatCluster(cluster))
         .then((cluster) => res.status(codes.SUCCESS).json({
           cluster,
         }))
@@ -63,27 +63,12 @@ function getCluster(req, res) {
     clusterWriters.retrieveNetwork(networkID),
     clusterWriters.retrieveCluster(networkID, clusterID),
     (network, networkCluster) =>
-      networkActorController.formatNetworkActor(network, networkCluster),
+      clusterSerializer.formatClusterWithDetails(network, networkCluster),
   )
     .then((cluster) => res.status(codes.SUCCESS).json({
       cluster,
     }))
     .catch((err) => formatError(err, req, res));
-}
-
-function formatCluster(networkCluster) {
-  const cluster = _.pick(networkCluster, ['label', 'id', 'type', 'medianCompetition', 'value']);
-  cluster.flags = {};
-  cluster.hidden = !networkCluster.active;
-  return config.db.select("expand(out('Includes'))")
-    .from('ActorCluster')
-    .where({ id: networkCluster.id })
-    .all()
-    .then((nodes) => _.map(nodes, 'id'))
-    .then((nodes) => {
-      cluster.nodes = nodes;
-      return cluster;
-    });
 }
 
 module.exports = {

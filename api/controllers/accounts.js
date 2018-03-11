@@ -10,6 +10,7 @@ const formatError = require('../helpers/errorFormatter');
 const validateToken = require('../middlewares/validateToken');
 const AuthHelper = require('../helpers/auth');
 const MailGun = require('../../services/MailGun');
+const userSerializer = require('../serializers/user');
 
 function createAccount(req, res) {
   const userAttrs = {};
@@ -82,13 +83,13 @@ function activateAccount(req, res) {
         .one();
     })
     .then((user) =>
-      res.status(codes.SUCCESS).json(_.pick(user, ['id', 'email', 'twitterId', 'githubId', 'active'])))
+      res.status(codes.SUCCESS).json(userSerializer.formatUser(user)))
     .catch((err) => formatError(err, req, res));
 }
 
 function getAccount(req, res) {
   return validateToken(req, res, () =>
-    res.status(codes.SUCCESS).json(_.pick(req.user, ['id', 'email', 'twitterId', 'githubId', 'active'])));
+    res.status(codes.SUCCESS).json(userSerializer.formatUser(req.user)));
 }
 
 function deleteAccount(req, res) {

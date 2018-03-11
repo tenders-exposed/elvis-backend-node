@@ -7,7 +7,7 @@ const Promise = require('bluebird');
 const writers = require('../../../api/writers/tender');
 const codes = require('../../../api/helpers/codes');
 const config = require('../../../config/default');
-const cpvController = require('../../../api/controllers/cpvs');
+const cpvSerializer = require('../../../api/serializers/cpv');
 const helpers = require('../../helpers');
 const app = require('../../../server');
 const fixtures = require('../../fixtures');
@@ -23,7 +23,7 @@ function expectedResponse(matchTenderID) {
     .then((writtenCpvs) => ({
       cpvs: _.map(_.sortBy(writtenCpvs, 'code'), (cpv) => {
         cpv.xNumberBids = 1;
-        return cpvController.formatCpv(cpv);
+        return cpvSerializer.formatCpv(cpv);
       }),
     }));
 }
@@ -129,7 +129,7 @@ test.serial('getTenderCpvs filters cpvs by bidder or buyer', async (t) => {
       const cpvs = _.sortBy([fullBidderCpv, fullBuyerCpv], 'code');
       const formattedCpvs = _.map(cpvs, (cpv) => {
         cpv.xNumberBids = 1;
-        return cpvController.formatCpv(cpv);
+        return cpvSerializer.formatCpv(cpv);
       });
       return {
         cpvs: formattedCpvs,
