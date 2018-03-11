@@ -9,12 +9,13 @@ const writers = require('../writers/network');
 const codes = require('../helpers/codes');
 const validateToken = require('../middlewares/validateToken');
 const formatError = require('../helpers/errorFormatter');
+const networkSerializer = require('../serializers/network');
 
 function createNetwork(req, res) {
   const networkParams = req.swagger.params.body.value.network;
   return validateToken(req, res, () =>
     writers.createNetwork(networkParams, req.user)
-      .then((network) => formatNetworkWithRelated(network))
+      .then((network) => networkSerializer.formatNetworkWithRelated(network))
       .then((network) => res.status(codes.CREATED).json({
         network,
       }))
@@ -69,7 +70,7 @@ function updateNetwork(req, res) {
             .commit()
             .one();
         })
-        .then((network) => formatNetworkWithRelated(network))
+        .then((network) => networkSerializer.formatNetworkWithRelated(network))
         .then((network) => res.status(codes.SUCCESS).json({
           network,
         }))
@@ -89,7 +90,7 @@ function getNetwork(req, res) {
       if (_.isUndefined(network) === true) {
         throw codes.NotFound('Network not found');
       }
-      return formatNetworkWithRelated(network);
+      return networkSerializer.formatNetworkWithRelated(network);
     })
     .then((network) => res.status(codes.SUCCESS).json({
       network,
@@ -105,7 +106,7 @@ function getNetworks(req, res) {
         .where({ "in('Owns').id": req.user.id })
         .all()
         .then((networks) =>
-          Promise.map(networks, (network) => formatNetwork(network)))
+          Promise.map(networks, (network) => networkSerializer.formatNetwork(network)))
         .then((networks) => res.status(codes.SUCCESS).json({
           networks,
         }))
@@ -115,91 +116,10 @@ function getNetworks(req, res) {
   });
 }
 
-function formatNetwork(network) {
-  const prettyNetwork = _.pick(network, ['id', 'name', 'synopsis']);
-  prettyNetwork.created = moment(network.created).format();
-  prettyNetwork.updated = moment(network.updated).format();
-  prettyNetwork.settings = _.pick(network.settings, ['nodeSize', 'edgeSize']);
-  prettyNetwork.query = _.pick(network.query, ['countries', 'years', 'cpvs', 'bidders', 'buyers']);
-  prettyNetwork.count = {};
-  const nodeCountQuery = `SELECT in('PartOf').size() as nodeCount
-    FROM Network
-    WHERE id=:networkID`;
-  const edgeCountQuery = (edgeName) =>
-    `SELECT in('PartOf').out('${edgeName}').size() as edgeCount
-    FROM Network
-    WHERE id=:networkID`;
-  return Promise.join(
-    config.db.query(nodeCountQuery, { params: { networkID: network.id } }),
-    config.db.query(edgeCountQuery('Contracts'), { params: { networkID: network.id } }),
-    config.db.query(edgeCountQuery('Partners'), { params: { networkID: network.id } }),
-    (nodeResult, contractsResult, partnersResult) => {
-      prettyNetwork.count.nodeCount = nodeResult[0].nodeCount;
-      prettyNetwork.count.edgeCount = contractsResult[0].edgeCount + partnersResult[0].edgeCount;
-      return prettyNetwork;
-    },
-  );
-}
-
-function formatNode(networkActor) {
-  const node = _.pick(networkActor, ['label', 'id', 'type', 'medianCompetition',
-    'value', 'country']);
-  node.flags = {};
-  node.hidden = !networkActor.active;
-  return node;
-}
-
-function formatEdge(networkEdge) {
-  const edge = _.pick(networkEdge, ['from', 'to', 'type', 'value']);
-  edge.id = networkEdge.uuid;
-  edge.flags = {};
-  edge.hidden = !networkEdge.active;
-  return edge;
-}
-
-function formatNetworkWithRelated(network) {
-  return formatNetwork(network)
-    .then((prettyNetwork) => {
-      const networkID = network.id;
-      const nodesQuery = `SELECT *
-        FROM NetworkActor
-        WHERE out('PartOf').id=:networkID
-        AND @class='NetworkActor'`;
-      const edgesQuery = (className) => `SELECT *,
-        out.id as \`from\`,
-        in.id as to,
-        @class.toLowerCase() as type
-        FROM ${className}
-        WHERE out.out('PartOf').id=:networkID;`;
-      const clustersQuery = `SELECT *,
-        out('Includes').id as nodes
-        FROM ActorCluster
-        WHERE out('PartOf').id=:networkID;`;
-      return Promise.join(
-        config.db.query(nodesQuery, { params: { networkID } }),
-        config.db.query(edgesQuery('Contracts'), { params: { networkID } }),
-        config.db.query(edgesQuery('Partners'), { params: { networkID } }),
-        config.db.query(clustersQuery, { params: { networkID } }),
-        (nodes, contractsEdges, partnersEdges, clusters) => {
-          prettyNetwork.nodes = nodes.map((node) => formatNode(node));
-          prettyNetwork.edges = _.concat(contractsEdges, partnersEdges)
-            .map((edge) => formatEdge(edge));
-          prettyNetwork.clusters = clusters.map((cluster) =>
-            Object.assign(formatNode(cluster), { nodes: cluster.nodes }));
-          return prettyNetwork;
-        },
-      );
-    });
-}
-
 module.exports = {
   createNetwork,
   deleteNetwork,
   updateNetwork,
   getNetwork,
   getNetworks,
-  formatNode,
-  formatEdge,
-  formatNetwork,
-  formatNetworkWithRelated,
 };

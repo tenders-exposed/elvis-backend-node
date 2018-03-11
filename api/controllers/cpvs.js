@@ -4,6 +4,7 @@ const _ = require('lodash');
 const codes = require('../helpers/codes');
 const config = require('../../config/default');
 const formatError = require('../helpers/errorFormatter');
+const cpvSerializer = require('../serializers/cpv');
 
 function getTenderCpvs(req, res) {
   const swaggerParams = _.pickBy(
@@ -46,16 +47,11 @@ function getTenderCpvs(req, res) {
     ORDER BY code asc;`;
   return config.db.query(cpvsQuery, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
-      cpvs: _.map(results, (cpv) => formatCpv(cpv)),
+      cpvs: _.map(results, (cpv) => cpvSerializer.formatCpv(cpv)),
     }))
     .catch((err) => formatError(err, req, res));
 }
 
-function formatCpv(cpvNode) {
-  return _.pick(cpvNode, ['code', 'xName', 'xNumberDigits', 'xNumberBids']);
-}
-
 module.exports = {
   getTenderCpvs,
-  formatCpv,
 };
