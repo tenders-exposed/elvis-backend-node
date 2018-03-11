@@ -4,6 +4,7 @@ const _ = require('lodash');
 const codes = require('../helpers/codes');
 const config = require('../../config/default');
 const formatError = require('../helpers/errorFormatter');
+const countrySerializer = require('../serializers/country');
 
 function getTenderCountries(req, res) {
   const swaggerParams = _.pickBy(
@@ -41,16 +42,11 @@ function getTenderCountries(req, res) {
     )`;
   return config.db.query(query, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
-      countries: _.map(results, (country) => formatCountry(country)),
+      countries: _.map(results, (country) => countrySerializer.formatCountry(country)),
     }))
     .catch((err) => formatError(err, req, res));
 }
 
-function formatCountry(country) {
-  return _.pick(country, ['code', 'name']);
-}
-
 module.exports = {
   getTenderCountries,
-  formatCountry,
 };

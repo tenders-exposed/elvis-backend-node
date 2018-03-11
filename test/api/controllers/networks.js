@@ -6,7 +6,7 @@ const Promise = require('bluebird');
 const request = require('supertest');
 const tenderWriters = require('../../../api/writers/tender');
 const networkWriters = require('./../../../api/writers/network');
-const networkController = require('./../../../api/controllers/networks');
+const networkSerializer = require('./../../../api/serializers/network');
 const config = require('../../../config/default');
 const codes = require('../../../api/helpers/codes');
 const helpers = require('../../helpers');
@@ -18,7 +18,7 @@ test.afterEach.always(() => helpers.truncateDB());
 
 async function formatNetworkResponse(network) {
   return {
-    network: await networkController.formatNetworkWithRelated(network),
+    network: await networkSerializer.formatNetworkWithRelated(network),
   };
 }
 
@@ -215,7 +215,7 @@ test.serial('getNetworks returns a user\'s networks', async (t) => {
   t.is(res.status, codes.SUCCESS);
 
   const networks = await Promise.map(userNetworks, (network) =>
-    networkController.formatNetwork(network));
+    networkSerializer.formatNetwork(network));
   t.deepEqual(
     _.sortBy(res.body.networks, 'id'),
     _.sortBy(networks, 'id'),

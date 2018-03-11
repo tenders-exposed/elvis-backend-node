@@ -2,9 +2,10 @@
 
 const request = require('supertest');
 const test = require('ava').test;
+
 const writers = require('../../../api/writers/tender');
 const codes = require('../../../api/helpers/codes');
-const controller = require('../../../api/controllers/actors');
+const actorSerializer = require('../../../api/serializers/actor');
 const helpers = require('../../helpers');
 const app = require('../../../server');
 const fixtures = require('../../fixtures');
@@ -14,7 +15,7 @@ test.afterEach.always(() => helpers.truncateDB());
 
 function expectedResponse(actors) {
   return {
-    actors: actors.map((actor) => controller.formatActor(actor)),
+    actors: actors.map((actor) => actorSerializer.formatActor(actor)),
   };
 }
 
