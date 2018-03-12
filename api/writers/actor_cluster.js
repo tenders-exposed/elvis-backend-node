@@ -216,7 +216,18 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
       value: edge.value,
       active: true,
     };
-    return createNetworkEdge(transaction, 'Partners', edgeAttrs, clusterName, edge.clusterPartnerID, network.id);
+    return retrieveNetworkActor(edge.clusterPartnerID, network.id)
+      .then((partnerNode) => {
+        const partnerName = networkWriters.recordName(partnerNode.id, partnerNode['@class']);
+        const edgeName = `${clusterName}partners${partnerName}`;
+        transaction.let(edgeName, (t) => {
+          t.create('edge', 'Partners')
+            .from(`$${clusterName}`)
+            .to(partnerNode['@rid'])
+            .set(edgeAttrs);
+        });
+        return edgeName;
+      });
   }));
 }
 
@@ -246,27 +257,48 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
       value: edge.value,
       active: true,
     };
-    return createNetworkEdge(transaction, 'contracts', edgeAttrs, clusterName, edge.contractorID, network.id);
+    return retrieveNetworkActor(edge.contractorID, network.id)
+      .then((contractorNode) => {
+        const partnerName = networkWriters.recordName(contractorNode.id, contractorNode['@class']);
+        const edgeName = `${clusterName}contracts${partnerName}`;
+        if (edgeToBidClass === 'Awards') {
+          transaction.let(edgeName, (t) => {
+            t.create('edge', 'Contracts')
+              .from(`$${clusterName}`)
+              .to(contractorNode['@rid'])
+              .set(edgeAttrs);
+          });
+        } else {
+          transaction.let(edgeName, (t) => {
+            t.create('edge', 'Contracts')
+              .from(contractorNode['@rid'])
+              .to(`$${clusterName}`)
+              .set(edgeAttrs);
+          });
+        }
+        return edgeName;
+      });
   }));
 }
 
-function createNetworkEdge(transaction, edgeClass, edgeAttrs, clusterName, actorID, networkID) {
+function retrieveNetworkActor(actorID, networkID) {
   return config.db.select()
-    .from('NetworkActor').where({
+    .from('NetworkActor')
+    .where({
       "out('PartOf').id": networkID,
       "in('ActingAs').id": actorID,
     })
     .one()
-    .then((partnerNode) => {
-      const partnerName = networkWriters.recordName(actorID, 'NetworkActor');
-      const edgeName = `${clusterName}${edgeClass}${partnerName}`;
-      transaction.let(edgeName, (t) => {
-        t.create('edge', edgeClass)
-          .from(`$${clusterName}`)
-          .to(partnerNode['@rid'])
-          .set(edgeAttrs);
-      });
-      return edgeName;
+    .then((networkActor) => {
+      if (networkActor.active === false) {
+        return config.db.select("expand(in('Includes'))")
+          .from('NetworkActor')
+          .where({
+            '@rid': networkActor['@rid'],
+          })
+          .one();
+      }
+      return networkActor;
     });
 }
 
@@ -349,10 +381,10 @@ module.exports = {
   calculateCluster,
   createPartnersEdges,
   createContractsEdges,
-  createNetworkEdge,
   createIncludesEdges,
   retrieveNetwork,
   retrieveCluster,
+  retrieveNetworkActor,
   retrieveActorIDs,
   updateClusterActor,
   updateClusterActorEdges,
