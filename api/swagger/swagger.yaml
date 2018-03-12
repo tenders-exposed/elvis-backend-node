@@ -749,7 +749,7 @@ paths:
             $ref: "#/definitions/CreateClusterRequest"
       responses:
         "201":
-          description: Successfully created created cluster. This makes the nodes involved in the cluster and their edges hidden so GET `/network/{ID}` to see all changes.
+          description: Successfully created created cluster. This makes the nodes involved in the cluster and their edges hidden so GET `/network/{networkID}` to see all changes.
           schema:
             $ref: "#/definitions/NetworkClusterResponse"
         "400":
@@ -836,7 +836,7 @@ paths:
             $ref: "#/definitions/UpdateClusterRequest"
       responses:
         "200":
-          description: Successfully updated cluster. This makes the nodes involved in the cluster and their edges hidden so GET `/network/{ID}` to see all changes.
+          description: Successfully updated cluster. This makes the nodes involved in the cluster and their edges hidden so GET `/network/{networkID}` to see all changes.
           schema:
             $ref: "#/definitions/NetworkClusterResponse"
         "404":
@@ -882,7 +882,7 @@ paths:
           required: true
       responses:
         "204":
-          description: Successfully deleted This makes the nodes involved in the cluster and their edges visible again so GET `/network/{ID}` to see all changes.
+          description: Successfully deleted This makes the nodes involved in the cluster and their edges visible again so GET `/network/{networkID}` to see all changes.
         "404":
           description: Cluster/network not found
           schema:
