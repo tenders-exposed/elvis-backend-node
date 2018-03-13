@@ -92,8 +92,8 @@ async function deleteBid(transaction, bidID) {
 
 async function createLot(transaction, rawLot, tenderName, buyerNames, rawTender) { // eslint-disable-line max-len
   const rawBids = (rawLot.bids || []);
-  rawLot.bidsCount = rawBids.length;
   const lot = lotExtractor.extractLot(rawLot);
+  lot.bidsCount = lot.bidsCount || rawBids.length;
   const lotName = recordName(uuidv4(), 'Lot');
 
   transaction.let(lotName, (t) => {
