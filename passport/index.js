@@ -34,7 +34,7 @@ module.exports.localStrategyCallback = (email, password, done) => {
 
 module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb) => {
   let email;
-  let query = 'SELECT @rid, id, email, githubId, twitterId FROM User WHERE githubId = :githubId';
+  let query = 'SELECT id, @rid, email, githubId, twitterId FROM User WHERE githubId = :githubId';
   const params = {
     githubId: profile.id,
   };
@@ -75,6 +75,7 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
         return foundUser;
       }
       params.id = uuidv4();
+      params.active = true;
       return config.db.create('vertex', 'User')
         .set(params)
         .commit()
@@ -86,7 +87,7 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
 
 module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
   let email;
-  let query = 'SELECT @rid, email, githubId, twitterId FROM User WHERE twitterId = :twitterId';
+  let query = 'SELECT id, @rid, email, githubId, twitterId FROM User WHERE twitterId = :twitterId';
   const params = {
     twitterId: profile.id,
   };
@@ -123,6 +124,7 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
         return foundUser;
       }
       params.id = uuidv4();
+      params.active = true;
       return config.db.create('vertex', 'User')
         .set(params)
         .commit()
