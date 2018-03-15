@@ -67,7 +67,7 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
           foundUser.githubId = profile.id;
           return config.db.update('User')
             .set({ githubId: profile.id })
-            .where({ '@rid': foundUser['@rid'] })
+            .where({ id: foundUser.id })
             .return('AFTER')
             .commit()
             .one();
@@ -116,7 +116,7 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
           foundUser.twitterId = profile.id;
           return config.db.update('User')
             .set({ twitterId: profile.id })
-            .where({ '@rid': foundUser['@rid'] })
+            .where({ id: foundUser.id })
             .return('AFTER')
             .commit()
             .one();
@@ -163,11 +163,11 @@ module.exports.configureStrategies = () => {
     done(null, user);
   });
 
-  passport.deserializeUser((id, done) => {
+  passport.deserializeUser((user, done) => {
     config.db.select().from('User')
-      .where({ id })
+      .where({ id: user.id })
       .one()
-      .then((user) => done(null, user))
+      .then((foundUser) => done(null, foundUser))
       .catch((err) => done(err));
   });
 };
