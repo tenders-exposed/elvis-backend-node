@@ -14,10 +14,10 @@ class AuthHelper {
           session = pair;
 
           return config.db.query(
-            'UPDATE User ADD accessTokens = :accessToken, refreshTokens = :refreshToken WHERE @rid = :rid',
+            'UPDATE User ADD accessTokens = :accessToken, refreshTokens = :refreshToken WHERE id = :id',
             {
               params: {
-                rid: req.user['@rid'],
+                id: req.user.id,
                 accessToken: session.accessToken,
                 refreshToken: session.refreshToken,
               },
