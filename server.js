@@ -83,7 +83,7 @@ app.use(bodyParser.json({ limit: '200mb' }));
 app.use(logger('dev'));
 app.all('/*', (req, res, next) => {
   // cors
-  res.header('Access-Control-Allow-Origin', '*'); // TODO restrict to specified domain if necessary
+  res.header('Access-Control-Allow-Origin', 'https://tenders.exposed'); // TODO restrict to specified domain if necessary
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
   res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-type,Accept,X-Refresh-Token,Authorization');
   res.header('Access-Control-Allow-Credentials', true);
@@ -99,6 +99,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false },
+  key: 'sid',
 }));
 app.use(passport.initialize());
 app.use(passport.session());
