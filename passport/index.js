@@ -163,11 +163,11 @@ module.exports.configureStrategies = () => {
     done(null, user);
   });
 
-  passport.deserializeUser((id, done) => {
+  passport.deserializeUser((user, done) => {
     config.db.select().from('User')
-      .where({ id })
+      .where({ id: user.id })
       .one()
-      .then((user) => done(null, user))
+      .then((foundUser) => done(null, foundUser))
       .catch((err) => done(err));
   });
 };
