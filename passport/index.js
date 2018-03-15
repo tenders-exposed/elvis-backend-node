@@ -67,7 +67,7 @@ module.exports.githubStrategyCallback = (accessToken, refreshToken, profile, cb)
           foundUser.githubId = profile.id;
           return config.db.update('User')
             .set({ githubId: profile.id })
-            .where({ '@rid': foundUser['@rid'] })
+            .where({ id: foundUser.id })
             .return('AFTER')
             .commit()
             .one();
@@ -116,7 +116,7 @@ module.exports.twitterStrategyCallback = (token, tokenSecret, profile, cb) => {
           foundUser.twitterId = profile.id;
           return config.db.update('User')
             .set({ twitterId: profile.id })
-            .where({ '@rid': foundUser['@rid'] })
+            .where({ id: foundUser.id })
             .return('AFTER')
             .commit()
             .one();
