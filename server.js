@@ -81,7 +81,7 @@ app.use(bodyParser.json({ limit: '200mb' }));
 app.use(logger('dev'));
 app.all('/*', (req, res, next) => {
   // cors
-  res.header('Access-Control-Allow-Origin', 'http://localhost:4200 https://tenders.exposed http://develop.tenders.exposed https://elvis-ember-develop.tenders.exposed https://elvis-ember-new-backend.tenders.exposed'); // TODO restrict to specified domain if necessary
+  res.header('Access-Control-Allow-Origin', 'https://tenders.exposed'); // TODO restrict to specified domain if necessary
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
   res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-type,Accept,X-Refresh-Token,Authorization');
   res.header('Access-Control-Allow-Credentials', true);
