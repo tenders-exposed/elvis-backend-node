@@ -88,7 +88,7 @@ function createOwnsEdge(transaction, user, networkName) {
 function settingsToValueQuery(sizeSetting) {
   let value;
   if (sizeSetting === 'numberOfWinningBids') {
-    value = 'set(@rid).size()';
+    value = 'set(id).size()';
   } else if (sizeSetting === 'amountOfMoneyExchanged') {
     value = 'sum(price.netAmountEur)';
   }

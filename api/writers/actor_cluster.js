@@ -188,13 +188,13 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
     sum(bidsCount) as value
     FROM (
       SELECT difference(pairIDs, :actorIDs) as outsider,
-      set(bidRID).size() as bidsCount
+      set(bidID).size() as bidsCount
       FROM (
-        SELECT bidRID,
+        SELECT bidID,
         set(actor.id, partner.id) as pairIDs,
         set(actor, partner) as pairRIDs
         FROM (
-          SELECT @rid as bidRID,
+          SELECT id as bidID,
           in('${edgeToBidClass}') as actor,
           in('${edgeToBidClass}') as partner
           FROM Bid
@@ -237,7 +237,7 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
   const clusterContractsQuery = `SELECT contractor.id as contractorID,
     ${valueQuery} as value
     FROM (
-      SELECT @rid as bidRID,
+      SELECT id,
       in('${contractorEdge}') as contractor,
       in('${edgeToBidClass}') as clusterActor
       FROM Bid
@@ -294,7 +294,7 @@ function retrieveNetworkActor(actorID, networkID) {
         return config.db.select("expand(in('Includes'))")
           .from('NetworkActor')
           .where({
-            '@rid': networkActor['@rid'],
+            id: networkActor.id,
           })
           .one();
       }

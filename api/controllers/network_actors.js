@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('lodash');
 const Promise = require('bluebird');
 const config = require('../../config/default');
 const clusterWriters = require('../writers/actor_cluster');
@@ -16,8 +17,12 @@ function getNetworkActor(req, res) {
       .from('NetworkActor')
       .where({ id: nodeID })
       .one(),
-    (network, networkActor) =>
-      networkActorSerializer.formatActorWithDetails(network, networkActor),
+    (network, networkActor) => {
+      if (_.isUndefined(networkActor) === true) {
+        throw codes.NotFound('Network actor not found.');
+      }
+      return networkActorSerializer.formatActorWithDetails(network, networkActor);
+    },
   )
     .then((networkActor) => res.status(codes.SUCCESS).json({
       node: networkActor,

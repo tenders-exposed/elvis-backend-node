@@ -25,7 +25,7 @@ bidSerializer.formatBidWithBidders = function (network, bid) {
   const formattedBid = bidSerializer.formatBid(bid);
   return config.db.select("expand(in('Participates'))")
     .from('Bid')
-    .where({ '@rid': bid['@rid'] })
+    .where({ id: bid.id })
     .all()
     .then((bidders) => Promise.map(bidders, (bidder) =>
       actorSerializer.formatActorWithNode(network, bidder)))
@@ -38,7 +38,7 @@ bidSerializer.formatBidWithBidders = function (network, bid) {
 bidSerializer.formatBidWithRelated = function (network, bid) {
   const retrieveFormattedLot = config.db.select("expand(out('AppliedTo'))")
     .from('Bid')
-    .where({ '@rid': bid['@rid'] })
+    .where({ id: bid.id })
     .one()
     .then((lot) => lotSerializer.formatLotWithTender(network, lot));
   return Promise.join(

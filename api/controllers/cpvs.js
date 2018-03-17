@@ -36,9 +36,9 @@ function getTenderCpvs(req, res) {
   const cpvsQuery = `SELECT cpv.code as code,
     cpv.xNumberDigits as xNumberDigits,
     cpv.xName as xName,
-    set(bidID).size() as xNumberBids
+    set(id).size() as xNumberBids
     FROM (
-      SELECT @rid as bidID, out('AppliedTo').in('Comprises').out('HasCPV') as cpv
+      SELECT id, out('AppliedTo').in('Comprises').out('HasCPV') as cpv
         FROM Bid
         ${queryCriteria.length ? ` WHERE ${_.join(queryCriteria, ' AND ')}` : ''}
       UNWIND cpv

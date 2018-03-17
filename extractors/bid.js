@@ -2,10 +2,15 @@
 
 const _ = require('lodash');
 const moment = require('moment');
+const uuidv4 = require('uuid/v4');
 const priceExtractor = require('./price');
 
 function extractBid(bidAttrs, tenderAttrs, lotAttrs) {
+  if (_.isUndefined(bidAttrs.id) === false) {
+    console.log('Bid with id found', bidAttrs); // eslint-disable-line no-console
+  }
   return {
+    id: uuidv4(),
     isWinning: bidAttrs.isWinning,
     isSubcontracted: bidAttrs.isSubcontracted,
     isConsortium: bidAttrs.isConsortium,
