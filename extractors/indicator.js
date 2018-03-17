@@ -9,7 +9,6 @@ function extractIndicator(indicatorAttrs) {
   }
   return {
     id: indicatorAttrs.id,
-    xDigiwhistLastModified: helpers.formatTimestamp(indicatorAttrs.modified),
     type: indicatorAttrs.type,
     value: indicatorAttrs.value,
   };

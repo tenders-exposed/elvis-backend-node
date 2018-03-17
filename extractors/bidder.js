@@ -12,7 +12,6 @@ function extractBidder(bidderAttrs, tenderAttrs = {}) {
     normalizedName: helpers.removeDiacritics(bidderAttrs.name),
     address: bidderAttrs.address,
     isPublic: bidderAttrs.isPublic,
-    xDigiwhistLastModified: helpers.formatTimestamp(bidderAttrs.modified),
     indicators: _
       .filter((tenderAttrs.indicators || []), { relatedEntityId: bidderAttrs.id })
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
