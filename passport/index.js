@@ -17,7 +17,7 @@ module.exports.localStrategyCallback = (email, password, done) => {
     .one()
     .then((user) => {
       if (!user) {
-        return done(codes.BadRequest('Incorrect email.'), false);
+        return done(codes.BadRequest('No user with this email was found.'), false);
       }
       if (user.active === false) {
         return done(codes.BadRequest('Activate your account via email before logging in'), false);

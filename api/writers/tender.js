@@ -50,9 +50,9 @@ async function writeTender(fullTenderRecord) {
   if (_.isUndefined(existingTender) === false) {
     const existingLotRel = await config.db.select("out('Comprises')").from('Tender')
       .where({ '@rid': existingTenderID }).one();
-    const existingLotIDs = existingLotRel.out;
-    await Promise.map(existingLotIDs, (existingLotID) =>
-      deleteLot(transaction, existingLotID));
+    const existingLotRIDs = existingLotRel.out;
+    await Promise.map(existingLotRIDs, (existingLotRID) =>
+      deleteLot(transaction, existingLotRID));
   }
 
   await Promise.map((fullTenderRecord.lots || []), (rawLot) => {
@@ -66,27 +66,27 @@ async function writeTender(fullTenderRecord) {
   return transaction.commit(2).return(`$${tenderName}`).one();
 }
 
-async function deleteLot(transaction, lotID) {
+async function deleteLot(transaction, lotRID) {
   const lotName = `delete${recordName(uuidv4(), 'Lot')}`;
 
   transaction.let(lotName, (t) =>
     t.delete('vertex', 'Lot')
-      .where({ '@rid': lotID }));
+      .where({ '@rid': lotRID }));
 
   const existingBidRel = await config.db.select("in('AppliedTo')").from('Lot')
-    .where({ '@rid': lotID }).one();
-  const existingBidIDs = existingBidRel.in;
-  await Promise.map(existingBidIDs, (existingBidID) =>
-    deleteBid(transaction, existingBidID));
+    .where({ '@rid': lotRID }).one();
+  const existingBidRIDs = existingBidRel.in;
+  await Promise.map(existingBidRIDs, (existingBidRID) =>
+    deleteBid(transaction, existingBidRID));
   return lotName;
 }
 
-async function deleteBid(transaction, bidID) {
+async function deleteBid(transaction, bidRID) {
   const bidName = `delete${recordName(uuidv4(), 'Bid')}`;
 
   transaction.let(bidName, (t) =>
     t.delete('vertex', 'Bid')
-      .where({ '@rid': bidID }));
+      .where({ '@rid': bidRID }));
   return bidName;
 }
 
