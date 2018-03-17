@@ -21,7 +21,7 @@ const swaggerConfig = {
     twitterOauth: (req, def, scopes, callback) => {
       passport.authenticate('twitter', (err, user) => {
         if (err) {
-          console.log(err);
+          console.log(err); // eslint-disable-line no-console
           return callback(new Error('Error in passport authenticate'));
         }
 
@@ -36,7 +36,7 @@ const swaggerConfig = {
     githubOauth: (req, def, scopes, callback) => {
       passport.authenticate('github', (err, user) => {
         if (err) {
-          console.log(err);
+          console.log(err); // eslint-disable-line no-console
           return callback(new Error('Error in passport authenticate'));
         }
 

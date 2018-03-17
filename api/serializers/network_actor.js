@@ -28,12 +28,12 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
   return config.db.query(actorIDsQuery, { params: { networkActorIDs } })
     .then((actors) => _.map(actors, 'id'))
     .then((actorIDs) => {
-      const detailsQuery = `SELECT set(@rid).size() as numberOfWinningBids,
+      const detailsQuery = `SELECT set(id).size() as numberOfWinningBids,
       sum(price.netAmountEur) as amountOfMoneyExchanged,
       list(price.netAmountEur).size() as numberOfAvailablePrices,
-      set(@rid) as bidRIDs
+      set(id) as bidIDs
         FROM (
-          SELECT *
+          SELECT id, price
           FROM Bid
           WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
           AND in('${edgeToBidClass}').id in :actorIDs
@@ -50,10 +50,10 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
       node.percentValuesMissing = 100 - (
         (_.get(details, 'numberOfAvailablePrices', 0) * 100) / details.numberOfWinningBids
       );
-      return Promise.map(details.bidRIDs, (bidRID) =>
+      return Promise.map(details.bidIDs, (bidID) =>
         config.db.select()
           .from('Bid')
-          .where({ '@rid': bidRID })
+          .where({ id: bidID })
           .one()
           .then((bid) => bidSerializer.formatBidWithRelated(network, bid)));
     })

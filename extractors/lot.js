@@ -1,9 +1,15 @@
 'use strict';
 
+const _ = require('lodash');
+const uuidv4 = require('uuid/v4');
 const priceExtractor = require('./price');
 
 function extractLot(lotAttrs) {
+  if (_.isUndefined(lotAttrs.id) === false) {
+    console.log('Bid with id found', lotAttrs); // eslint-disable-line no-console
+  }
   return {
+    id: uuidv4(),
     title: lotAttrs.title,
     description: lotAttrs.description,
     contractNumber: lotAttrs.contractNumber,

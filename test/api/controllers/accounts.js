@@ -138,8 +138,8 @@ test.serial('login: Wrong email', async (t) => {
     .send({ email: 'wrong_email@gmail.com', password: 'wrong_password' });
 
   t.is(res.status, codes.BAD_REQUEST);
-  t.regex(res.body.errors[0].message, /incorrect/i);
-  t.regex(res.body.errors[0].message, /email/i);
+  t.regex(res.body.errors[0].message, /user/i);
+  t.regex(res.body.errors[0].message, /found/i);
 });
 
 test.serial('login: Wrong password', async (t) => {

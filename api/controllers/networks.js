@@ -65,7 +65,7 @@ function updateNetwork(req, res) {
           networkParams.updated = moment().format('YYYY-MM-DD HH:mm:ss');
           return config.db.update('Network')
             .set(networkParams)
-            .where({ '@rid': network['@rid'] })
+            .where({ id: network.id })
             .return('AFTER')
             .commit()
             .one();

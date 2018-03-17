@@ -30,7 +30,7 @@ lotSerializer.formatLotWithTender = function (network, lot) {
   const formattedLot = lotSerializer.formatLot(lot);
   return config.db.select("expand(in('Comprises'))")
     .from('Lot')
-    .where({ '@rid': lot['@rid'] })
+    .where({ id: lot.id })
     .one()
     .then((tender) =>
       tenderSerializer.formatTenderWithBuyers(network, tender))
@@ -44,7 +44,7 @@ lotSerializer.formatLotWithBids = function (network, lot) {
   const formattedLot = lotSerializer.formatLot(lot);
   return config.db.select("expand(in('AppliedTo'))")
     .from('Lot')
-    .where({ '@rid': lot['@rid'] })
+    .where({ id: lot.id })
     .all()
     .then((bids) => Promise.map(bids, (bid) =>
       bidSerializer.formatBidWithBidders(network, bid)))

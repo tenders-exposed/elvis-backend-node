@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('lodash');
 const Promise = require('bluebird');
 
 const config = require('../../config/default');
@@ -21,6 +22,9 @@ function getNetworkEdge(req, res) {
       .where({ uuid: edgeUUID })
       .one(),
     (network, networkEdge) => {
+      if (_.isUndefined(networkEdge) === true) {
+        throw codes.NotFound('Network edge not found.');
+      }
       if (networkEdge.type === 'partners') {
         throw codes.NotImplemented('No details available for an edge of type "partners".');
       }
