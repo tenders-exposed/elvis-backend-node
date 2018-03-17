@@ -18,4 +18,3 @@ exports.down = (db) => (
         type: 'String',
         mandatory: true,
       })));
-
