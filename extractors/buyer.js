@@ -13,7 +13,6 @@ function extractBuyer(buyerAttrs, tenderAttrs = {}) {
     isPublic: buyerAttrs.isPublic,
     buyerType: buyerAttrs.buyerType,
     isSubsidized: buyerAttrs.isSubsidized,
-    xDigiwhistLastModified: helpers.formatTimestamp(buyerAttrs.modified),
     indicators: _
       .filter((tenderAttrs.indicators || []), { relatedEntityId: buyerAttrs.id })
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
