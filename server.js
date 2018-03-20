@@ -81,19 +81,7 @@ require('./passport').configureStrategies();
 app.use(bodyParser.urlencoded({ extended: true, limit: '200mb' }));
 app.use(bodyParser.json({ limit: '200mb' }));
 app.use(logger('dev'));
-app.all('/*', (req, res, next) => {
-  // cors
-  res.header('Access-Control-Allow-Origin', '*'); // TODO restrict to specified domain if necessary
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-type,Accept,X-Refresh-Token,Authorization');
-  res.header('Access-Control-Allow-Credentials', true);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  return next();
-});
 app.use(session({
   secret: config.session.secret,
   resave: false,
