@@ -311,6 +311,35 @@ test.serial('upsertBidder creates an edge between bidder and bid', async (t) => 
   t.is(writtenEdges.length, 1);
 });
 
+test.serial('upsertBidder avoids issue #35', async (t) => {
+  const rawBidder = await fixtures.build('rawBidder');
+  const firstBid = await fixtures.build('extractedBid');
+  const secondBid = await fixtures.build('extractedBid');
+  const firstBidName = 'bid1';
+  const secondBidName = 'bid2';
+  const transaction = config.db.let(firstBidName, (tr) =>
+    tr.create('vertex', 'Bid')
+      .set(firstBid));
+  transaction.let(secondBidName, (tr) =>
+    tr.create('vertex', 'Bid')
+      .set(secondBid));
+  await writers.upsertBidder(transaction, rawBidder, firstBidName);
+  await writers.upsertBidder(transaction, rawBidder, secondBidName);
+  await transaction.commit()
+    .return()
+    .one();
+  const writtenBidder = await config.db.select()
+    .from('Bidder')
+    .where({ id: rawBidder.id })
+    .one();
+  const writtenEdges = await config.db.select()
+    .from('Participates')
+    .where({ out: writtenBidder['@rid'] })
+    .all();
+  t.not(writtenBidder, undefined);
+  t.is(writtenEdges.length, 2);
+});
+
 test.serial('upsertBidder updates an existing bidder', async (t) => {
   t.plan(2);
   const bidderAttrs = await fixtures.build('extractedBidder', { isPublic: true });
