@@ -28,7 +28,7 @@ factory.define('extractedTender', Object, tenderAttrs, {
 });
 
 const cpvAttrs = {
-  code: factory.sequence((n) => `12021220-${n}`),
+  code: factory.sequence((n) => `12021220${n}`),
   name: 'Talkative ghosts',
   xNumberDigits: 3,
 };
