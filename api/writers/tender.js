@@ -211,7 +211,7 @@ async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
 
 async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
   const cpv = cpvExtractor.extractCpv(rawCpv);
-  const cpvName = recordName(rawCpv.code, 'CPV');
+  const cpvName = recordName(cpv.code, 'CPV');
 
   const existingCpv = await config.db.select().from('CPV')
     .where({ code: cpv.code }).one();
