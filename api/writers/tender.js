@@ -187,10 +187,14 @@ async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
   const existingBidder = await config.db.select().from('Bidder')
     .where({ id: bidder.id }).one();
   if (_.isUndefined(existingBidder)) {
-    transaction.let(bidderName, (t) => {
-      t.create('vertex', 'Bidder')
-        .set(bidder);
-    });
+    // See issue #35
+    const transactedRecords = _.flatMap(transaction._state.let, (arr) => arr[0]);
+    if (_.includes(transactedRecords, bidderName) === false) {
+      transaction.let(bidderName, (t) => {
+        t.create('vertex', 'Bidder')
+          .set(bidder);
+      });
+    }
   } else {
     transaction.let(bidderName, (t) => {
       t.update('Bidder')
@@ -211,45 +215,48 @@ async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
 
 async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
   const cpv = cpvExtractor.extractCpv(rawCpv);
-  const cpvName = recordName(cpv.code, 'CPV');
+  if (_.isUndefined(cpv.code) === false) {
+    const cpvName = recordName(cpv.code, 'CPV');
 
-  const existingCpv = await config.db.select().from('CPV')
-    .where({ code: cpv.code }).one();
-  const existingCpvID = (existingCpv || {})['@rid'];
-  if (_.isUndefined(existingCpv)) {
-    transaction.let(cpvName, (t) => {
-      t.create('vertex', 'CPV')
-        .set(cpv);
-    });
-  } else {
-    transaction.let(cpvName, (t) => {
-      t.update('CPV')
-        .set(cpv)
-        .where({ '@rid': existingCpv['@rid'] })
-        .return('AFTER');
-    });
-  }
-
-  const existingRel = await config.db.select().from('HasCPV')
-    .where({
-      // This is needed because undefined confuses OrientDB
-      in: (existingCpvID || null),
-      out: (existingTenderID || null),
-    }).one();
-  transaction.let(`${tenderName}has${cpvName}`, (t) => {
-    if (_.isUndefined(existingRel)) {
-      t.create('edge', 'HasCPV')
-        .from(`$${tenderName}`)
-        .to(`$${cpvName}`)
-        .set(cpvExtractor.extractHasCpv(rawCpv));
+    const existingCpv = await config.db.select().from('CPV')
+      .where({ code: cpv.code }).one();
+    const existingCpvID = (existingCpv || {})['@rid'];
+    if (_.isUndefined(existingCpv)) {
+      transaction.let(cpvName, (t) => {
+        t.create('vertex', 'CPV')
+          .set(cpv);
+      });
     } else {
-      t.update('HasCPV')
-        .set(cpvExtractor.extractHasCpv(rawCpv))
-        .where({ '@rid': existingRel['@rid'] })
-        .return('AFTER');
+      transaction.let(cpvName, (t) => {
+        t.update('CPV')
+          .set(cpv)
+          .where({ '@rid': existingCpv['@rid'] })
+          .return('AFTER');
+      });
     }
-  });
-  return cpvName;
+
+    const existingRel = await config.db.select().from('HasCPV')
+      .where({
+        // This is needed because undefined confuses OrientDB
+        in: (existingCpvID || null),
+        out: (existingTenderID || null),
+      }).one();
+    transaction.let(`${tenderName}has${cpvName}`, (t) => {
+      if (_.isUndefined(existingRel)) {
+        t.create('edge', 'HasCPV')
+          .from(`$${tenderName}`)
+          .to(`$${cpvName}`)
+          .set(cpvExtractor.extractHasCpv(rawCpv));
+      } else {
+        t.update('HasCPV')
+          .set(cpvExtractor.extractHasCpv(rawCpv))
+          .where({ '@rid': existingRel['@rid'] })
+          .return('AFTER');
+      }
+    });
+    return cpvName;
+  }
+  return true;
 }
 
 module.exports = {
