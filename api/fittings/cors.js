@@ -1,11 +1,20 @@
 'use strict';
 
+const url = require('url');
+
 module.exports = function create() {
   return (context, next) => {
     const req = context.request;
     const res = context.response;
 
-    const origin = req.headers.origin || '*';
+    const originURL = url.parse(req.headers.referer);
+    const originReferer = `${originURL.protocol}//${originURL.hostname}`;
+    const originHeader = req.headers.origin;
+
+    const origin = originHeader || originReferer || '*';
+
+    console.log('Origin is', origin);
+
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
     res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-type,Accept,X-Refresh-Token,Authorization');
