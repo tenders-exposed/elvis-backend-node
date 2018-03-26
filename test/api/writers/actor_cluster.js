@@ -191,7 +191,7 @@ test.serial('createCluster recalculates partners edges ignoring edges between cl
     nodes: [firstClusterBuyer.id, secondClusterBuyer.id],
   };
   const cluster = await clusterWriters.createCluster(network.id, clusterParams);
-  const partnersEdges = await config.db.select("expand(outE('Partners'))")
+  const partnersEdges = await config.db.select("expand(bothE('Partners'))")
     .from('ActorCluster')
     .where({ id: cluster.id })
     .all();
@@ -245,6 +245,87 @@ test.serial('createCluster makes edges of nodes involved in the cluster inactive
     { params: { nodes: _.map(clusterBuyers, 'id') } },
   );
   t.false(_.includes(_.map(buyersEdges, 'active'), true));
+});
+
+test.serial('createCluster creates Contracts edge between two clusters', async (t) => {
+  const network = await createNetwork();
+  const clusterActorsQuery = `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND type=:type
+    LIMIT 2;`;
+  const clusterBuyers = await config.db.query(
+    clusterActorsQuery,
+    { params: { networkID: network.id, type: 'buyer' } },
+  );
+  const clusterBidders = await config.db.query(
+    clusterActorsQuery,
+    { params: { networkID: network.id, type: 'bidder' } },
+  );
+  const buyerCluster = await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'buyers crew',
+      type: 'buyer',
+      nodes: _.map(clusterBuyers, 'id'),
+    },
+  );
+  const bidderCluster = await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'bidders crew',
+      type: 'bidder',
+      nodes: _.map(clusterBidders, 'id'),
+    },
+  );
+  const clustersEdge = await config.db.select()
+    .from('NetworkEdge')
+    .where({
+      in: bidderCluster['@rid'],
+      out: buyerCluster['@rid'],
+    })
+    .one();
+  t.false(_.isUndefined(clustersEdge));
+  t.is(clustersEdge.value, 2);
+});
+
+test.serial('createCluster creates Contracts edges between a cluster and nodes involved in another cluster', async (t) => {
+  const network = await createNetwork();
+  const clusterActorsQuery = `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND type=:type
+    LIMIT 2;`;
+  const clusterBuyers = await config.db.query(
+    clusterActorsQuery,
+    { params: { networkID: network.id, type: 'buyer' } },
+  );
+  const clusterBidders = await config.db.query(
+    clusterActorsQuery,
+    { params: { networkID: network.id, type: 'bidder' } },
+  );
+  await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'buyers crew',
+      type: 'buyer',
+      nodes: _.map(clusterBuyers, 'id'),
+    },
+  );
+  const bidderCluster = await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'bidders crew',
+      type: 'bidder',
+      nodes: _.map(clusterBidders, 'id'),
+    },
+  );
+  const bidderClusterContracts = await config.db.query(
+    "SELECT expand(inE('Contracts')) FROM NetworkActor where id=:bidderClusterID",
+    { params: { bidderClusterID: bidderCluster.id } },
+  );
+  t.is(bidderClusterContracts.length, 4);
+  t.is(_.filter(bidderClusterContracts, { active: false }).length, 2);
 });
 
 test.serial('updateCluster links cluster to nodes added to the cluster', async (t) => {
