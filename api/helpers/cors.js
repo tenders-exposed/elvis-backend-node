@@ -5,9 +5,11 @@ const url = require('url');
 module.exports = (req, res, next) => {
   if (!req.headers.referer) {
     console.warn('No referer was sent', req.headers);
+    const originURL = url.parse(req.headers.referer);
+  } else {
+    const originURL = url.parse(req.headers.origin);
   }
 
-  const originURL = url.parse(req.headers.referer);
   const originReferer = `${originURL.protocol}//${originURL.hostname}`;
   const originHeader = req.headers.origin;
 
