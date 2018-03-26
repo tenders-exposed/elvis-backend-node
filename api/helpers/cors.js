@@ -5,13 +5,16 @@ const url = require('url');
 module.exports = (req, res, next) => {
   let originURL = undefined;
   let origin = undefined;
+  let port = '';
 
   if (req.headers.referer) {
     originURL = url.parse(req.headers.referer);
-    origin = `${originURL.protocol}//${originURL.hostname}`;
+    port = originURL.port ? `:${originURL.port}` : '';
+    origin = `${originURL.protocol}//${originURL.hostname}${port}`;
   } else if (req.headers.origin) {
     originURL = url.parse(req.headers.origin);
-    origin = `${originURL.protocol}//${originURL.hostname}`;
+    port = originURL.port ? `:${originURL.port}` : '';
+    origin = `${originURL.protocol}//${originURL.hostname}${port}`;
   } else {
     origin = '*';
   }
