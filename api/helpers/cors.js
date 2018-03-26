@@ -3,17 +3,18 @@
 const url = require('url');
 
 module.exports = (req, res, next) => {
-  if (!req.headers.referer) {
-    console.warn('No referer was sent', req.headers);
-    const originURL = url.parse(req.headers.referer);
+  let originURL = undefined;
+  let origin = undefined;
+
+  if (req.headers.referer) {
+    originURL = url.parse(req.headers.referer);
+    origin = `${originURL.protocol}//${originURL.hostname}`;
+  } else if (req.headers.origin) {
+    originURL = url.parse(req.headers.origin);
+    origin = `${originURL.protocol}//${originURL.hostname}`;
   } else {
-    const originURL = url.parse(req.headers.origin);
+    origin = '*';
   }
-
-  const originReferer = `${originURL.protocol}//${originURL.hostname}`;
-  const originHeader = req.headers.origin;
-
-  const origin = originHeader || originReferer || '*';
 
   res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
