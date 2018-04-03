@@ -185,10 +185,10 @@ function retrieveNetwork(networkID) {
 
 function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clusterName) {
   const clusterPartnersQuery = `SELECT outsider[0] as clusterPartnerID,
-    sum(bidsCount) as value
+    set(bidIDs).size() as value
     FROM (
       SELECT difference(pairIDs, :actorIDs) as outsider,
-      set(bidID).size() as bidsCount
+      set(bidID) as bidIDs
       FROM (
         SELECT bidID,
         set(actor.id, partner.id) as pairIDs,
