@@ -1042,20 +1042,12 @@ definitions:
   ResetPasswordRequest:
     type: object
     required:
-      - email
       - resetPasswordToken
       - password
-      - passwordConfirmation
     additionalProperties: false
     properties:
-      email:
-        type: string
-        format: email
       password:
         type: string
-      passwordConfirmation:
-        type: string
-        description: Same as new password
       resetPasswordToken:
         type: string
         description: Reset token sent through email
