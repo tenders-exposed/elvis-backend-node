@@ -210,25 +210,56 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
   return config.db.query(
     clusterPartnersQuery,
     { params: Object.assign({}, network.query, { actorIDs }) },
-  ).then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
-    const edgeAttrs = {
-      uuid: uuidv4(),
-      value: edge.value,
-      active: true,
-    };
-    return retrieveNetworkActor(edge.clusterPartnerID, network.id)
-      .then((partnerNode) => {
-        const partnerName = networkWriters.recordName(partnerNode.id, partnerNode['@class']);
-        const edgeName = `${clusterName}partners${partnerName}`;
-        transaction.let(edgeName, (t) => {
-          t.create('edge', 'Partners')
-            .from(`$${clusterName}`)
-            .to(partnerNode['@rid'])
-            .set(edgeAttrs);
-        });
-        return edgeName;
-      });
-  }));
+  ).then((partnersEdges) => {
+    const partnerIDs = _.map(partnersEdges, 'clusterPartnerID');
+    return Promise.map(partnersEdges, (edge) =>
+      retrieveNetworkActor(edge.clusterPartnerID, network.id)
+        .then((partnerNode) =>
+          createPartnersEdge(transaction, network, edge.value, partnerNode, clusterName)))
+      .then(() => {
+        // Calculate Partners edges with other clusters in the network
+        const partnerClusterActorsQuery = `SELECT in('Includes')[0].id as partnerClusterID,
+        set(in('ActingAs').id) as partnerClusterActorIDs
+        FROM (
+          SELECT * FROM NetworkActor WHERE out('PartOf').id = :networkID
+          AND in('ActingAs').id in :partnerIDs
+          AND in('Includes').size() > 0
+        ) GROUP BY in('Includes');`;
+        return config.db.query(
+          partnerClusterActorsQuery,
+          { params: { networkID: network.id, partnerIDs } },
+        );
+      })
+      .then((results) =>
+        Promise.map(results, (result) => {
+          const contractorClusterEdgeQuery = `SELECT set(id).size() as value
+          FROM (
+            SELECT *
+            FROM Bid
+            WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
+            AND in('${edgeToBidClass}').id in :partnerClusterActorIDs
+            AND in('${edgeToBidClass}').id in :actorIDs
+            AND isWinning=true
+          );`;
+          const queryParams = Object.assign(
+            {},
+            network.query,
+            {
+              actorIDs,
+              partnerClusterActorIDs: result.partnerClusterActorIDs,
+            },
+          );
+          return Promise.join(
+            retrieveCluster(network.id, result.partnerClusterID),
+            config.db.query(
+              contractorClusterEdgeQuery,
+              { params: queryParams },
+            ),
+            (contractorCluster, edgeResult) =>
+              createPartnersEdge(transaction, network, edgeResult[0].value, contractorCluster, clusterName), // eslint-disable-line max-len
+          );
+        }));
+  });
 }
 
 function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, clusterName) {
@@ -332,6 +363,26 @@ function createContractsEdge(transaction, network, edgeValue, contractorNode, cl
   return edgeName;
 }
 
+function createPartnersEdge(transaction, network, edgeValue, partnerNode, clusterName) {
+  const edgeAttrs = {
+    uuid: uuidv4(),
+    value: edgeValue,
+    active: true,
+  };
+  const partnerName = networkWriters.recordName(partnerNode.id, partnerNode['@class']);
+  const edgeName = `${clusterName}contracts${partnerName}`;
+  if (partnerNode.active === false) {
+    edgeAttrs.active = false;
+  }
+  transaction.let(edgeName, (t) => {
+    t.create('edge', 'Partners')
+      .from(partnerNode['@rid'])
+      .to(`$${clusterName}`)
+      .set(edgeAttrs);
+  });
+  return edgeName;
+}
+
 function retrieveNetworkActor(actorID, networkID) {
   return config.db.select()
     .from('NetworkActor')
@@ -379,13 +430,15 @@ function updateClusterActorEdges(transaction, networkActorID, edgeClass, active)
       SELECT expand(inE('${edgeClass}'))
       FROM NetworkActor
       WHERE id=:networkActorID
-    ) WHERE out.active = true;`;
+    ) WHERE out.active = true
+    OR :networkActorID IN out.in('Includes').out('Includes').id;`;
   const outEdgesQuery = `SELECT *
   FROM (
     SELECT expand(outE('${edgeClass}'))
     FROM NetworkActor
     WHERE id=:networkActorID
-  ) WHERE in.active = true;`;
+  ) WHERE in.active = true
+  OR :networkActorID IN in.in('Includes').out('Includes').id;`;
   return Promise.join(
     config.db.query(inEdgesQuery, { params: { networkActorID } }),
     config.db.query(outEdgesQuery, { params: { networkActorID } }),

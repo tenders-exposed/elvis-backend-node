@@ -328,6 +328,82 @@ test.serial('createCluster creates Contracts edges between a cluster and nodes i
   t.is(_.filter(bidderClusterContracts, { active: false }).length, 2);
 });
 
+test.serial('createCluster creates Partners edge between two clusters', async (t) => {
+  const network = await createNetwork();
+  const clusterBuyersQuery = `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND type='buyer'
+    LIMIT 3;`;
+  const clusterBuyers = await config.db.query(
+    clusterBuyersQuery,
+    { params: { networkID: network.id } },
+  );
+  const firstCluster = await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'first cluster',
+      type: 'buyer',
+      nodes: _.map(_.take(clusterBuyers, 2), 'id'),
+    },
+  );
+  const secondCluster = await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'second cluster',
+      type: 'buyer',
+      nodes: _.map(_.takeRight(clusterBuyers, 1), 'id'),
+    },
+  );
+  const clustersEdge = await config.db.select()
+    .from('NetworkEdge')
+    .where({
+      in: secondCluster['@rid'],
+      out: firstCluster['@rid'],
+    })
+    .one();
+  t.false(_.isUndefined(clustersEdge));
+  t.is(clustersEdge.value, 1);
+});
+
+test.serial('createCluster creates Partners edge between a cluster and nodes involved in another cluster', async (t) => {
+  const network = await createNetwork();
+  const clusterBuyersQuery = `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND type='buyer'
+    LIMIT 3;`;
+  const clusterBuyers = await config.db.query(
+    clusterBuyersQuery,
+    { params: { networkID: network.id } },
+  );
+  const firstCluster = await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'first cluster',
+      type: 'buyer',
+      nodes: _.map(_.take(clusterBuyers, 2), 'id'),
+    },
+  );
+  await clusterWriters.createCluster(
+    network.id,
+    {
+      label: 'second cluster',
+      type: 'buyer',
+      nodes: _.map(_.takeRight(clusterBuyers, 1), 'id'),
+    },
+  );
+  const clusterToActorEdge = await config.db.select()
+    .from('NetworkEdge')
+    .where({
+      in: firstCluster['@rid'],
+      out: _.takeRight(clusterBuyers, 1)[0]['@rid'],
+    })
+    .one();
+  t.is(clusterToActorEdge.active, false);
+  t.is(clusterToActorEdge.value, 1);
+});
+
 test.serial('updateCluster links cluster to nodes added to the cluster', async (t) => {
   t.plan(2);
   const network = await createNetwork();
