@@ -210,26 +210,23 @@ function forgotPassword(req, res) {
 
 function resetPassword(req, res) {
   const requestObject = req.swagger.params.body.value;
+  let email;
   return AuthHelper.verifyToken(requestObject.resetPasswordToken)
     .then((decoded) => {
       if (!decoded.email) {
         throw codes.BadRequest('Wrong token.');
-      }
-      if (requestObject.email !== decoded.email) {
-        throw codes.BadRequest('Wrong token');
+      } else {
+        email = decoded.email;
       }
       return config.db.select('@rid').from('User')
         .where({
-          email: requestObject.email,
+          email,
         })
         .one();
     })
     .then((user) => {
       if (!user) {
         throw codes.NotFound('User not found.');
-      }
-      if (requestObject.password !== requestObject.passwordConfirmation) {
-        throw codes.BadRequest('Passwords do not match.');
       }
 
       return AuthHelper.createPasswordHash(requestObject.password);
@@ -239,7 +236,7 @@ function resetPassword(req, res) {
       {
         params: {
           passwordHash,
-          email: requestObject.email,
+          email,
         },
       },
     ))

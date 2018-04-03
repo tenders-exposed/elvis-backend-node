@@ -178,9 +178,7 @@ test.serial('resetPassword: Success updates the password', async (t) => {
     .commit()
     .one();
   const requestAttrs = {
-    email: userAttrs.email,
     password: '123456789test',
-    passwordConfirmation: '123456789test',
     resetPasswordToken: await AuthHelper.createToken({ email: userAttrs.email }),
   };
 
