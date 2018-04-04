@@ -330,13 +330,20 @@ test.serial('createCluster creates Contracts edges between a cluster and nodes i
 
 test.serial('createCluster creates Partners edge between two clusters', async (t) => {
   const network = await createNetwork();
-  const clusterBuyersQuery = `SELECT *
+  const firstClusterBuyers = await config.db.query(
+    `SELECT *
     FROM NetworkActor
     WHERE out('PartOf').id=:networkID
     AND type='buyer'
-    LIMIT 3;`;
-  const clusterBuyers = await config.db.query(
-    clusterBuyersQuery,
+    AND in('ActingAs').out('Awards').size() > 1;`,
+    { params: { networkID: network.id } },
+  );
+  const secondClusterBuyers = await config.db.query(
+    `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND type='buyer'
+    AND in('ActingAs').out('Awards').size() = 1;`,
     { params: { networkID: network.id } },
   );
   const firstCluster = await clusterWriters.createCluster(
@@ -344,7 +351,7 @@ test.serial('createCluster creates Partners edge between two clusters', async (t
     {
       label: 'first cluster',
       type: 'buyer',
-      nodes: _.map(_.take(clusterBuyers, 2), 'id'),
+      nodes: _.map(firstClusterBuyers, 'id'),
     },
   );
   const secondCluster = await clusterWriters.createCluster(
@@ -352,7 +359,7 @@ test.serial('createCluster creates Partners edge between two clusters', async (t
     {
       label: 'second cluster',
       type: 'buyer',
-      nodes: _.map(_.takeRight(clusterBuyers, 1), 'id'),
+      nodes: _.map(secondClusterBuyers, 'id'),
     },
   );
   const clustersEdge = await config.db.select()
@@ -368,13 +375,20 @@ test.serial('createCluster creates Partners edge between two clusters', async (t
 
 test.serial('createCluster creates Partners edge between a cluster and nodes involved in another cluster', async (t) => {
   const network = await createNetwork();
-  const clusterBuyersQuery = `SELECT *
+  const firstClusterBuyers = await config.db.query(
+    `SELECT *
     FROM NetworkActor
     WHERE out('PartOf').id=:networkID
     AND type='buyer'
-    LIMIT 3;`;
-  const clusterBuyers = await config.db.query(
-    clusterBuyersQuery,
+    AND in('ActingAs').out('Awards').size() > 1;`,
+    { params: { networkID: network.id } },
+  );
+  const secondClusterBuyers = await config.db.query(
+    `SELECT *
+    FROM NetworkActor
+    WHERE out('PartOf').id=:networkID
+    AND type='buyer'
+    AND in('ActingAs').out('Awards').size() = 1;`,
     { params: { networkID: network.id } },
   );
   const firstCluster = await clusterWriters.createCluster(
@@ -382,7 +396,7 @@ test.serial('createCluster creates Partners edge between a cluster and nodes inv
     {
       label: 'first cluster',
       type: 'buyer',
-      nodes: _.map(_.take(clusterBuyers, 2), 'id'),
+      nodes: _.map(firstClusterBuyers, 'id'),
     },
   );
   await clusterWriters.createCluster(
@@ -390,14 +404,14 @@ test.serial('createCluster creates Partners edge between a cluster and nodes inv
     {
       label: 'second cluster',
       type: 'buyer',
-      nodes: _.map(_.takeRight(clusterBuyers, 1), 'id'),
+      nodes: _.map(secondClusterBuyers, 'id'),
     },
   );
   const clusterToActorEdge = await config.db.select()
     .from('NetworkEdge')
     .where({
       in: firstCluster['@rid'],
-      out: _.takeRight(clusterBuyers, 1)[0]['@rid'],
+      out: secondClusterBuyers[0]['@rid'],
     })
     .one();
   t.is(clusterToActorEdge.active, false);
