@@ -221,18 +221,20 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
     const existingCpv = await config.db.select().from('CPV')
       .where({ code: cpv.code }).one();
     const existingCpvID = (existingCpv || {})['@rid'];
-    if (_.isUndefined(existingCpv)) {
-      transaction.let(cpvName, (t) => {
-        t.create('vertex', 'CPV')
-          .set(cpv);
-      });
-    } else {
-      transaction.let(cpvName, (t) => {
-        t.update('CPV')
-          .set(cpv)
-          .where({ '@rid': existingCpv['@rid'] })
-          .return('AFTER');
-      });
+    if (_.includes(_.flatMap(transaction._state.let, (arr) => arr[0]), cpvName) === false) {
+      if (_.isUndefined(existingCpv)) {
+        transaction.let(cpvName, (t) => {
+          t.create('vertex', 'CPV')
+            .set(cpv);
+        });
+      } else {
+        transaction.let(cpvName, (t) => {
+          t.update('CPV')
+            .set(cpv)
+            .where({ '@rid': existingCpv['@rid'] })
+            .return('AFTER');
+        });
+      }
     }
 
     const existingRel = await config.db.select().from('HasCPV')
@@ -241,19 +243,24 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
         in: (existingCpvID || null),
         out: (existingTenderID || null),
       }).one();
-    transaction.let(`${tenderName}has${cpvName}`, (t) => {
+    const edgeName = `${tenderName}has${cpvName}`;
+    if (_.includes(_.flatMap(transaction._state.let, (arr) => arr[0]), edgeName) === false) {
       if (_.isUndefined(existingRel)) {
-        t.create('edge', 'HasCPV')
-          .from(`$${tenderName}`)
-          .to(`$${cpvName}`)
-          .set(cpvExtractor.extractHasCpv(rawCpv));
+        transaction.let(edgeName, (t) => {
+          t.create('edge', 'HasCPV')
+            .from(`$${tenderName}`)
+            .to(`$${cpvName}`)
+            .set(cpvExtractor.extractHasCpv(rawCpv));
+        });
       } else {
-        t.update('HasCPV')
-          .set(cpvExtractor.extractHasCpv(rawCpv))
-          .where({ '@rid': existingRel['@rid'] })
-          .return('AFTER');
+        transaction.let(edgeName, (t) => {
+          t.update('HasCPV')
+            .set(cpvExtractor.extractHasCpv(rawCpv))
+            .where({ '@rid': existingRel['@rid'] })
+            .return('AFTER');
+        });
       }
-    });
+    }
     return cpvName;
   }
   return true;
