@@ -3,9 +3,9 @@
 const url = require('url');
 
 module.exports = (req, res, next) => {
-  let originURL = undefined;
-  let origin = undefined;
-  let port = '';
+  let originURL;
+  let origin;
+  let port;
 
   if (req.headers.referer) {
     originURL = url.parse(req.headers.referer);
