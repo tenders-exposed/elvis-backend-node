@@ -6,16 +6,19 @@ const AuthHelper = require('../helpers/auth');
 const sendResponse = require('../helpers/errorFormatter');
 const codes = require('../helpers/codes');
 const config = require('../../config/default');
+const cors = require('../helpers/cors');
 
 const router = express.Router();
 
 router.get(config.passport.twitter.callbackRoute, passport.authenticate('twitter'), (req, res) => {
+  cors(req, res, () => {});
   AuthHelper.createSession(req)
     .then((tokens) => res.status(codes.SUCCESS).json(tokens))
     .catch((err) => sendResponse(err, req, res));
 });
 
 router.get(config.passport.github.callbackRoute, passport.authenticate('github'), (req, res) => {
+  cors(req, res, () => {});
   AuthHelper.createSession(req)
     .then((tokens) => res.status(codes.SUCCESS).json(tokens))
     .catch((err) => sendResponse(err, req, res));

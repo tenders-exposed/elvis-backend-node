@@ -142,7 +142,6 @@ module.exports.configureStrategies = () => {
       {
         clientID: config.passport.github.clientId,
         clientSecret: config.passport.github.clientSecret,
-        callbackURL: config.passport.github.callbackUrl,
         scope: ['user:email'],
       },
       module.exports.githubStrategyCallback,
@@ -152,7 +151,6 @@ module.exports.configureStrategies = () => {
       {
         consumerKey: config.passport.twitter.apiKey,
         consumerSecret: config.passport.twitter.apiSecret,
-        callbackURL: config.passport.twitter.callbackUrl,
         includeEmail: true,
       },
       module.exports.twitterStrategyCallback,
