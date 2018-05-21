@@ -40,7 +40,7 @@ function importFileData(filePath, concurrency, retries) {
 
     handler.on('line', (line) => {
       const writeTender = () => writers.writeTender(JSON.parse(line));
-      queue.add(() => pRetry(writeTender, { retries, factor: 8, minTimeout: 10000 })
+      queue.add(() => pRetry(writeTender, { retries })
         .catch((err) => {
           if (err instanceof OrientDBError.RequestError) {
             console.error('Max retries exceeded', err.message); // eslint-disable-line no-console
