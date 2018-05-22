@@ -17,7 +17,7 @@ function extractBid(bidAttrs, tenderAttrs, lotAttrs) {
     isDisqualified: bidAttrs.isDisqualified,
     price: priceExtractor.extractPrice(bidAttrs.price),
     robustPrice: priceExtractor.extractPrice(bidAttrs.robustPrice),
-    xCountry: tenderAttrs.ot.country,
+    xCountry: _.get(tenderAttrs, 'ot.country') || tenderAttrs.country,
     xYear: extractYear(lotAttrs.awardDecisionDate),
     xTEDCANID: _
       .chain((tenderAttrs.publications || []))

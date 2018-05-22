@@ -12,7 +12,7 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
     title: tenderAttrs.title,
     titleEnglish: tenderAttrs.titleEnglish,
     description: tenderAttrs.description,
-    country: tenderAttrs.ot.country,
+    country: _.get(tenderAttrs, 'ot.country') || tenderAttrs.country,
     isFrameworkAgreement: tenderAttrs.isFrameworkAgreement,
     isCoveredByGpa: tenderAttrs.isCoveredByGpa,
     procedureType: tenderAttrs.procedureType,
