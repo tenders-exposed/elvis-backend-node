@@ -85,22 +85,12 @@ function createOwnsEdge(transaction, user, networkName) {
   return undefined;
 }
 
-function settingsToValueQuery(sizeSetting) {
-  let value;
-  if (sizeSetting === 'numberOfWinningBids') {
-    value = 'set(id).size()';
-  } else if (sizeSetting === 'amountOfMoneyExchanged') {
-    value = 'sum(price.netAmountEur)';
-  }
-  return value;
-}
-
 function createBidderNodes(transaction, networkSettings, networkQuery, networkName) {
   const bidderActorMapping = {};
-  const valueQuery = settingsToValueQuery(networkSettings.nodeSize);
   const bidderNodesQuery = `SELECT bidder.name as label,
     bidder[@rid] as bidderRID,
-    ${valueQuery} as value,
+    count(*) as numberOfWinningBids,
+    sum(price.netAmountEur) as amountOfMoneyExchanged,
     median(out('AppliedTo').bidsCount) as medianCompetition
     FROM (
       SELECT *, in('Participates') as bidder
@@ -116,11 +106,12 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
     .then((bidderNodes) => Promise.map(bidderNodes, (node) => {
       const nodeAttrs = _.pick(
         node,
-        ['label', 'value', 'medianCompetition'],
+        ['label', 'medianCompetition'],
       );
+      nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'bidder';
       nodeAttrs.active = true;
-      nodeAttrs.id = uuidv4();
+      nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.bidderRID, networkName);
       bidderActorMapping[node.bidderRID] = partnerName;
       return undefined;
@@ -130,10 +121,10 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
 
 function createBuyerNodes(transaction, networkSettings, networkQuery, networkName) {
   const buyerActorMapping = {};
-  const valueQuery = settingsToValueQuery(networkSettings.nodeSize);
   const buyerNodesQuery = `SELECT buyer.name as label,
     buyer[@rid] as buyerRID,
-    ${valueQuery} as value,
+    count(*) as numberOfWinningBids,
+    sum(price.netAmountEur) as amountOfMoneyExchanged,
     buyer.address.country as country,
     median(out('AppliedTo').bidsCount) as medianCompetition
     FROM (
@@ -149,11 +140,12 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
     .then((buyerNodes) => Promise.map(buyerNodes, (node) => {
       const nodeAttrs = _.pick(
         node,
-        ['label', 'value', 'medianCompetition', 'country'],
+        ['label', 'medianCompetition', 'country'],
       );
+      nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'buyer';
       nodeAttrs.active = true;
-      nodeAttrs.id = uuidv4();
+      nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.buyerRID, networkName);
       buyerActorMapping[node.buyerRID] = partnerName;
       return undefined;
@@ -181,26 +173,35 @@ function createNetworkActor(transaction, nodeAttrs, actorRID, networkName) {
 }
 
 function createContractsEdges(transaction, networkSettings, networkQuery, networkActorsMapping) {
-  const valueQuery = settingsToValueQuery(networkSettings.edgeSize);
-  const contractsEdgesQuery = `SELECT buyer[@rid] as buyerRID,
-    bidder[@rid] as bidderRID,
-    ${valueQuery} as value
+  const contractsEdgesQuery = `SELECT buyerRID,
+    bidderRID,
+    bidRIDs.size() as numberOfWinningBids,
+    bidSum as amountOfMoneyExchanged
     FROM (
-      SELECT *, in('Participates') as bidder,
-      in('Awards') as buyer
-      FROM Bid
-      WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
-      AND isWinning=true
-      UNWIND bidder, buyer
-    )
-    WHERE buyer IS NOT NULL
-    AND bidder IS NOT NULL
-    GROUP BY [buyer, bidder];`;
+      SELECT price,
+      buyerRID,
+      bidderRID,
+      set(bidRID) as bidRIDs,
+      sum(price.netAmountEur) as bidSum
+      FROM (
+        SELECT price,
+        @rid as bidRID, 
+        in('Participates') as bidderRID,
+        in('Awards') as buyerRID
+        FROM Bid
+        WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+        AND isWinning=true
+        UNWIND bidderRID, buyerRID
+      )
+      WHERE buyerRID IS NOT NULL
+      AND bidderRID IS NOT NULL
+      GROUP BY [buyerRID, bidderRID]
+    );`;
   return config.db.query(contractsEdgesQuery, { params: networkQuery })
     .then((contractsEdges) => Promise.map(contractsEdges, (edge) => {
       const edgeAttrs = {
         uuid: uuidv4(),
-        value: edge.value,
+        value: edge[networkSettings.edgeSize],
         active: true,
       };
       const fromName = networkActorsMapping[edge.buyerRID];
@@ -212,23 +213,28 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
 function createPartnersEdges(transaction, edgeToBidClass, networkQuery, networkActorsMapping) {
   const partnersEdgesQuery = `SELECT actorRID,
     partnerRID,
-    set(bidRID).size() as value
+    sharedBidRIDs.size() as value
     FROM (
-      SELECT bidRID,
-      actorRID,
+      SELECT actorRID,
       partnerRID,
-      set(actorRID, partnerRID) as pair
+      set(bidRID) as sharedBidRIDs
       FROM (
-        SELECT @rid as bidRID,
-        in('${edgeToBidClass}') as actorRID,
-        in('${edgeToBidClass}') as partnerRID
-        FROM Bid
-        WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
-        AND isWinning=true
-        AND in('${edgeToBidClass}').size() > 1
-        UNWIND actorRID, partnerRID
-      ) WHERE actorRID != partnerRID
-    ) GROUP BY pair;`;
+        SELECT bidRID,
+        actorRID,
+        partnerRID,
+        set(actorRID, partnerRID) as pair
+        FROM (
+          SELECT @rid as bidRID,
+          in('${edgeToBidClass}') as actorRID,
+          in('${edgeToBidClass}') as partnerRID
+          FROM Bid
+          WHERE ${_.join(queryToBidFilters(networkQuery), ' AND ')}
+          AND isWinning=true
+          AND in('${edgeToBidClass}').size() > 1
+          UNWIND actorRID, partnerRID
+        ) WHERE actorRID != partnerRID
+      ) GROUP BY pair
+    )`;
   return config.db.query(partnersEdgesQuery, { params: networkQuery })
     .then((partnersEdges) => Promise.map(partnersEdges, (edge) => {
       const edgeAttrs = {
@@ -262,7 +268,6 @@ module.exports = {
   createOwnsEdge,
   createNetworkActor,
   createNetworkEdge,
-  settingsToValueQuery,
   queryToBidFilters,
   recordName,
 };

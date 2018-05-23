@@ -19,7 +19,7 @@ async function createCluster(networkID, clusterParams) {
     label: clusterParams.label,
     type: clusterParams.type,
     active: true,
-    value: calcuatedAttrs.value,
+    value: calcuatedAttrs[network.settings.nodeSize],
     medianCompetition: calcuatedAttrs.medianCompetition,
   };
   const clusterName = networkWriters.recordName(clusterAttrs.id, 'ActorCluster');
@@ -63,7 +63,7 @@ async function updateCluster(networkID, clusterID, clusterParams) {
   if (clusterParams.type || clusterParams.nodes) {
     const calcuatedAttrs = await calculateCluster(edgeToBidClass, network, actorIDs);
     Object.assign(clusterAttrs, {
-      value: calcuatedAttrs.value,
+      value: calcuatedAttrs[network.settings.nodeSize],
       medianCompetition: calcuatedAttrs.medianCompetition,
     });
   }
@@ -111,20 +111,18 @@ async function deleteCluster(networkID, clusterID) {
 }
 
 function calculateCluster(edgeToBidClass, network, actorIDs) {
-  const valueQuery = networkWriters.settingsToValueQuery(network.settings.nodeSize);
-  const clusterQuery = `SELECT ${valueQuery} as value,
-  median(out('AppliedTo').bidsCount) as medianCompetition
-  FROM (
-    SELECT *
+  const clusterQuery = `SELECT
+    count(*) as numberOfWinningBids,
+    sum(price.netAmountEur) as amountOfMoneyExchanged,
+    median(out('AppliedTo').bidsCount) as medianCompetition
     FROM Bid
     WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
     AND in('${edgeToBidClass}').id in :actorIDs
-    AND isWinning=true
-  );`;
+    AND isWinning=true;`;
   return config.db.query(
     clusterQuery,
     { params: Object.assign({}, network.query, { actorIDs }) },
-  ).then((results) => _.pick(results[0], ['value', 'medianCompetition']));
+  ).then((results) => results[0]);
 }
 
 function retrieveActorIDs(networkActorIDs, clusterType, clusterID) {
@@ -184,29 +182,33 @@ function retrieveNetwork(networkID) {
 }
 
 function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clusterName) {
-  const clusterPartnersQuery = `SELECT outsider[0] as clusterPartnerID,
-    set(bidIDs).size() as value
+  const clusterPartnersQuery = `SELECT clusterPartnerID,
+    clusterPartnerBidIDs.size() as value
     FROM (
-      SELECT difference(pairIDs, :actorIDs) as outsider,
-      set(bidID) as bidIDs
+      SELECT outsider[0] as clusterPartnerID,
+      set(bidIDs) as clusterPartnerBidIDs
       FROM (
-        SELECT bidID,
-        set(actor.id, partner.id) as pairIDs,
-        set(actor, partner) as pairRIDs
+        SELECT difference(pairIDs, :actorIDs) as outsider,
+        set(bidID) as bidIDs
         FROM (
-          SELECT id as bidID,
-          in('${edgeToBidClass}') as actor,
-          in('${edgeToBidClass}') as partner
-          FROM Bid
-          WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
-          AND in('${edgeToBidClass}').id in :actorIDs
-          AND in('${edgeToBidClass}').size() > 1
-          AND isWinning=true
-          UNWIND actor, partner
-        ) WHERE actor != partner
-      ) WHERE difference(pairIDs, :actorIDs).size() = 1
-      GROUP BY pairRIDs
-    ) GROUP BY outsider;`;
+          SELECT bidID,
+          set(actor.id, partner.id) as pairIDs,
+          set(actor, partner) as pairRIDs
+          FROM (
+            SELECT id as bidID,
+            in('${edgeToBidClass}') as actor,
+            in('${edgeToBidClass}') as partner
+            FROM Bid
+            WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
+            AND in('${edgeToBidClass}').id in :actorIDs
+            AND in('${edgeToBidClass}').size() > 1
+            AND isWinning=true
+            UNWIND actor, partner
+          ) WHERE actor != partner
+        ) WHERE difference(pairIDs, :actorIDs).size() = 1
+        GROUP BY pairRIDs
+      ) GROUP BY outsider
+    );`;
   return config.db.query(
     clusterPartnersQuery,
     { params: Object.assign({}, network.query, { actorIDs }) },
@@ -232,15 +234,12 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
       })
       .then((results) =>
         Promise.map(results, (result) => {
-          const contractorClusterEdgeQuery = `SELECT set(id).size() as value
-          FROM (
-            SELECT *
+          const contractorClusterEdgeQuery = `SELECT count(*) as value
             FROM Bid
             WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
             AND in('${edgeToBidClass}').id in :partnerClusterActorIDs
             AND in('${edgeToBidClass}').id in :actorIDs
-            AND isWinning=true
-          );`;
+            AND isWinning=true;`;
           const queryParams = Object.assign(
             {},
             network.query,
@@ -263,22 +262,27 @@ function createPartnersEdges(transaction, edgeToBidClass, network, actorIDs, clu
 }
 
 function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, clusterName) {
-  const valueQuery = networkWriters.settingsToValueQuery(network.settings.edgeSize);
   const contractorEdge = edgeToBidClass === 'Awards' ? 'Participates' : 'Awards';
-  const clusterContractsQuery = `SELECT contractor.id as contractorID,
-    ${valueQuery} as value
+  const clusterContractsQuery = `SELECT contractorID,
+    bidIDs.size() as numberOfWinningBids,
+    bidSum as amountOfMoneyExchanged
     FROM (
-      SELECT *,
-      in('${contractorEdge}') as contractor,
-      in('${edgeToBidClass}') as clusterActor
-      FROM Bid
-      WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
-      AND in('${edgeToBidClass}').id in :actorIDs
-      AND isWinning=true
-      UNWIND contractor
-    ) WHERE contractor IS NOT NULL
-    AND clusterActor IS NOT NULL
-    GROUP BY contractor;`;
+      SELECT contractor.id as contractorID,
+      set(id) as bidIDs,
+      sum(price.netAmountEur) as bidSum
+      FROM (
+        SELECT *,
+        in('${contractorEdge}') as contractor,
+        in('${edgeToBidClass}') as clusterActor
+        FROM Bid
+        WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
+        AND in('${edgeToBidClass}').id in :actorIDs
+        AND isWinning=true
+        UNWIND contractor
+      ) WHERE contractor IS NOT NULL
+      AND clusterActor IS NOT NULL
+      GROUP BY contractor
+    );`;
   return config.db.query(
     clusterContractsQuery,
     { params: Object.assign({}, network.query, { actorIDs }) },
@@ -286,8 +290,10 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
     const contractorIDs = _.map(contractsEdges, 'contractorID');
     return Promise.map(contractsEdges, (edge) =>
       retrieveNetworkActor(edge.contractorID, network.id)
-        .then((contractorNode) =>
-          createContractsEdge(transaction, network, edge.value, contractorNode, clusterName)))
+        .then((contractorNode) => {
+          const edgeValue = edge[network.settings.edgeSize];
+          return createContractsEdge(transaction, network, edgeValue, contractorNode, clusterName);
+        }))
       .then(() => {
         // Calculate Contracts edges with other clusters in the network
         const contractorClusterActorsQuery = `SELECT in('Includes')[0].id as contractorClusterID,
@@ -304,15 +310,14 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
       })
       .then((results) =>
         Promise.map(results, (result) => {
-          const contractorClusterEdgeQuery = `SELECT ${valueQuery} as value
-          FROM (
-            SELECT *
-            FROM Bid
-            WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
-            AND in('${contractorEdge}').id in :contractorClusterIDs
-            AND in('${edgeToBidClass}').id in :actorIDs
-            AND isWinning=true
-          );`;
+          const contractorClusterEdgeQuery = `SELECT
+          count(*) as numberOfWinningBids,
+          sum(price.netAmountEur) as amountOfMoneyExchanged
+          FROM Bid
+          WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
+          AND in('${contractorEdge}').id in :contractorClusterIDs
+          AND in('${edgeToBidClass}').id in :actorIDs
+          AND isWinning=true;`;
           const queryParams = Object.assign(
             {},
             network.query,
@@ -327,8 +332,10 @@ function createContractsEdges(transaction, edgeToBidClass, network, actorIDs, cl
               contractorClusterEdgeQuery,
               { params: queryParams },
             ),
-            (contractorCluster, edgeResult) =>
-              createContractsEdge(transaction, network, edgeResult[0].value, contractorCluster, clusterName), // eslint-disable-line max-len
+            (contractorCluster, edgeResult) => {
+              const edgeValue = edgeResult[0][network.settings.edgeSize];
+              return createContractsEdge(transaction, network, edgeValue, contractorCluster, clusterName); // eslint-disable-line max-len
+            },
           );
         }));
   });

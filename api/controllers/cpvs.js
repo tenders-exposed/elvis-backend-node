@@ -33,18 +33,22 @@ function getTenderCpvs(req, res) {
   if (actorQueries.length) {
     queryCriteria.push(`(${_.join(actorQueries, ' OR ')})`);
   }
-  const cpvsQuery = `SELECT cpv.code as code,
-    cpv.xNumberDigits as xNumberDigits,
-    cpv.xName as xName,
-    set(id).size() as xNumberBids
+  const cpvsQuery = `SELECT code, xNumberDigits, xName,
+    bidIDs.size() as xNumberBids
     FROM (
-      SELECT id, out('AppliedTo').in('Comprises').out('HasCPV') as cpv
-        FROM Bid
-        ${queryCriteria.length ? ` WHERE ${_.join(queryCriteria, ' AND ')}` : ''}
-      UNWIND cpv
-    ) WHERE cpv.code IS NOT NULL
-    GROUP BY cpv
-    ORDER BY code asc;`;
+      SELECT cpv.code as code,
+      cpv.xNumberDigits as xNumberDigits,
+      cpv.xName as xName,
+      set(bidID) as bidIDs
+      FROM (
+        SELECT id as bidID, out('AppliedTo').in('Comprises').out('HasCPV') as cpv
+          FROM Bid
+          ${queryCriteria.length ? ` WHERE ${_.join(queryCriteria, ' AND ')}` : ''}
+        UNWIND cpv
+      ) WHERE cpv.code IS NOT NULL
+      GROUP BY cpv
+      ORDER BY code asc
+    );`;
   return config.db.query(cpvsQuery, { params: queryParams })
     .then((results) => res.status(codes.SUCCESS).json({
       cpvs: _.map(results, (cpv) => cpvSerializer.formatCpv(cpv)),

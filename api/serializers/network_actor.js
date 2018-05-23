@@ -28,12 +28,14 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
   return config.db.query(actorIDsQuery, { params: { networkActorIDs } })
     .then((actors) => _.map(actors, 'id'))
     .then((actorIDs) => {
-      const detailsQuery = `SELECT set(id).size() as numberOfWinningBids,
-      sum(price.netAmountEur) as amountOfMoneyExchanged,
-      list(price.netAmountEur).size() as numberOfAvailablePrices,
-      set(id) as bidIDs
-        FROM (
-          SELECT id, price
+      const detailsQuery = `SELECT bidIDs,
+      bidIDs.size() as numberOfWinningBids,
+      bidSum as amountOfMoneyExchanged,
+      priceList.size() as numberOfAvailablePrices
+      FROM (
+        SELECT set(id) as bidIDs,
+        sum(price.netAmountEur) as bidSum,
+        list(price.netAmountEur) as priceList
           FROM Bid
           WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
           AND in('${edgeToBidClass}').id in :actorIDs

@@ -26,12 +26,14 @@ function formatContractsEdgeWithDetails(network, networkEdge) {
     { params: { edgeUUID: networkEdge.uuid } },
   )
     .then((result) => {
-      const detailsQuery = `SELECT set(id).size() as numberOfWinningBids,
-      sum(price.netAmountEur) as amountOfMoneyExchanged,
-      list(price.netAmountEur).size() as numberOfAvailablePrices,
-      set(id) as bidIDs
+      const detailsQuery = `SELECT bidIDs,
+        bidIDs.size() as numberOfWinningBids,
+        bidSum as amountOfMoneyExchanged,
+        priceList.size() as numberOfAvailablePrices
         FROM (
-          SELECT id, price
+          SELECT set(id) as bidIDs,
+          sum(price.netAmountEur) as bidSum,
+          list(price.netAmountEur) as priceList
           FROM Bid
           WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
           AND in('Awards').id in :edgeBuyerIDs
