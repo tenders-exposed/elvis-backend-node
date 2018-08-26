@@ -47,6 +47,9 @@ async function writeTender(fullTenderRecord) {
     (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, fullTenderRecord), // eslint-disable-line max-len
   );
 
+  const cpvNames = await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
+    upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
+
   if (_.isUndefined(existingTender) === false) {
     const existingLotRel = await config.db.select("out('Comprises')").from('Tender')
       .where({ '@rid': existingTenderID }).one();
@@ -56,14 +59,18 @@ async function writeTender(fullTenderRecord) {
   }
 
   await Promise.map((fullTenderRecord.lots || []), (rawLot) => {
-    rawLot.awardCriteria = rawLot.awardCriteria || fullTenderRecord.awardCriteria;
-    return createLot(transaction, rawLot, tenderName, buyerNames, fullTenderRecord);
+    const rawBids = (rawLot.bids || []);
+    return createLot(transaction, rawLot, tenderName, fullTenderRecord)
+      .then((lotName) =>
+        Promise.map(rawBids, (rawBid) =>
+          createBid(transaction, rawBid, lotName, buyerNames, cpvNames, fullTenderRecord, rawLot)));
   });
 
-  await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
-    upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
-
-  return transaction.commit(2).return(`$${tenderName}`).one();
+  return transaction.commit(2).return(`$${tenderName}`).one()
+    .catch((err) => {
+      console.log(err);
+      throw err;
+    });
 }
 
 async function deleteLot(transaction, lotRID) {
@@ -75,7 +82,7 @@ async function deleteLot(transaction, lotRID) {
 
   const existingBidRel = await config.db.select("in('AppliedTo')").from('Lot')
     .where({ '@rid': lotRID }).one();
-  const existingBidRIDs = existingBidRel.in;
+  const existingBidRIDs = _.get(existingBidRel, 'in', []);
   await Promise.map(existingBidRIDs, (existingBidRID) =>
     deleteBid(transaction, existingBidRID));
   return lotName;
@@ -90,10 +97,8 @@ async function deleteBid(transaction, bidRID) {
   return bidName;
 }
 
-async function createLot(transaction, rawLot, tenderName, buyerNames, rawTender) { // eslint-disable-line max-len
-  const rawBids = (rawLot.bids || []);
-  const lot = lotExtractor.extractLot(rawLot);
-  lot.bidsCount = lot.bidsCount || rawBids.length;
+async function createLot(transaction, rawLot, tenderName, rawTender) {
+  const lot = lotExtractor.extractLot(rawLot, rawTender);
   const lotName = recordName(uuidv4(), 'Lot');
 
   transaction.let(lotName, (t) => {
@@ -105,12 +110,10 @@ async function createLot(transaction, rawLot, tenderName, buyerNames, rawTender)
       .to(`$${lotName}`);
   });
 
-  await Promise.map(rawBids, (rawBid) =>
-    createBid(transaction, rawBid, lotName, buyerNames, rawTender, rawLot));
   return lotName;
 }
 
-async function createBid(transaction, rawBid, lotName, buyerNames, rawTender, rawLot) { // eslint-disable-line max-len
+async function createBid(transaction, rawBid, lotName, buyerNames, cpvNames, rawTender, rawLot) { // eslint-disable-line max-len
   const bid = bidExtractor.extractBid(rawBid, rawTender, rawLot);
   const bidName = recordName(uuidv4(), 'Bid');
 
@@ -128,6 +131,13 @@ async function createBid(transaction, rawBid, lotName, buyerNames, rawTender, ra
       t.create('edge', 'Awards')
         .from(`$${buyerName}`)
         .to(`$${bidName}`);
+    }));
+
+  await Promise.map(_.flatten([cpvNames]), (cpvName) =>
+    transaction.let(`${bidName}hasCPV${cpvName}`, (t) => {
+      t.create('edge', 'BidHasCPV')
+        .from(`$${bidName}`)
+        .to(`$${cpvName}`);
     }));
 
   // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps

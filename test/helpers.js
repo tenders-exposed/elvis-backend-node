@@ -31,6 +31,7 @@ async function truncateDB() {
     'Bidder',
     'Buyer',
     'Bid',
+    'BidHasCPV',
     'Lot',
     'Tender',
     'CPV',

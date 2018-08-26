@@ -14,7 +14,7 @@ services:
         max-size: "200k"
         max-file: "3"
   orientdb:
-    image: tendersexposed/orientdb-snapshot:3.0.1-20180514
+    image: orientdb:3.0.4
     restart: always
     environment:
       - ORIENTDB_ROOT_PASSWORD=$ORIENTDB_ROOT_PASSWORD
