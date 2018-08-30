@@ -56,7 +56,7 @@ function retrieveActors(swaggerParams, actorClass, edgeToBidClass) {
     queryParams.countries = swaggerParams.countries;
   }
   if (swaggerParams.cpvs) {
-    queryCriteria.push(`out('${edgeToBidClass}').out('AppliedTo').in('Comprises').out('HasCPV').code IN :cpvs`);
+    queryCriteria.push(`out('${edgeToBidClass}').out('BidHasCPV').code IN :cpvs`);
     queryParams.cpvs = swaggerParams.cpvs;
   }
   const query = `SELECT *, $score FROM ${from}

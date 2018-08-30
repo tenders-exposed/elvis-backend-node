@@ -14,7 +14,7 @@ function getTenderCountries(req, res) {
   const queryCriteria = [];
   const queryParams = {};
   if (swaggerParams.cpvs) {
-    queryCriteria.push("out('AppliedTo').in('Comprises').out('HasCPV').code in :cpvs");
+    queryCriteria.push("out('BidHasCPV').code in :cpvs");
     queryParams.cpvs = swaggerParams.cpvs;
   }
   if (swaggerParams.years) {

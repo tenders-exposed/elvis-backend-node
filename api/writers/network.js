@@ -67,7 +67,7 @@ function queryToBidFilters(networkQuery) {
     filters.push('xYear in :years');
   }
   if (networkQuery.cpvs) {
-    filters.push("out('AppliedTo').in('Comprises').out('HasCPV').code in :cpvs");
+    filters.push("out('BidHasCPV').code in :cpvs");
   }
   return filters;
 }
