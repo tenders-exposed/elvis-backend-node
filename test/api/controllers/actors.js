@@ -50,7 +50,7 @@ test.serial('getTenderActors limits actors to limit', async (t) => {
   t.plan(2);
   const buyer = await fixtures.build('rawBuyer', { '@class': 'Buyer' });
   const secondBuyer = await fixtures.build('rawBuyer', { '@class': 'Buyer' });
-  await fixtures.build('rawTender', {
+  await fixtures.build('rawFullTender', {
     buyers: [buyer, secondBuyer],
   })
     .then((rawTender) => writers.writeTender(rawTender));

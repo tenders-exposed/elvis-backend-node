@@ -57,7 +57,7 @@ const lotAttrs = {
       weight: 10,
     },
   ],
-  status: 'awarded',
+  status: 'AWARDED',
   addressOfImplementation: {
     rawAddress: 'Klausenburger',
   },

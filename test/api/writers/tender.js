@@ -13,7 +13,7 @@ test.before(() => helpers.createDB());
 test.afterEach.always(() => helpers.truncateDB());
 
 test.serial('writeTender creates new tender', async (t) => {
-  const rawTender = await fixtures.build('rawTender');
+  const rawTender = await fixtures.build('rawFullTender');
   const writtenTender = await writers.writeTender(rawTender)
     .then(() => config.db.select()
       .from('Tender')
@@ -24,13 +24,14 @@ test.serial('writeTender creates new tender', async (t) => {
 
 test.serial('writeTender updates indicators', async (t) => {
   t.plan(2);
-  const rawTender = await fixtures.build('rawTender');
+  const rawTender = await fixtures.build('rawFullTender');
   const firstIndicator = await fixtures.build('rawIndicator', {
     relatedEntityId: rawTender.id,
     value: 1,
   });
   rawTender.indicators = [firstIndicator];
   await writers.writeTender(rawTender);
+  console.log(rawTender);
   const secondIndicator = await fixtures.build('rawIndicator', {
     relatedEntityId: rawTender.id,
   });
@@ -49,7 +50,7 @@ test.serial('writeTender updates indicators', async (t) => {
 test.serial('writeTender updates existing tender', async (t) => {
   t.plan(2);
   const tenderAttrs = await fixtures.build('extractedTender', { country: 'NL' });
-  const updatedTenderAttrs = await fixtures.build('rawTender', {
+  const updatedTenderAttrs = await fixtures.build('rawFullTender', {
     country: 'BE',
     id: tenderAttrs.id,
   });
@@ -66,7 +67,7 @@ test.serial('writeTender updates existing tender', async (t) => {
 });
 
 test.serial('writeTender rolls back transaction on error', async (t) => {
-  const wrongTenderAttrs = await fixtures.build('rawTender', { isFrameworkAgreement: 'I should be a boolean' });
+  const wrongTenderAttrs = await fixtures.build('rawFullTender', { isFrameworkAgreement: 'I should be a boolean' });
   await t.throws(writers.writeTender(wrongTenderAttrs), OrientDBError.RequestError);
   const writtenTender = await config.db.select()
     .from('Tender')

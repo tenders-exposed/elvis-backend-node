@@ -19,6 +19,13 @@ function recordName(id, className) {
 // Returns true
 // Raises OrientDBError if the writing failed
 async function writeTender(fullTenderRecord) {
+  const awardedLots = _.filter(fullTenderRecord.lots, { status: 'AWARDED' });
+
+  // If there are no awarded lots don't even process the tender
+  if (awardedLots.length === 0) {
+    return new Promise((resolve) => resolve(null));
+  }
+
   const tender = tenderExtractor.extractTender(
     _.omit(fullTenderRecord, ['indicators', 'publications']),
     fullTenderRecord.indicators,
@@ -58,7 +65,7 @@ async function writeTender(fullTenderRecord) {
       deleteLot(transaction, existingLotRID));
   }
 
-  await Promise.map((fullTenderRecord.lots || []), (rawLot) => {
+  await Promise.map((awardedLots || []), (rawLot) => {
     const rawBids = (rawLot.bids || []);
     return createLot(transaction, rawLot, tenderName, fullTenderRecord)
       .then((lotName) =>
