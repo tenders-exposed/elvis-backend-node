@@ -54,8 +54,10 @@ async function writeTender(fullTenderRecord) {
     (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, fullTenderRecord), // eslint-disable-line max-len
   );
 
-  const cpvNames = await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
+  const processedCpvs = await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
     upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
+  // Only process further valid cpvs
+  const cpvNames = _.compact(processedCpvs);
 
   if (_.isUndefined(existingTender) === false) {
     const existingLotRel = await config.db.select("out('Comprises')").from('Tender')
@@ -280,7 +282,7 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
     }
     return cpvName;
   }
-  return true;
+  return undefined;
 }
 
 module.exports = {
