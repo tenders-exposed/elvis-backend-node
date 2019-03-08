@@ -182,6 +182,27 @@ test.serial('getTenderActors allows lucene queries', async (t) => {
   t.deepEqual(await expectedResponse([expectedBuyer]), res.body);
 });
 
+test.serial('getTenderActors ackowledges whitespace in query string', async (t) => {
+  t.plan(2);
+  const expectedBuyer = await fixtures.build('rawBuyer', {
+    name: 'Expelli armus',
+    '@class': 'Buyer',
+  });
+  const alternativeBuyer = await fixtures.build('rawBuyer', {
+    name: 'Expelliarmus',
+    '@class': 'Buyer',
+  });
+  await fixtures.build('rawFullTender', {
+    buyers: [expectedBuyer, alternativeBuyer],
+  }).then((ten) => writers.writeTender(ten));
+
+  const res = await request(app)
+    .get('/tenders/actors?name=expelli%20%20');
+
+  t.is(res.status, codes.SUCCESS);
+  t.deepEqual(await expectedResponse([expectedBuyer]), res.body);
+});
+
 // TODO: Uncomment this after switching to ODB3 SEARCH_CLASS function
 // test.serial('getTenderActors orders suggestions by score', async (t) => {
 //   t.plan(2);

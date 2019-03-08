@@ -40,9 +40,14 @@ function retrieveActors(swaggerParams, actorClass, edgeToBidClass) {
   let from = actorClass;
   const limit = swaggerParams.limit;
   if (swaggerParams.name) {
-    queryParams.nameQuery = swaggerParams.name;
-    // If the user didn't set fuzziness make this a prefix query
-    if (_.isEmpty(swaggerParams.name.match(/~\d?$/))) {
+    if (swaggerParams.name.match(/~\d?$/)) {
+      // If the user set fuzziness use the raw query
+      queryParams.nameQuery = swaggerParams.name;
+    } else if (swaggerParams.name.match(/\s$/)) {
+      // If the input string ends in whitespace use the raw query
+      queryParams.nameQuery = swaggerParams.name;
+    } else {
+      // Otherwise turn the raw query into a prefix query
       queryParams.nameQuery = `${swaggerParams.name}*`;
     }
     from = `(SELECT *, $score FROM ${actorClass} WHERE name LUCENE :nameQuery)`;
