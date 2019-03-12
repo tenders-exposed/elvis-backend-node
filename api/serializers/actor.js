@@ -5,11 +5,9 @@ const config = require('../../config/default');
 
 function formatActor(actor) {
   const fields = ['name', 'id'];
-  if (actor['@class'] === 'Buyer') {
-    fields.push('country');
-  }
   const formattedActor = _.pick(actor, fields);
   formattedActor.type = _.toLower(actor['@class']);
+  formattedActor.country = _.get(actor, 'address.country');
   return formattedActor;
 }
 
