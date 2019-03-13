@@ -3,6 +3,7 @@
 const request = require('supertest');
 const test = require('ava').test;
 
+const _ = require('lodash');
 const writers = require('../../../api/writers/tender');
 const codes = require('../../../api/helpers/codes');
 const actorSerializer = require('../../../api/serializers/actor');
@@ -15,7 +16,7 @@ test.afterEach.always(() => helpers.truncateDB());
 
 function expectedResponse(actors) {
   return {
-    actors: actors.map((actor) => actorSerializer.formatActor(actor)),
+    actors: actors.map((actor) => _.omitBy(actorSerializer.formatActor(actor), _.isUndefined)),
   };
 }
 

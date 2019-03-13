@@ -1718,6 +1718,9 @@ definitions:
         enum:
           - bidder
           - buyer
+      country:
+        type: string
+        description: Actor country
   Address:
     type: object
     properties:

@@ -42,6 +42,9 @@ const buyerAttrs = {
   modified: '2017-06-08T11:55:43.525',
   name: 'Ministry of Magic',
   isPublic: true,
+  address: {
+    country: 'DK',
+  },
 };
 factory.define('rawBuyer', Object, buyerAttrs);
 factory.define('extractedBuyer', Object, buyerAttrs, {
@@ -89,6 +92,9 @@ const bidderAttrs = {
   modified: '2017-11-11T11:55:43.525',
   name: 'Ollivander\'s',
   isPublic: false,
+  address: {
+    country: 'DK',
+  },
 };
 factory.define('rawBidder', Object, bidderAttrs);
 factory.define('extractedBidder', Object, bidderAttrs, {
