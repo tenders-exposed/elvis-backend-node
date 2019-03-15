@@ -30,6 +30,7 @@
     "mailgun-js": "^0.13.1",
     "moment": "^2.19.1",
     "morgan": "^1.9.0",
+    "nunjucks": "^3.2.0",
     "orientjs": "^2.2.10",
     "p-queue": "^2.3.0",
     "p-retry": "^1.0.0",

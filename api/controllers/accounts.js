@@ -3,6 +3,7 @@
 const _ = require('lodash');
 const uuidv4 = require('uuid/v4');
 const passport = require('passport');
+const nunjucks = require('nunjucks');
 
 const config = require('../../config/default');
 const codes = require('../helpers/codes');
@@ -12,9 +13,13 @@ const AuthHelper = require('../helpers/auth');
 const MailGun = require('../../services/MailGun');
 const userSerializer = require('../serializers/user');
 
+nunjucks.configure('../../views', { autoescape: true });
+
+
 function createAccount(req, res) {
   const userAttrs = {};
   const userEmail = req.swagger.params.body.value.email;
+
   return config.db.select().from('User')
     .where({
       email: userEmail,
@@ -49,7 +54,11 @@ function createAccount(req, res) {
         return new MailGun().sendEmail({
           to: userEmail,
           subject: 'Registration',
-          text: `Thanks for registration. To activate your account follow this link: ${config.activation.externalUrl}${token} \n or this link to activate through the API: ${config.activation.url}?t=${token}`,
+          text: nunjucks.render('email_registration.html', {
+            activationExternalUrl: config.activation.externalUrl,
+            token,
+            activationUrl: config.activationUrl,
+          }),
         });
       }
       return null;
@@ -76,6 +85,13 @@ function activateAccount(req, res) {
       }
       if (user.active) {
         throw codes.BadRequest('User is already active.');
+      }
+      if (config.env !== 'testing') {
+        return new MailGun().sendEmail({
+          to: user.email,
+          subject: 'Congratulations!',
+          text: nunjucks.render('email_activation.html'),
+        });
       }
       return config.db.update(user['@rid'])
         .set({ active: true })
