@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const request = require('supertest');
-const test = require('ava').test;
+const test = require('ava');
 const writers = require('../../../api/writers/tender');
 const codes = require('../../../api/helpers/codes');
 const config = require('../../../config/default');

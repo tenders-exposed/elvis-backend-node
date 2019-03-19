@@ -207,7 +207,7 @@ async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
     .where({ id: bidder.id }).one();
   if (_.isUndefined(existingBidder)) {
     // See issue #35
-    const transactedRecords = _.flatMap(transaction._state.let, (arr) => arr[0]);
+    const transactedRecords = _.flatMap(transaction._state.bcommon, (arr) => arr[0]);
     if (_.includes(transactedRecords, bidderName) === false) {
       transaction.let(bidderName, (t) => {
         t.create('vertex', 'Bidder')

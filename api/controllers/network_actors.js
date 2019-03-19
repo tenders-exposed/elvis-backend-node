@@ -19,7 +19,7 @@ function getNetworkActor(req, res) {
       .one(),
     (network, networkActor) => {
       if (_.isUndefined(networkActor) === true) {
-        throw codes.NotFound('Network actor not found.');
+        throw new codes.NotFoundError('Network actor not found.');
       }
       return networkActorSerializer.formatActorWithDetails(network, networkActor);
     },

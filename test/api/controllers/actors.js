@@ -1,7 +1,7 @@
 'use strict';
 
 const request = require('supertest');
-const test = require('ava').test;
+const test = require('ava');
 
 const _ = require('lodash');
 const writers = require('../../../api/writers/tender');

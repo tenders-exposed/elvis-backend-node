@@ -138,12 +138,12 @@ function retrieveActorIDs(networkActorIDs, clusterType, clusterID) {
   )
     .then((networkActors) => {
       if (_.isEmpty(networkActors) === true) {
-        throw codes.BadRequest('No nodes with `id` and `type` you provided were found.');
+        throw new codes.BadRequestError('No nodes with `id` and `type` you provided were found.');
       }
       return _.map(networkActors, (networkActor) => {
         if (networkActor.active === false) {
           if (_.isUndefined(clusterID) || !_.includes(networkActor.clusterIDs, clusterID)) {
-            throw codes.BadRequest(`Node with \`id\` ${networkActor.id} can't be used because it is already part of another cluster.`);
+            throw new codes.BadRequestError(`Node with \`id\` ${networkActor.id} can't be used because it is already part of another cluster.`);
           }
         }
         return networkActor.actorIDs[0];
@@ -162,7 +162,7 @@ function retrieveCluster(networkID, clusterID) {
     { params: { clusterID, networkID } },
   ).then((result) => {
     if (_.isEmpty(result) === true) {
-      throw codes.NotFound(`Cluster with \`id\` ${clusterID} was not found in the network with id ${networkID}}.`);
+      throw new codes.NotFoundError(`Cluster with \`id\` ${clusterID} was not found in the network with id ${networkID}}.`);
     }
     return result[0];
   });
@@ -175,7 +175,7 @@ function retrieveNetwork(networkID) {
     .one()
     .then((network) => {
       if (_.isUndefined(network) === true) {
-        throw codes.NotFound(`Network with \`id\` ${networkID} was not found.`);
+        throw new codes.NotFoundError(`Network with \`id\` ${networkID} was not found.`);
       }
       return network;
     });

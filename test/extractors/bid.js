@@ -1,6 +1,6 @@
 'use strict';
 
-const test = require('ava').test;
+const test = require('ava');
 
 const bidExtractor = require('./../../extractors/bid');
 const fixtures = require('./../fixtures');

@@ -15,7 +15,7 @@ function recordName(id, className) {
 async function createNetwork(networkParams, user) {
   const networkQuery = _.pickBy(networkParams.query, (val) => !(_.isUndefined(val)));
   if (_.isEmpty(networkQuery) === true) {
-    throw codes.BadRequest('Network "query" can\'t be empty.');
+    throw new codes.BadRequestError('Network "query" can\'t be empty.');
   }
 
   const networkAttrs = Object.assign({}, networkParams);

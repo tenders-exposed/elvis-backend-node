@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const test = require('ava').test;
+const test = require('ava');
 const Promise = require('bluebird');
 const request = require('supertest');
 const tenderWriters = require('../../../api/writers/tender');
@@ -302,7 +302,7 @@ test.serial('deleteNetwork fails if user doesn\'t own the network', async (t) =>
   t.is(res.status, codes.UNAUTHORIZED);
 });
 
-test.serial('getNetwork returns error if the network is not found', async (t) => {
+test.serial('deleteNetwork returns error if the network is not found', async (t) => {
   t.plan(1);
   const user = await helpers.createUser();
   const res = await request(app)

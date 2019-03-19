@@ -17,14 +17,14 @@ module.exports.localStrategyCallback = (email, password, done) => {
     .one()
     .then((user) => {
       if (!user) {
-        return done(codes.BadRequest('No user with this email was found.'), false);
+        return done(new codes.BadRequestError('No user with this email was found.'), false);
       }
       if (user.active === false) {
-        return done(codes.BadRequest('Activate your account via email before logging in'), false);
+        return done(new codes.BadRequestError('Activate your account via email before logging in'), false);
       }
 
       if (!bcrypt.compareSync(password, user.password)) {
-        return done(codes.BadRequest('Incorrect password.'), false);
+        return done(new codes.BadRequestError('Incorrect password.'), false);
       }
 
       return done(null, user);

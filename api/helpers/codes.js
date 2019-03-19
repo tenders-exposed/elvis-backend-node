@@ -1,7 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
-
 const SUCCESS = 200;
 const CREATED = 201;
 const NO_CONTENT = 204;
@@ -20,24 +18,7 @@ const INTERNAL_SERVER_ERROR = 500;
 const NOT_IMPLEMENTED = 501;
 const SERVICE_UNAVAILABLE = 503;
 
-module.exports = {
-  SUCCESS,
-  CREATED,
-  NO_CONTENT,
-  MULTIPLE_CHOICES,
-  MOVED_PERMANENTLY,
-  BAD_REQUEST,
-  UNAUTHORIZED,
-  PAYMENT_REQUIRED,
-  FORBIDDEN,
-  NOT_FOUND,
-  METHOD_NOT_ALLOWED,
-  GONE,
-  TOO_MANY_REQUESTS,
-  UNAVAILABLE_FOR_LEGAL_REASONS,
-  INTERNAL_SERVER_ERROR,
-  NOT_IMPLEMENTED,
-  SERVICE_UNAVAILABLE,
+const defaultResponses = {
   success: {
     status: SUCCESS,
     message: 'Success',
@@ -98,100 +79,105 @@ module.exports = {
     status: SERVICE_UNAVAILABLE,
     message: 'Service unavailable, we are working hard to fix it asap',
   },
-  getCode(response, data, message, development) {
-    const res = _.clone(this[response]);
-    if (data) {
-      res.data = data;
-    }
-    if (message) {
-      res.message = message;
-    }
-    if (development) {
-      res.development = development;
-    }
+};
 
-    return res;
-  },
-  Success(...args) {
-    return this.getCode('success', ...args);
-  },
-  Created(...args) {
-    return this.getCode('created', ...args);
-  },
-  NoContent(...args) {
-    return this.getCode('noContent', ...args);
-  },
-  BadRequest(...args) {
-    return this.getCode('badRequest', null, ...args);
-  },
-  Unauthorized(...args) {
-    return this.getCode('unauthorized', null, ...args);
-  },
-  PaymentRequired(...args) {
-    return this.getCode('paymentRequired', null, ...args);
-  },
-  Forbidden(...args) {
-    return this.getCode('forbidden', null, ...args);
-  },
-  NotFound(...args) {
-    return this.getCode('notFound', null, ...args);
-  },
-  MethodNotAllowed(...args) {
-    return this.getCode('methodNotAllowed', null, ...args);
-  },
-  Gone(...args) {
-    return this.getCode('gone', null, ...args);
-  },
-  UnavailableForLegalReasons(...args) {
-    return this.getCode('unavailableForLegalReasons', null, ...args);
-  },
-  InternalServerError(...args) {
-    return this.getCode('internalServerError', null, ...args);
-  },
-  ServiceUnavailable(...args) {
-    return this.getCode('serviceUnavailable', null, ...args);
-  },
-  NotImplemented(...args) {
-    return this.getCode('notImplemented', null, ...args);
-  },
-  TooManyRequests(...args) {
-    return this.getCode('tooManyRequests', null, ...args);
-  },
-  Determine(response) {
-    const fields = ['status', 'message', 'data', 'links', 'info', 'development'];
-    let res;
+class DomainError extends Error {
+  constructor(message) {
+    super(message);
+    // Ensure the name of this error is the same as the class name
+    this.name = this.constructor.name;
+    this.message = message;
+    // This clips the constructor invocation from the stack trace.
+    // It's not absolutely essential, but it does make the stack trace a little nicer.
+    //  @see Node.js reference (bottom)
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
 
-    if (typeof response.status === 'undefined') {
-      response.status = '';
-    }
+class BadRequestError extends DomainError {
+  constructor(message, query) {
+    super(message);
+    this.data = { query };
+    this.status = defaultResponses.badRequest.status;
+    this.message = message || defaultResponses.badRequest.message;
+  }
+}
 
-    switch (response.status) {
-      case SUCCESS: {
-        res = _.clone(this.success);
-        fields.forEach((field) => {
-          if (response[field]) {
-            res[field] = response[field];
-          }
-        });
-        break;
-      }
-      case CREATED: {
-        res = _.clone(this.created);
-        fields.forEach((field) => {
-          if (response[field]) {
-            res[field] = response[field];
-          }
-        });
-        break;
-      }
-      default: {
-        res = this.BadRequest('Wrong response given to Determine() method', {
-          info: 'response should contain 200 or 201 status',
-        });
-        break;
-      }
-    }
+class UnauthorizedError extends DomainError {
+  constructor(message, query) {
+    super(message);
+    this.data = { query };
+    this.status = defaultResponses.unauthorized.status;
+    this.message = message || defaultResponses.unauthorized.message;
+  }
+}
+class ForbiddenError extends DomainError {
+  constructor(message, query) {
+    super(message);
+    this.data = { query };
+    this.status = defaultResponses.forbidden.status;
+    this.message = message || defaultResponses.forbidden.message;
+  }
+}
 
-    return res;
-  },
+class NotFoundError extends DomainError {
+  constructor(message, query) {
+    super(message);
+    this.data = { query };
+    this.status = defaultResponses.notFound.status;
+    this.message = message || defaultResponses.notFound.message;
+  }
+}
+
+class InternalServerError extends DomainError {
+  constructor(message, query) {
+    super(message);
+    this.data = { query };
+    this.status = defaultResponses.internalServerError.status;
+    this.message = message || defaultResponses.internalServerError.message;
+  }
+}
+
+class ServiceUnavailableError extends DomainError {
+  constructor(message, query) {
+    super(message);
+    this.data = { query };
+    this.status = defaultResponses.serviceUnavailable.status;
+    this.message = message || defaultResponses.serviceUnavailable.message;
+  }
+}
+
+class NotImplementedError extends DomainError {
+  constructor(message, query) {
+    super(message);
+    this.data = { query };
+    this.status = defaultResponses.notImplemented.status;
+    this.message = message || defaultResponses.notImplemented.message;
+  }
+}
+module.exports = {
+  SUCCESS,
+  CREATED,
+  NO_CONTENT,
+  MULTIPLE_CHOICES,
+  MOVED_PERMANENTLY,
+  BAD_REQUEST,
+  UNAUTHORIZED,
+  PAYMENT_REQUIRED,
+  FORBIDDEN,
+  NOT_FOUND,
+  METHOD_NOT_ALLOWED,
+  GONE,
+  TOO_MANY_REQUESTS,
+  UNAVAILABLE_FOR_LEGAL_REASONS,
+  INTERNAL_SERVER_ERROR,
+  NOT_IMPLEMENTED,
+  SERVICE_UNAVAILABLE,
+  NotFoundError,
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  InternalServerError,
+  ServiceUnavailableError,
+  NotImplementedError,
 };

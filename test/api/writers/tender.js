@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const test = require('ava').test;
+const test = require('ava');
 const OrientDBError = require('orientjs/lib/errors');
 
 const config = require('../../../config/default');
@@ -31,7 +31,6 @@ test.serial('writeTender updates indicators', async (t) => {
   });
   rawTender.indicators = [firstIndicator];
   await writers.writeTender(rawTender);
-  console.log(rawTender);
   const secondIndicator = await fixtures.build('rawIndicator', {
     relatedEntityId: rawTender.id,
   });
@@ -67,8 +66,12 @@ test.serial('writeTender updates existing tender', async (t) => {
 });
 
 test.serial('writeTender rolls back transaction on error', async (t) => {
+  t.plan(2);
   const wrongTenderAttrs = await fixtures.build('rawFullTender', { isFrameworkAgreement: 'I should be a boolean' });
-  await t.throws(writers.writeTender(wrongTenderAttrs), OrientDBError.RequestError);
+  await t.throwsAsync(
+    writers.writeTender(wrongTenderAttrs),
+    { instanceOf: OrientDBError.RequestError },
+  );
   const writtenTender = await config.db.select()
     .from('Tender')
     .where({ id: wrongTenderAttrs.id })

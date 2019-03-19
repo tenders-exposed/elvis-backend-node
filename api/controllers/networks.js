@@ -32,17 +32,17 @@ function deleteNetwork(req, res) {
         .one()
         .then((network) => {
           if (_.isUndefined(network) === true) {
-            throw codes.NotFound('Network not found.');
+            throw new codes.NotFoundError('Network not found.');
           }
           if (network.userIDS[0] !== req.user.id) {
-            throw codes.Unauthorized('Network does not belong to this user');
+            throw new codes.UnauthorizedError('Network does not belong to this user');
           }
           return config.db.vertex.delete(network);
         })
         .then(() => res.status(codes.NO_CONTENT).json())
         .catch((err) => formatError(err, req, res));
     }
-    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+    return formatError(new codes.UnauthorizedError('This operation requires authorization.'), req, res);
   });
 }
 
@@ -57,10 +57,10 @@ function updateNetwork(req, res) {
         .one()
         .then((network) => {
           if (_.isUndefined(network) === true) {
-            throw codes.NotFound('Network not found.');
+            throw new codes.NotFoundError('Network not found.');
           }
           if (network.userIDS[0] !== req.user.id) {
-            throw codes.Unauthorized('Network does not belong to this user');
+            throw new codes.UnauthorizedError('Network does not belong to this user');
           }
           networkParams.updated = moment().format('YYYY-MM-DD HH:mm:ss');
           return config.db.update('Network')
@@ -76,7 +76,7 @@ function updateNetwork(req, res) {
         }))
         .catch((err) => formatError(err, req, res));
     }
-    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+    return formatError(new codes.UnauthorizedError('This operation requires authorization.'), req, res);
   });
 }
 
@@ -88,7 +88,7 @@ function getNetwork(req, res) {
     .one()
     .then((network) => {
       if (_.isUndefined(network) === true) {
-        throw codes.NotFound('Network not found');
+        throw new codes.NotFoundError('Network not found');
       }
       return networkSerializer.formatNetworkWithRelated(network);
     })
@@ -112,7 +112,7 @@ function getNetworks(req, res) {
         }))
         .catch((err) => formatError(err, req, res));
     }
-    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+    return formatError(new codes.UnauthorizedError('This operation requires authorization.'), req, res);
   });
 }
 
