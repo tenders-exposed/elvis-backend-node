@@ -1,7 +1,7 @@
 'use strict';
 
 const moment = require('moment');
-const test = require('ava').test;
+const test = require('ava');
 
 const extractorHelpers = require('./../../extractors/helpers');
 

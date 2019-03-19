@@ -1,6 +1,6 @@
 'use strict';
 
-const test = require('ava').test;
+const test = require('ava');
 const passport = require('../../passport/index');
 const helpers = require('../helpers');
 

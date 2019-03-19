@@ -22,7 +22,7 @@ function createAccount(req, res) {
     .one()
     .then((user) => {
       if (user) {
-        throw codes.BadRequest('The email address is already taken.');
+        throw new codes.BadRequestError('The email address is already taken.');
       }
       return AuthHelper.createPasswordHash(req.swagger.params.body.value.password);
     })
@@ -62,7 +62,7 @@ function activateAccount(req, res) {
   return AuthHelper.verifyToken(token)
     .then((decoded) => {
       if (!decoded.id) {
-        throw codes.BadRequest('Wrong token.');
+        throw new codes.BadRequestError('Wrong token.');
       }
       return config.db.select().from('User')
         .where({
@@ -72,10 +72,10 @@ function activateAccount(req, res) {
     })
     .then((user) => {
       if (!user) {
-        throw codes.NotFound('User not found.');
+        throw new codes.NotFoundError('User not found.');
       }
       if (user.active) {
-        throw codes.BadRequest('User is already active.');
+        throw new codes.BadRequestError('User is already active.');
       }
       return config.db.update(user['@rid'])
         .set({ active: true })
@@ -99,7 +99,7 @@ function deleteAccount(req, res) {
         .then(() => res.status(codes.NO_CONTENT).json())
         .catch((err) => formatError(err, req, res));
     }
-    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+    return formatError(new codes.UnauthorizedError('This operation requires authorization.'), req, res);
   });
 }
 
@@ -130,7 +130,7 @@ function refreshToken(req, res) {
   return AuthHelper.verifyToken(refToken)
     .then((decoded) => {
       if (!decoded.id || decoded.type !== 'refresh_token') {
-        throw codes.BadRequest('Wrong refresh token.');
+        throw new codes.BadRequestError('Wrong refresh token.');
       }
       return decoded;
     })
@@ -142,12 +142,12 @@ function refreshToken(req, res) {
         .one())
     .then((user) => {
       if (!user) {
-        throw codes.BadRequest('Wrong refresh token.');
+        throw new codes.BadRequestError('Wrong refresh token.');
       }
       user.accessTokens = user.accessTokens || [];
       user.refreshTokens = user.refreshTokens || [];
       if (!user.refreshTokens.includes(refToken)) {
-        throw codes.BadRequest('Wrong refresh token.');
+        throw new codes.BadRequestError('Wrong refresh token.');
       }
       foundUser = user;
       return AuthHelper.createTokenPair({ id: foundUser.id });
@@ -171,7 +171,7 @@ function forgotPassword(req, res) {
   const email = req.swagger.params.email.value;
 
   if (!email) {
-    return formatError(codes.BadRequest('Email is not provided.'), req, res);
+    return formatError(new codes.BadRequestError('Email is not provided.'), req, res);
   }
   return config.db.select('@rid', 'active').from('User')
     .where({
@@ -180,10 +180,10 @@ function forgotPassword(req, res) {
     .one()
     .then((user) => {
       if (!user) {
-        throw codes.NotFound('User not found.');
+        throw new codes.NotFoundError('User not found.');
       }
       if (!user.active) {
-        throw codes.BadRequest('User is not active.');
+        throw new codes.BadRequestError('User is not active.');
       }
       return AuthHelper.createToken(
         { email },
@@ -214,7 +214,7 @@ function resetPassword(req, res) {
   return AuthHelper.verifyToken(requestObject.resetPasswordToken)
     .then((decoded) => {
       if (!decoded.email) {
-        throw codes.BadRequest('Wrong token.');
+        throw new codes.BadRequestError('Wrong token.');
       } else {
         email = decoded.email;
       }
@@ -226,7 +226,7 @@ function resetPassword(req, res) {
     })
     .then((user) => {
       if (!user) {
-        throw codes.NotFound('User not found.');
+        throw new codes.NotFoundError('User not found.');
       }
 
       return AuthHelper.createPasswordHash(requestObject.password);

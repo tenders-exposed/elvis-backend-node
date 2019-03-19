@@ -64,14 +64,14 @@ class AuthHelper {
       JWT.verify(token, config.jwt.secret, (err, decoded) => {
         if (err) {
           if (err.name === 'TokenExpiredError') {
-            return reject(codes.Unauthorized('Token expired.'));
+            return reject(new codes.UnauthorizedError('Token expired.'));
           }
 
           if (err.name === 'JsonWebTokenError') {
-            return reject(codes.BadRequest(err.message));
+            return reject(new codes.BadRequestError(err.message));
           }
 
-          return reject(codes.InternalServerError('There was a problem checking the refresh token.'));
+          return reject(new codes.InternalServerError('There was a problem checking the refresh token.'));
         }
 
         return resolve(decoded);

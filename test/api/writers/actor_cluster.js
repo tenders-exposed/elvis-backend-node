@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const test = require('ava').test;
+const test = require('ava');
 const Promise = require('bluebird');
 
 const config = require('../../../config/default');
@@ -53,7 +53,7 @@ test.serial('createCluster raises for clusters with no nodes', async (t) => {
     type: 'buyer',
     nodes: [],
   };
-  const error = await t.throws(clusterWriters.createCluster(network.id, clusterParams));
+  const error = await t.throwsAsync(clusterWriters.createCluster(network.id, clusterParams));
   t.regex(error.message, /node/i);
   t.regex(error.message, /found/i);
 });

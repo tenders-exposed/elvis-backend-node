@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const test = require('ava').test;
+const test = require('ava');
 
 const tenderExtractor = require('./../../extractors/tender');
 const fixtures = require('./../fixtures');
