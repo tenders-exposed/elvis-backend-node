@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const request = require('supertest');
-const test = require('ava').test;
+const test = require('ava');
 const uuidv4 = require('uuid/v4');
 const helpers = require('../../helpers');
 const codes = require('../../../api/helpers/codes');

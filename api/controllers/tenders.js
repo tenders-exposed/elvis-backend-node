@@ -32,7 +32,7 @@ function retrieveNetworkTender(network, tenderID) {
     { params: Object.assign({}, network.query, { tenderID }) },
   ).then((bids) => {
     if (_.isEmpty(bids)) {
-      throw codes.BadRequest(`Tender with \`id\` ${tenderID} has no bids that commply with the network query.`);
+      throw new codes.BadRequestError(`Tender with \`id\` ${tenderID} has no bids that commply with the network query.`);
     }
     return config.db.select()
       .from('Tender')
@@ -40,7 +40,7 @@ function retrieveNetworkTender(network, tenderID) {
       .one()
       .then((tender) => {
         if (_.isUndefined(tender) === true) {
-          throw codes.NotFound(`Tender with \`id\` ${tenderID} was not found.`);
+          throw new codes.NotFoundError(`Tender with \`id\` ${tenderID} was not found.`);
         }
         return tender;
       });

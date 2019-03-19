@@ -12,18 +12,18 @@ module.exports = (req, res, next) => {
     return JWT.verify(token, config.jwt.secret, (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {
-          return formatError(codes.Unauthorized('Access token expired.'), req, res);
+          return formatError(new codes.UnauthorizedError('Access token expired.'), req, res);
         }
 
         if (err.name === 'JsonWebTokenError') {
-          return formatError(codes.BadRequest(err.message), req, res);
+          return formatError(new codes.BadRequestError(err.message), req, res);
         }
 
-        return formatError(codes.InternalServerError('There was a problem checking the access token.'), req, res);
+        return formatError(new codes.InternalServerError('There was a problem checking the access token.'), req, res);
       }
 
       if (!decoded.id || decoded.type !== 'access_token') {
-        return formatError(codes.BadRequest('Wrong access token.'), req, res);
+        return formatError(new codes.BadRequestError('Wrong access token.'), req, res);
       }
 
       return config.db.select().from('User')
@@ -37,9 +37,9 @@ module.exports = (req, res, next) => {
             return next();
           }
 
-          return formatError(codes.Unauthorized('User not found.'), req, res);
+          return formatError(new codes.UnauthorizedError('User not found.'), req, res);
         })
-        .catch((error) => formatError(codes.InternalServerError(error), req, res));
+        .catch((error) => formatError(new codes.InternalServerError(error), req, res));
     });
   }
   return next();

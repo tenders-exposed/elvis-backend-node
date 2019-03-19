@@ -22,7 +22,7 @@ function createCluster(req, res) {
         }))
         .catch((err) => formatError(err, req, res));
     }
-    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+    return formatError(new codes.UnauthorizedError('This operation requires authorization.'), req, res);
   });
 }
 
@@ -39,7 +39,7 @@ function updateCluster(req, res) {
         }))
         .catch((err) => formatError(err, req, res));
     }
-    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+    return formatError(new codes.UnauthorizedError('This operation requires authorization.'), req, res);
   });
 }
 
@@ -52,7 +52,7 @@ function deleteCluster(req, res) {
         .then(() => res.status(codes.NO_CONTENT).json())
         .catch((err) => formatError(err, req, res));
     }
-    return formatError(codes.Unauthorized('This operation requires authorization.'), req, res);
+    return formatError(new codes.UnauthorizedError('This operation requires authorization.'), req, res);
   });
 }
 

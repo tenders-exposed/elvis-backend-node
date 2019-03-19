@@ -23,10 +23,10 @@ function getNetworkEdge(req, res) {
       .one(),
     (network, networkEdge) => {
       if (_.isUndefined(networkEdge) === true) {
-        throw codes.NotFound('Network edge not found.');
+        throw new codes.NotFoundError('Network edge not found.');
       }
       if (networkEdge.type === 'partners') {
-        throw codes.NotImplemented('No details available for an edge of type "partners".');
+        throw new codes.NotImplementedError('No details available for an edge of type "partners".');
       }
       return edgeSerializer.formatContractsEdgeWithDetails(network, networkEdge);
     },

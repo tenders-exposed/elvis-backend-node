@@ -20,7 +20,7 @@ module.exports = (err, req, res) => {
     }
     errorResponse = err;
   } else {
-    errorResponse = codes.InternalServerError('Something went wrong...');
+    errorResponse = new codes.InternalServerError('Something went wrong...');
     errorResponse.error = err;
     errorResponse.error_info = err.toString();
   }

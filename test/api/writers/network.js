@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const test = require('ava').test;
+const test = require('ava');
 const Promise = require('bluebird');
 const OrientDBError = require('orientjs/lib/errors');
 
@@ -123,7 +123,8 @@ test.serial('createNetwork raises error if query is empty', async (t) => {
       edgeSize: 'amountOfMoneyExchanged',
     },
   };
-  const error = await t.throws(networkWriters.createNetwork(networkParams, undefined));
+
+  const error = await t.throwsAsync(networkWriters.createNetwork(networkParams, undefined));
   t.regex(error.message, /query/i);
   t.regex(error.message, /empty/i);
 });
@@ -138,9 +139,9 @@ test.serial('createNetwork raises error if mandatory settings are missing', asyn
       nodeSize: 'amountOfMoneyExchanged',
     },
   };
-  const error = await t.throws(
+  const error = await t.throwsAsync(
     networkWriters.createNetwork(networkParams, undefined),
-    OrientDBError.RequestError,
+    { instanceOf: OrientDBError.RequestError },
   );
   t.regex(error.message, /edgeSize/i);
   t.regex(error.message, /mandatory/i);
