@@ -7,6 +7,7 @@ function extractCpv(cpvAttrs) {
     xName: cpvAttrs.name,
     code: extractCpvCode(cpvAttrs.code),
     xNumberDigits: cpvAttrs.xNumberDigits,
+    military: cpvAttrs.military,
   };
 }
 

@@ -33,12 +33,13 @@ function getTenderCpvs(req, res) {
   if (actorQueries.length) {
     queryCriteria.push(`(${_.join(actorQueries, ' OR ')})`);
   }
-  const cpvsQuery = `SELECT code, xNumberDigits, xName,
+  const cpvsQuery = `SELECT code, xNumberDigits, xName, military,
     bidIDs.size() as xNumberBids
     FROM (
       SELECT cpv.code as code,
       cpv.xNumberDigits as xNumberDigits,
       cpv.xName as xName,
+      cpv.military as military,
       set(bidID) as bidIDs
       FROM (
         SELECT id as bidID, out('BidHasCPV') as cpv

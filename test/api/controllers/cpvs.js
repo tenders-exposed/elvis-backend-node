@@ -23,6 +23,7 @@ function expectedResponse(matchTenderID) {
     .then((writtenCpvs) => ({
       cpvs: _.map(_.sortBy(writtenCpvs, 'code'), (cpv) => {
         cpv.xNumberBids = 1;
+        cpv.military = true;
         return cpvSerializer.formatCpv(cpv);
       }),
     }));

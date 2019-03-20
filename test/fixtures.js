@@ -31,6 +31,7 @@ const cpvAttrs = {
   code: factory.sequence((n) => `12021220${n}`),
   name: 'Talkative ghosts',
   xNumberDigits: 3,
+  military: true,
 };
 factory.define('rawCpv', Object, cpvAttrs);
 factory.define('extractedCpv', Object, cpvAttrs, {

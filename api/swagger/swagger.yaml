@@ -1543,7 +1543,7 @@ definitions:
                                   nodeID:
                                     type: string
                                     description: ID of the node corresponding to this actor in the Network
-                                    format: uuid                
+                                    format: uuid
   Bid:
     type: object
     description: The bid applied to win a certain lot
@@ -1655,6 +1655,7 @@ definitions:
       - code
       - xName
       - xNumberDigits
+      - military
     properties:
       code:
         type: string
@@ -1668,6 +1669,9 @@ definitions:
       xNumberBids:
         type: integer
         description: Number of bids with this CPV
+      military:
+        type: boolean
+        description: Is the CPV related to military activities or not
   CountryIndexResponse:
     type: object
     properties:
