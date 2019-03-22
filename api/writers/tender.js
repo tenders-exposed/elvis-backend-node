@@ -26,6 +26,11 @@ async function writeTender(fullTenderRecord) {
     return new Promise((resolve) => resolve(null));
   }
 
+  // If the tender doesn't have at least one military CPV skip it
+  if (hasMilitaryCpv(fullTenderRecord.cpvs) === false) {
+    return new Promise((resolve) => resolve(null));
+  }
+
   const tender = tenderExtractor.extractTender(
     _.omit(fullTenderRecord, ['indicators', 'publications']),
     fullTenderRecord.indicators,
@@ -48,16 +53,16 @@ async function writeTender(fullTenderRecord) {
     }
   });
 
+  const processedCpvs = await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
+    upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
+  // Only process further valid cpvs
+  const cpvNames = _.compact(processedCpvs);
+
   // TODO: Remove this filter by id after empty objects are excluded from the Digiwhist dumps
   const buyerNames = await Promise.map(
     _.filter(fullTenderRecord.buyers, (rawBuyer) => rawBuyer.id),
     (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, fullTenderRecord), // eslint-disable-line max-len
   );
-
-  const processedCpvs = await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
-    upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
-  // Only process further valid cpvs
-  const cpvNames = _.compact(processedCpvs);
 
   if (_.isUndefined(existingTender) === false) {
     const existingLotRel = await config.db.select("out('Comprises')").from('Tender')
@@ -285,6 +290,17 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
   return undefined;
 }
 
+async function hasMilitaryCpv(cpvs) {
+  const extractedCpvs = _.map(cpvs, (rawCpv) =>
+    cpvExtractor.extractCpv(rawCpv));
+  const extractedCodes = _.map(extractedCpvs, 'code');
+  const fetchedCpvs = await config.db.select().from('CPV')
+    .where(`code IN [${extractedCodes.map((code) => `'${code}'`)}]`)
+    .all();
+  const militaryCpvs = _.filter(fetchedCpvs, { military: true });
+  return !_.isEmpty(militaryCpvs);
+}
+
 module.exports = {
   writeTender,
   upsertBuyer,
@@ -294,4 +310,5 @@ module.exports = {
   deleteBid,
   createLot,
   createBid,
+  hasMilitaryCpv,
 };

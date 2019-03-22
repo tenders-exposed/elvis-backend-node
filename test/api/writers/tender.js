@@ -477,3 +477,32 @@ test.serial('upsertCpv allows cpv to have edges to more than one tender', async 
     _.sortBy(_.map(writtenEdges, (edge) => edge.out.toString())),
   );
 });
+
+test.serial('hasMilitaryCPV returns false if none of the CPVs is military', async (t) => {
+  t.plan(1);
+  const militaryCpv = await fixtures.build('rawCpv', {
+    code: '35613000',
+    military: true,
+  });
+  await config.db.create('vertex', 'CPV')
+    .set(militaryCpv)
+    .commit()
+    .one();
+  const nonMilitaryCpv = await fixtures.build('rawCpv', { code: '03222111' });
+  const nonMilitaryCpv2 = await fixtures.build('rawCpv', { code: '03222112' });
+  t.is(await writers.hasMilitaryCpv([nonMilitaryCpv, nonMilitaryCpv2]), false);
+});
+
+test.serial('hasMilitaryCPV returns true if at least one of the CPVs is military', async (t) => {
+  t.plan(1);
+  const militaryCpv = await fixtures.build('rawCpv', {
+    code: '35613000',
+    military: true,
+  });
+  await config.db.create('vertex', 'CPV')
+    .set(militaryCpv)
+    .commit()
+    .one();
+  const nonMilitaryCpv = await fixtures.build('rawCpv', { code: '03222111' });
+  t.is(await writers.hasMilitaryCpv([nonMilitaryCpv, militaryCpv]), true);
+});
