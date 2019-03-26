@@ -159,7 +159,7 @@ async function createBid(transaction, rawBid, lotName, buyerNames, cpvNames, raw
 
 async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, rawTender = {}) {
   const buyer = buyerExtractor.extractBuyer(rawBuyer, rawTender);
-  const buyerName = recordName(rawBuyer.id, 'Buyer');
+  const buyerName = recordName(_.last(_.split(rawBuyer.id, '::')), 'Buyer');
 
   const existingBuyer = await config.db.select().from('Buyer')
     .where({ id: buyer.id }).one();
@@ -201,7 +201,7 @@ async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, 
 
 async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
   const bidder = bidderExtractor.extractBidder(rawBidder, rawTender);
-  const bidderName = recordName(rawBidder.id, 'Bidder');
+  const bidderName = recordName(_.last(_.split(rawBidder.id, '::')), 'Bidder');
 
   const existingBidder = await config.db.select().from('Bidder')
     .where({ id: bidder.id }).one();
@@ -240,7 +240,7 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
     const existingCpv = await config.db.select().from('CPV')
       .where({ code: cpv.code }).one();
     const existingCpvID = (existingCpv || {})['@rid'];
-    if (_.includes(_.flatMap(transaction._state.let, (arr) => arr[0]), cpvName) === false) {
+    if (_.includes(_.flatMap(transaction._state.bcommon, (arr) => arr[0]), cpvName) === false) {
       if (_.isUndefined(existingCpv)) {
         transaction.let(cpvName, (t) => {
           t.create('vertex', 'CPV')
@@ -263,7 +263,7 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
         out: (existingTenderID || null),
       }).one();
     const edgeName = `${tenderName}has${cpvName}`;
-    if (_.includes(_.flatMap(transaction._state.let, (arr) => arr[0]), edgeName) === false) {
+    if (_.includes(_.flatMap(transaction._state.bcommon, (arr) => arr[0]), edgeName) === false) {
       if (_.isUndefined(existingRel)) {
         transaction.let(edgeName, (t) => {
           t.create('edge', 'HasCPV')
