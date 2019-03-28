@@ -25,6 +25,7 @@ function extractBid(bidAttrs, tenderAttrs, lotAttrs) {
       .head()
       .get('sourceId')
       .value(),
+    sources: extractSources(tenderAttrs.publications),
   };
 }
 
@@ -34,6 +35,12 @@ function extractYear(awardDecisionDate) {
     year = moment(awardDecisionDate).year();
   }
   return year;
+}
+
+function extractSources(publications) {
+  const awardNotices = _.filter(publications, { formType: 'CONTRACT_AWARD' });
+  const sourceURLs = _.map(awardNotices, 'humanReadableUrl');
+  return sourceURLs;
 }
 
 module.exports = {

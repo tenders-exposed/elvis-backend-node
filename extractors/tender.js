@@ -28,6 +28,7 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
       'sourceId',
     ),
     year: extractYear(publications),
+    sources: extractSources(publications),
   };
 }
 
@@ -59,6 +60,13 @@ function extractYear(publications) {
   }
   return year;
 }
+
+function extractSources(publications) {
+  const contractNotices = _.filter(publications, { formType: 'CONTRACT_NOTICE' });
+  const sourceURLs = _.map(contractNotices, 'humanReadableUrl');
+  return sourceURLs;
+}
+
 module.exports = {
   extractTender,
 };

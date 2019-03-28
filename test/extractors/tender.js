@@ -23,6 +23,23 @@ test('extractTender returns null if there is no publication', async (t) => {
   );
 });
 
+test('extractTender extracts sources from contract notice publications', async (t) => {
+  const publication = await fixtures.build('rawContractNotice');
+  const rawTender = await fixtures.build('rawTender');
+  t.deepEqual(
+    tenderExtractor.extractTender(rawTender, [], [publication]).sources,
+    [publication.humanReadableUrl],
+  );
+});
+
+test('extractTender returns empty set of sources if there is no publication', async (t) => {
+  const rawTender = await fixtures.build('rawTender');
+  t.deepEqual(
+    tenderExtractor.extractTender(rawTender, [], []).sources,
+    [],
+  );
+});
+
 test('extractTender extracts year from contract notice if available', async (t) => {
   const publication = await fixtures.build('rawContractNotice', {
     publicationDate: '2015-11-03',
@@ -45,7 +62,7 @@ test('extractTender extracts year from contract award notice if contract notice 
   );
 });
 
-test('extractTender return undefined if no relevant publication is available', async (t) => {
+test('extractTender returns undefined year if no relevant publication is available', async (t) => {
   const rawTender = await fixtures.build('rawTender');
   t.is(
     tenderExtractor.extractTender(rawTender, [], []).year,
