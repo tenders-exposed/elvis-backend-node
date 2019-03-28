@@ -99,4 +99,11 @@ config.activation = {
   externalUrl: process.env.ACCOUNT_ACTIVATION_URL,
 };
 
+config.staticDataUrls = {
+  cpvs: process.env.CPV_LIST_URL || 'https://raw.githubusercontent.com/tenders-exposed/data_sources/master/cpv_codes.json',
+  militaryCpvs: process.env.MILITARY_CPV_LIST_URL || 'https://raw.githubusercontent.com/tenders-exposed/data_sources/master/military_cpv_codes.json',
+  countries: process.env.COUNTRIES_LIST_URL || 'https://raw.githubusercontent.com/tenders-exposed/data_sources/master/countrynames_iso2_correspondence.json',
+  directiveTenders: process.env.DIRECTIVE_TENDERS_LIST_URL || 'https://raw.githubusercontent.com/tenders-exposed/data_sources/master/tenders_200981EC_directive.csv',
+};
+
 module.exports = config;

@@ -9,9 +9,6 @@ const Promise = require('bluebird');
 const config = require('../config/default');
 const helpers = require('./helpers');
 
-const cpvsURL = new URL('https://raw.githubusercontent.com/tenders-exposed/data_sources/master/cpv_codes.json');
-const militaryCpvsURL = new URL('https://raw.githubusercontent.com/tenders-exposed/data_sources/master/military_cpv_codes.json');
-
 function upsertCpv(cpvRecord) {
   return config.db.select().from('CPV')
     .where({ code: cpvRecord.code })
@@ -34,10 +31,10 @@ function upsertCpv(cpvRecord) {
 
 function importMilitaryCpvs() {
   console.log('Retrieving military CPVs...');
-  return helpers.fetchRemoteFile(militaryCpvsURL)
+  return helpers.fetchRemoteFile(new URL(config.staticDataUrls.militaryCpvs))
     .then((militaryCpvList) => {
       console.log('Retrieving all CPVs...');
-      return helpers.fetchRemoteFile(cpvsURL)
+      return helpers.fetchRemoteFile(new URL(config.staticDataUrls.cpvs))
         .then((cpvList) => {
           console.log('Upserting CPVs...');
           return Promise.map(cpvList, (rawCpv) => {

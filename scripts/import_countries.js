@@ -9,10 +9,8 @@ const Promise = require('bluebird');
 const config = require('../config/default');
 const helpers = require('./helpers');
 
-const countriesURL = new URL('https://raw.githubusercontent.com/tenders-exposed/data_sources/master/countrynames_iso2_correspondence.json');
-
 function importCountries() {
-  helpers.fetchRemoteFile(countriesURL)
+  helpers.fetchRemoteFile(new URL(config.staticDataUrls.countries))
     .then((countriesMapping) => {
       console.log('Upserting countries...');
       return Promise.all(_.values(_.mapValues(countriesMapping, (name, code) =>
