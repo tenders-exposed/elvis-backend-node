@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const { URL } = require('url');
 const Promise = require('bluebird');
 const uuidv4 = require('uuid/v4');
 
@@ -26,11 +27,6 @@ async function writeTender(fullTenderRecord) {
     return new Promise((resolve) => resolve(null));
   }
 
-  // If the tender doesn't have at least one military CPV skip it
-  if (hasMilitaryCpv(fullTenderRecord.cpvs) === false) {
-    return new Promise((resolve) => resolve(null));
-  }
-
   const tender = tenderExtractor.extractTender(
     _.omit(fullTenderRecord, ['indicators', 'publications']),
     fullTenderRecord.indicators,
@@ -38,6 +34,17 @@ async function writeTender(fullTenderRecord) {
   );
   const tenderName = recordName(tender.id, 'Tender');
 
+  // If the tender doesn't have at least one military CPV skip it
+  if (hasMilitaryCpv(fullTenderRecord.cpvs) === false) {
+    return new Promise((resolve) => resolve(null));
+  }
+
+  // If the tender is not part of Directive 2009/81/EC skip it
+  if (isUnderDirective(fullTenderRecord.publications) === false) {
+    return new Promise((resolve) => resolve(null));
+  }
+
+  // Otherwise it can be considered a military tender and we should process it
   const existingTender = await config.db.select().from('Tender')
     .where({ id: tender.id }).one();
   const existingTenderID = (existingTender || {})['@rid'];
@@ -299,6 +306,23 @@ async function hasMilitaryCpv(cpvs) {
     .all();
   const militaryCpvs = _.filter(fetchedCpvs, { military: true });
   return !_.isEmpty(militaryCpvs);
+}
+
+async function isUnderDirective(publications) {
+  const tedPublicationUrls = _
+    .chain(publications)
+    .filter({ source: 'http://ted.europa.eu' })
+    .map('humanReadableUrl')
+    .compact()
+    .value();
+  const formattedPublicationUrls = _.map(tedPublicationUrls, (publicationUrl) => {
+    const publiUrl = new URL(publicationUrl);
+    return `${publiUrl.host}${publiUrl.pathname}${publiUrl.search}`;
+  });
+  const directivePublications = config.db.select().from('DirectiveCAN')
+    .where(`sourceUrl in [${formattedPublicationUrls.map((url) => `'${url}'`)}]`)
+    .all();
+  return !_.isEmpty(directivePublications);
 }
 
 module.exports = {
