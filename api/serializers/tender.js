@@ -16,9 +16,10 @@ const actorSerializer = require('./actor');
 
 tenderSerializer.formatTender = function (tender) {
   const formattedTender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description',
-    'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year', 'country']);
+    'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year', 'country', 'isDirective']);
   formattedTender.isEUFunded = tender.xIsEuFunded;
   formattedTender.TEDCNID = tender.xTEDCNID;
+  formattedTender.isDirective = tender.xIsDirective;
   formattedTender.finalValue = _.get(tender, 'finalPrice.netAmountEur') || undefined;
   return formattedTender;
 };

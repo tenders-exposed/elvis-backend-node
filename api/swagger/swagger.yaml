@@ -1643,6 +1643,9 @@ definitions:
         type: number
         format: double
         description: Total value of all the winning bids in the tender
+      isDirective:
+        type: boolean
+        description: Is the tender part of Directive 2009/81/EC
   CpvIndexResponse:
     type: object
     properties:

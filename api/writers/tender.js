@@ -34,13 +34,11 @@ async function writeTender(fullTenderRecord) {
   );
   const tenderName = recordName(tender.id, 'Tender');
 
-  // If the tender doesn't have at least one military CPV skip it
-  if (hasMilitaryCpv(fullTenderRecord.cpvs) === false) {
-    return new Promise((resolve) => resolve(null));
-  }
-
-  // If the tender is not part of Directive 2009/81/EC skip it
-  if (isUnderDirective(fullTenderRecord.publications) === false) {
+  // If the tender doesn't have at least one military CPV
+  // and it's also not part of Directive 2009/81/EC skip it
+  tender.xIsDirective = await isUnderDirective(fullTenderRecord.publications);
+  const militaryCpv = await hasMilitaryCpv(fullTenderRecord.cpvs);
+  if (militaryCpv === false && tender.xIsDirective === false) {
     return new Promise((resolve) => resolve(null));
   }
 
@@ -319,7 +317,7 @@ async function isUnderDirective(publications) {
     const publiUrl = new URL(publicationUrl);
     return `${publiUrl.host}${publiUrl.pathname}${publiUrl.search}`;
   });
-  const directivePublications = config.db.select().from('DirectiveCAN')
+  const directivePublications = await config.db.select().from('DirectiveCAN')
     .where(`sourceUrl in [${formattedPublicationUrls.map((url) => `'${url}'`)}]`)
     .all();
   return !_.isEmpty(directivePublications);
@@ -335,4 +333,5 @@ module.exports = {
   createLot,
   createBid,
   hasMilitaryCpv,
+  isUnderDirective,
 };
