@@ -12,8 +12,60 @@ const fixtures = require('./../../fixtures');
 test.before(() => helpers.createDB());
 test.afterEach.always(() => helpers.truncateDB());
 
-test.serial('writeTender creates new tender', async (t) => {
+test.serial('writeTender skips tender if hasMilitaryCpv and isDirective is false', async (t) => {
+  t.plan(1);
+  const nonMilitaryCpv = await fixtures.build('rawCpv', {
+    code: '03222111',
+    military: false,
+  });
   const rawTender = await fixtures.build('rawFullTender');
+  rawTender.cpvs = [nonMilitaryCpv];
+  const writtenTender = await writers.writeTender(rawTender)
+    .then(() => config.db.select()
+      .from('Tender')
+      .where({ id: rawTender.id })
+      .one());
+  t.true(_.isUndefined(writtenTender));
+});
+
+test.serial('writeTender writes tender if hasMilitaryCpv is true', async (t) => {
+  t.plan(1);
+  const militaryCpv = await fixtures.build('rawCpv', {
+    code: '35613000',
+    military: true,
+  });
+  const extractedMilitaryCpv = await fixtures.build('extractedCpv', {
+    code: militaryCpv.code,
+    military: militaryCpv.military,
+  });
+  await config.db.create('vertex', 'CPV')
+    .set(extractedMilitaryCpv)
+    .commit()
+    .one();
+  const rawTender = await fixtures.build('rawFullTender');
+  rawTender.cpvs = [militaryCpv];
+  const writtenTender = await writers.writeTender(rawTender)
+    .then(() => config.db.select()
+      .from('Tender')
+      .where({ id: rawTender.id })
+      .one());
+  t.false(_.isUndefined(writtenTender));
+});
+
+
+test.serial('writeTender writes tender if isDirective is true', async (t) => {
+  t.plan(1);
+  const directiveSourceUrl = 'ted.europa.eu/12345';
+  await config.db.class.get('DirectiveCAN')
+    .then((DirectiveCAN) => DirectiveCAN.create({
+      sourceUrl: directiveSourceUrl,
+    }));
+  const tenderCAN = await fixtures.build('rawContractAwardNotice', {
+    humanReadableUrl: `http://${directiveSourceUrl}`,
+    source: 'http://ted.europa.eu',
+  });
+  const rawTender = await fixtures.build('rawFullTender');
+  rawTender.publications = [tenderCAN];
   const writtenTender = await writers.writeTender(rawTender)
     .then(() => config.db.select()
       .from('Tender')
@@ -30,14 +82,14 @@ test.serial('writeTender updates indicators', async (t) => {
     value: 1,
   });
   rawTender.indicators = [firstIndicator];
-  await writers.writeTender(rawTender);
+  await writers.writeTender(rawTender, true);
   const secondIndicator = await fixtures.build('rawIndicator', {
     relatedEntityId: rawTender.id,
   });
   const newValue = 43;
   firstIndicator.value = newValue;
   rawTender.indicators = [firstIndicator, secondIndicator];
-  const updatedTender = await writers.writeTender(rawTender)
+  const updatedTender = await writers.writeTender(rawTender, true)
     .then(() => config.db.select()
       .from('Tender')
       .where({ id: rawTender.id })
@@ -57,7 +109,7 @@ test.serial('writeTender updates existing tender', async (t) => {
     .set(tenderAttrs)
     .commit()
     .one();
-  const updatedTender = await writers.writeTender(updatedTenderAttrs)
+  const updatedTender = await writers.writeTender(updatedTenderAttrs, true)
     .then(() => config.db.select().from('Tender')
       .where({ id: tenderAttrs.id })
       .one());
@@ -69,7 +121,7 @@ test.serial('writeTender rolls back transaction on error', async (t) => {
   t.plan(2);
   const wrongTenderAttrs = await fixtures.build('rawFullTender', { isFrameworkAgreement: 'I should be a boolean' });
   await t.throwsAsync(
-    writers.writeTender(wrongTenderAttrs),
+    writers.writeTender(wrongTenderAttrs, true),
     { instanceOf: OrientDBError.RequestError },
   );
   const writtenTender = await config.db.select()
@@ -104,7 +156,7 @@ test.serial('writeTender updates existing lots', async (t) => {
     id: existingTender.id,
   });
 
-  await writers.writeTender(updatedTenderAttrs);
+  await writers.writeTender(updatedTenderAttrs, true);
   const updatedTenderLots = await config.db.select()
     .from(config.db.traverse('out("Comprises")')
       .from(existingTender['@rid'])
@@ -149,7 +201,7 @@ test.serial('writeTender updates existing bids', async (t) => {
     lots: [updatedLotAttrs],
     id: existingTender.id,
   });
-  await writers.writeTender(updatedTenderAttrs);
+  await writers.writeTender(updatedTenderAttrs, true);
   const tenderBids = await config.db.select()
     .from(config.db.traverse('out("Comprises"), in("AppliedTo")')
       .from(existingTender['@rid'])

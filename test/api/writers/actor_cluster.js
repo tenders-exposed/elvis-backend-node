@@ -27,12 +27,12 @@ async function createNetwork() {
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   await fixtures.build('rawFullTender', {
     buyers: _.takeRight(buyers, 2),
     country: 'CZ',
   })
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: ['CZ'],

@@ -60,7 +60,7 @@ test.serial('createNetwork returns network with nodes and edges', async (t) => {
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     network: {
       query: {

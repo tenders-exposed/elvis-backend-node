@@ -19,7 +19,7 @@ function recordName(id, className) {
 
 // Returns true
 // Raises OrientDBError if the writing failed
-async function writeTender(fullTenderRecord) {
+async function writeTender(fullTenderRecord, skipMilitaryFilters = false) {
   const awardedLots = _.filter(fullTenderRecord.lots, { status: 'AWARDED' });
 
   // If there are no awarded lots don't even process the tender
@@ -36,10 +36,12 @@ async function writeTender(fullTenderRecord) {
 
   // If the tender doesn't have at least one military CPV
   // and it's also not part of Directive 2009/81/EC skip it
-  tender.xIsDirective = await isUnderDirective(fullTenderRecord.publications);
-  const militaryCpv = await hasMilitaryCpv(fullTenderRecord.cpvs);
-  if (militaryCpv === false && tender.xIsDirective === false) {
-    return new Promise((resolve) => resolve(null));
+  if (skipMilitaryFilters === false) {
+    tender.xIsDirective = await isUnderDirective(fullTenderRecord.publications);
+    const militaryCpv = await hasMilitaryCpv(fullTenderRecord.cpvs);
+    if (militaryCpv === false && tender.xIsDirective === false) {
+      return new Promise((resolve) => resolve(null));
+    }
   }
 
   // Otherwise it can be considered a military tender and we should process it

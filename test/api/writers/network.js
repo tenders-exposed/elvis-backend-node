@@ -71,7 +71,7 @@ test.serial('createNetwork filters bids by query', async (t) => {
       cpvs: [queryCpv],
       country: queryCountry,
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   await fixtures.build('rawBidWithBidder', { bidders: [queryBidder] })
     .then((bid) => fixtures.build('rawLot', {
       bids: [bid],
@@ -83,11 +83,11 @@ test.serial('createNetwork filters bids by query', async (t) => {
       cpvs: [queryCpv],
       country: queryCountry,
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   await fixtures.build('rawFullTender', {
     country: 'NL',
   })
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: [queryCountry],
@@ -158,7 +158,7 @@ test.serial('createNetwork creates network actors ', async (t) => {
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -181,7 +181,7 @@ test.serial('createNetwork creates actor even if the counterpart misses', async 
   await fixtures.build('rawFullTender', {
     buyers: [buyer],
     country: 'CZ',
-  }).then((rawTender) => tenderWriters.writeTender(rawTender));
+  }).then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -207,7 +207,7 @@ test.serial('createNetwork creates network edges ', async (t) => {
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -237,7 +237,7 @@ test.serial('createNetwork uses number of winning bids for node size', async (t)
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -272,7 +272,7 @@ test.serial('createNetwork uses amount of money exchanged for node size', async 
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -301,7 +301,7 @@ test.serial('createNetwork uses number of winning bids for contracts edge size '
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender)));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true)));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -333,7 +333,7 @@ test.serial('createNetwork uses amount of money exchanged bids for contracts edg
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender)));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true)));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -360,7 +360,7 @@ test.serial('createNetwork uses number of shared bids for partners edge size ', 
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender)));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true)));
   const networkParams = {
     query: {
       countries: ['CZ'],
@@ -389,12 +389,12 @@ test.serial('createNetwork calculates medianCompetition for nodes', async (t) =>
       lots: [rawLot],
       country: 'CZ',
     }))
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   await fixtures.build('rawFullTender', {
     buyers: _.takeRight(buyers, 2),
     country: 'CZ',
   })
-    .then((rawTender) => tenderWriters.writeTender(rawTender));
+    .then((rawTender) => tenderWriters.writeTender(rawTender, true));
   const networkParams = {
     query: {
       countries: ['CZ'],

@@ -41,7 +41,7 @@ test.serial('getTenderCpvs returns all cpvs by default', async (t) => {
   t.plan(2);
   const cpvs = fixtures.assocAttrsMany('rawCpv', 2);
   const tender = await fixtures.build('rawFullTender', { cpvs })
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   const res = await request(app)
     .get('/tenders/cpvs');
 
@@ -54,11 +54,11 @@ test.serial('getTenderCpvs filters cpvs by country', async (t) => {
   const rawMatchTender = await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
     country: 'RO',
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
     country: 'NL',
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get('/tenders/cpvs?countries[]=RO');
 
@@ -72,10 +72,10 @@ test.serial('getTenderCpvs filters cpvs by buyer', async (t) => {
   const rawMatchTender = await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
     buyers: [buyer],
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/cpvs?buyers[]=${buyer.id}`);
 
@@ -92,10 +92,10 @@ test.serial('getTenderCpvs filters cpvs by bidder', async (t) => {
       cpvs: fixtures.assocAttrsMany('rawCpv', 2),
       lots: [lot],
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/cpvs?bidders[]=${bidder.id}`);
 
@@ -115,11 +115,11 @@ test.serial('getTenderCpvs filters cpvs by bidder or buyer', async (t) => {
       cpvs: [bidderCpv],
       lots: [lot],
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawFullTender', {
     cpvs: [buyerCpv],
     buyers: [buyer],
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/cpvs?bidders[]=${bidder.id}&buyers[]=${buyer.id}`);
   t.is(res.status, codes.SUCCESS);
@@ -149,7 +149,7 @@ test.serial('getTenderCpvs filters cpvs by year', async (t) => {
       cpvs: fixtures.assocAttrsMany('rawCpv', 2),
       lots: [lot],
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawLot', {
     awardDecisionDate: '2017-01-10',
   })
@@ -157,7 +157,7 @@ test.serial('getTenderCpvs filters cpvs by year', async (t) => {
       cpvs: fixtures.assocAttrsMany('rawCpv', 2),
       lots: [lot],
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get('/tenders/cpvs?years=2016,2017');
 

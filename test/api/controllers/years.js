@@ -27,7 +27,7 @@ test.serial('getTenderYears returns all years by default', async (t) => {
     awardDecisionDate: `${expectedYear}-01-17`,
   });
   await fixtures.build('rawFullTender', { lots: [lot] })
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   const res = await request(app)
     .get('/tenders/years');
 
@@ -45,13 +45,13 @@ test.serial('getTenderYears filters years by cpvs', async (t) => {
   }).then((lot) => fixtures.build('rawFullTender', {
     cpvs: [cpv],
     lots: [lot],
-  })).then((ten) => writers.writeTender(ten));
+  })).then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawLotWithBid', {
     awardDecisionDate: `${alternativeYear}-01-17`,
   }).then((lot) => fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
     lots: [lot],
-  })).then((ten) => writers.writeTender(ten));
+  })).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/years?cpvs=${cpv.code}`);
 
@@ -69,12 +69,12 @@ test.serial('getTenderYears filters years by buyer', async (t) => {
   }).then((lot) => fixtures.build('rawFullTender', {
     buyers: [buyer],
     lots: [lot],
-  })).then((ten) => writers.writeTender(ten));
+  })).then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawLotWithBid', {
     awardDecisionDate: `${alternativeYear}-01-17`,
   }).then((lot) => fixtures.build('rawFullTender', {
     lots: [lot],
-  })).then((ten) => writers.writeTender(ten));
+  })).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/years?buyers[]=${buyer.id}`);
 
@@ -95,12 +95,12 @@ test.serial('getTenderYears filters years by bidder', async (t) => {
     .then((lot) => fixtures.build('rawFullTender', {
       lots: [lot],
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawLotWithBid', {
     awardDecisionDate: `${alternativeYear}-01-17`,
   }).then((lot) => fixtures.build('rawFullTender', {
     lots: [lot],
-  })).then((ten) => writers.writeTender(ten));
+  })).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/years?bidders[]=${bidder.id}`);
 
@@ -119,13 +119,13 @@ test.serial('getTenderYears filters years by countries', async (t) => {
   }).then((lot) => fixtures.build('rawFullTender', {
     lots: [lot],
     country: expectedCountry,
-  })).then((ten) => writers.writeTender(ten));
+  })).then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawLotWithBid', {
     awardDecisionDate: `${alternativeYear}-01-17`,
   }).then((lot) => fixtures.build('rawFullTender', {
     lots: [lot],
     country: alternativeCountry,
-  })).then((ten) => writers.writeTender(ten));
+  })).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/years?countries=${expectedCountry},PL`);
 

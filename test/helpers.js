@@ -39,6 +39,7 @@ async function truncateDB() {
     'Price',
     'Address',
     'User',
+    'DirectiveCAN',
   ];
 
   await Promise.map(dbClasses, (className) =>

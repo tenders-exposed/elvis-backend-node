@@ -39,7 +39,7 @@ test.serial('getTenderActors returns all actors by default', async (t) => {
       buyers: [buyer],
       lots: [lot],
     }))
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   const res = await request(app)
     .get('/tenders/actors');
 
@@ -54,7 +54,7 @@ test.serial('getTenderActors limits actors to limit', async (t) => {
   await fixtures.build('rawFullTender', {
     buyers: [buyer, secondBuyer],
   })
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   const res = await request(app)
     .get('/tenders/actors?limit=1');
 
@@ -74,11 +74,11 @@ test.serial('getTenderActors filters actors by cpvs', async (t) => {
       lots: [lot],
       cpvs: [cpv],
     }))
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   await fixtures.build('rawFullTender', {
     cpvs: fixtures.buildMany('rawCpv', 1),
     buyers: fixtures.buildMany('rawBuyer', 1, { '@class': 'Buyer' }),
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/actors?cpvs=${cpv.code}`);
 
@@ -101,7 +101,7 @@ test.serial('getTenderActors filters actors by year', async (t) => {
       buyers: [expectedBuyer],
       lots: [lot],
     }))
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   await fixtures.build('rawLot', {
     awardDecisionDate: `${alternativeYear}-01-10`,
   })
@@ -109,7 +109,7 @@ test.serial('getTenderActors filters actors by year', async (t) => {
       lots: [lot],
       buyers: fixtures.buildMany('rawBuyer', 1, { '@class': 'Buyer' }),
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/actors?years=${expectedYear},2017`);
 
@@ -130,11 +130,11 @@ test.serial('getTenderActors filters actors by countries', async (t) => {
       lots: [lot],
       country: expectedCountry,
     }))
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   await fixtures.build('rawFullTender', {
     country: alternativeContry,
     buyers: fixtures.buildMany('rawBuyer', 1, { '@class': 'Buyer' }),
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/actors?countries[]=${expectedCountry}`);
 
@@ -154,7 +154,7 @@ test.serial('getTenderActors provides sugestions based on name', async (t) => {
   });
   await fixtures.build('rawFullTender', {
     buyers: [expectedBuyer, alternativeBuyer],
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get('/tenders/actors?name=minis');
 
@@ -174,7 +174,7 @@ test.serial('getTenderActors allows lucene queries', async (t) => {
   });
   await fixtures.build('rawFullTender', {
     buyers: [expectedBuyer, alternativeBuyer],
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
 
   const res = await request(app)
     .get('/tenders/actors?name=ministry AND magic');
@@ -195,7 +195,7 @@ test.serial('getTenderActors ackowledges whitespace in query string', async (t) 
   });
   await fixtures.build('rawFullTender', {
     buyers: [expectedBuyer, alternativeBuyer],
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
 
   const res = await request(app)
     .get('/tenders/actors?name=expelli%20%20');
@@ -221,7 +221,7 @@ test.serial('getTenderActors ackowledges whitespace in query string', async (t) 
 //       buyers: [expectedBuyer],
 //       lots: [lot],
 //     }))
-//     .then((rawTender) => writers.writeTender(rawTender));
+//     .then((rawTender) => writers.writeTender(rawTender, true));
 //   const res = await request(app)
 //     .get('/tenders/actors?name=azkaban~');
 

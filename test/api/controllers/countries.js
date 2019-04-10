@@ -36,7 +36,7 @@ test.serial('getTenderCountries returns all cpvs by default', async (t) => {
   t.plan(2);
   const expectedCountry = 'CZ';
   await fixtures.build('rawFullTender', { country: expectedCountry })
-    .then((rawTender) => writers.writeTender(rawTender));
+    .then((rawTender) => writers.writeTender(rawTender, true));
   const res = await request(app)
     .get('/tenders/countries');
 
@@ -52,11 +52,11 @@ test.serial('getTenderCountries filters countries by cpvs', async (t) => {
   await fixtures.build('rawFullTender', {
     cpvs: [cpv],
     country: expectedCountry,
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawFullTender', {
     cpvs: fixtures.assocAttrsMany('rawCpv', 2),
     country: alternativeCountry,
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/countries?cpvs=${cpv.code}`);
 
@@ -72,10 +72,10 @@ test.serial('getTenderCountries filters countries by buyer', async (t) => {
   await fixtures.build('rawFullTender', {
     buyers: [buyer],
     country: expectedCountry,
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawFullTender', {
     country: alternativeCountry,
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/countries?buyers[]=${buyer.id}`);
 
@@ -94,10 +94,10 @@ test.serial('getTenderCountries filters countries by bidder', async (t) => {
       lots: [lot],
       country: expectedCountry,
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawFullTender', {
     country: alternativeCountry,
-  }).then((ten) => writers.writeTender(ten));
+  }).then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get(`/tenders/countries?bidders[]=${bidder.id}`);
 
@@ -116,7 +116,7 @@ test.serial('getTenderCountries filters countries by year', async (t) => {
       lots: [lot],
       country: expectedCountry,
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   await fixtures.build('rawLot', {
     awardDecisionDate: '2017-01-10',
   })
@@ -124,7 +124,7 @@ test.serial('getTenderCountries filters countries by year', async (t) => {
       lots: [lot],
       country: alternativeCountry,
     }))
-    .then((ten) => writers.writeTender(ten));
+    .then((ten) => writers.writeTender(ten, true));
   const res = await request(app)
     .get('/tenders/countries?years=2016,2017');
 
