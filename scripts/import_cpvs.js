@@ -18,11 +18,12 @@ function importCPVs() {
       return Promise.map(cpvList, (rawCpv) => {
         const cpv = {
           code: rawCpv.code,
+          xOriginalCode: rawCpv.code,
           xName: rawCpv.text,
           xNumberDigits: rawCpv.number_digits,
         };
         return config.db.select().from('CPV')
-          .where({ code: cpv.code })
+          .where({ xOriginalCode: cpv.code })
           .one()
           .then((existingCpv) => {
             if (_.isUndefined(existingCpv)) {
