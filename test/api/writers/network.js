@@ -57,7 +57,6 @@ test.serial('createNetwork filters bids by query', async (t) => {
   const queryBidder = await fixtures.build('rawBidder');
   const bidders = await fixtures.buildMany('rawBidder', 2);
   const buyer = await fixtures.build('rawBuyer');
-  const queryCpv = await fixtures.build('rawCpv');
   const queryYear = 2017;
   const queryCountry = 'CZ';
   await fixtures.build('rawBidWithBidder', { bidders })
@@ -68,7 +67,6 @@ test.serial('createNetwork filters bids by query', async (t) => {
     .then((rawLot) => fixtures.build('rawTender', {
       buyers: [queryBuyer],
       lots: [rawLot],
-      cpvs: [queryCpv],
       country: queryCountry,
     }))
     .then((rawTender) => tenderWriters.writeTender(rawTender));
@@ -80,7 +78,6 @@ test.serial('createNetwork filters bids by query', async (t) => {
     .then((rawLot) => fixtures.build('rawTender', {
       buyers: [buyer],
       lots: [rawLot],
-      cpvs: [queryCpv],
       country: queryCountry,
     }))
     .then((rawTender) => tenderWriters.writeTender(rawTender));
@@ -91,7 +88,6 @@ test.serial('createNetwork filters bids by query', async (t) => {
   const networkParams = {
     query: {
       countries: [queryCountry],
-      cpvs: [queryCpv.code],
       years: [queryYear],
       buyers: [queryBuyer.id],
       bidders: [queryBidder.id],

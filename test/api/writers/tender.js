@@ -426,7 +426,7 @@ test.serial('upsertCpv updates the edge between existing CPV and existing tender
     .one();
   const updatedCpvAttrs = await fixtures.build('rawCpv', {
     isMain: false,
-    code: existingCpv.code,
+    code: existingCpv.xOriginalCode,
   });
   const tenderName = 'tender';
   const transaction = await config.db.let(tenderName, (tr) =>
@@ -466,7 +466,7 @@ test.serial('upsertCpv allows cpv to have edges to more than one tender', async 
         .return(`$${secondTenderName}`)
         .one()));
   const writtenCpv = await config.db.select().from('CPV')
-    .where({ code: rawCpv.code })
+    .where({ xOriginalCode: rawCpv.code })
     .one();
   const writtenEdges = await config.db.select().from('HasCPV')
     .where({ in: writtenCpv['@rid'] })

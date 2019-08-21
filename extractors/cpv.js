@@ -5,7 +5,7 @@ const _ = require('lodash');
 function extractCpv(cpvAttrs) {
   return {
     xName: cpvAttrs.name,
-    code: extractCpvCode(cpvAttrs.code),
+    xOriginalCode: extractCpvCode(cpvAttrs.code),
     xNumberDigits: cpvAttrs.xNumberDigits,
   };
 }
