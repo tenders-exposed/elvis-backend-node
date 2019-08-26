@@ -19,12 +19,15 @@ function mapOldCPVs() {
 
       return helpers.fetchRemoteFile(correspondenceURL)
         .then((correspondenceList) => {
-          const withCorrespondence = _.reject(correspondenceList, (code) => _.isNull(code.code_2003));
+          const withCorrespondence = _.reject(
+            correspondenceList,
+            (code) => _.isNull(code.code_2003),
+          );
           const groupedBy2003Cpv = _.groupBy(withCorrespondence, 'code_2003');
           const cpvList2003 = _.keys(groupedBy2003Cpv);
 
           return Promise.map(cpvList2003, (cpv2003) => {
-            const group = groupedBy2003Cpv[cpv2003]
+            const group = groupedBy2003Cpv[cpv2003];
             // Always map to the most general 2007 CPV
             const cpv2007 = _.first(_.sortBy(group, 'code_2007'));
             const standardCpv = standardCpvs[cpv2007.code_2007][0];
@@ -51,7 +54,7 @@ function mapOldCPVs() {
                   .return('AFTER')
                   .commit()
                   .one();
-              })
+              });
           });
         });
     })
