@@ -8,7 +8,7 @@ const indicatorExtractor = require('./indicator');
 
 function extractTender(tenderAttrs, indicators = [], publications = []) {
   return {
-    id: tenderAttrs.id,
+    id: tenderAttrs.persistentId,
     title: tenderAttrs.title,
     titleEnglish: tenderAttrs.titleEnglish,
     description: tenderAttrs.description,
