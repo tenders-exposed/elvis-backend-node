@@ -246,11 +246,11 @@ async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
 
 async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
   const cpv = cpvExtractor.extractCpv(rawCpv);
-  if (_.isUndefined(cpv.code) === false) {
-    const cpvName = recordName(cpv.code, 'CPV');
+  if (_.isUndefined(cpv.xOriginalCode) === false) {
+    const cpvName = recordName(cpv.xOriginalCode, 'CPV');
 
     const existingCpv = await config.db.select().from('CPV')
-      .where({ code: cpv.code }).one();
+      .where({ xOriginalCode: cpv.xOriginalCode }).one();
     const existingCpvID = (existingCpv || {})['@rid'];
     if (_.includes(_.flatMap(transaction._state.bcommon, (arr) => arr[0]), cpvName) === false) {
       if (_.isUndefined(existingCpv)) {

@@ -11,7 +11,7 @@ const helpers = require('./helpers');
 
 function upsertCpv(cpvRecord) {
   return config.db.select().from('CPV')
-    .where({ code: cpvRecord.code })
+    .where({ xOriginalCode: cpvRecord.code })
     .one()
     .then((existingCpv) => {
       if (_.isUndefined(existingCpv)) {
@@ -40,6 +40,7 @@ function importMilitaryCpvs() {
           return Promise.map(cpvList, (rawCpv) => {
             const cpv = {
               code: rawCpv.code,
+              xOriginalCode: rawCpv.code,
               xName: rawCpv.text,
               xNumberDigits: rawCpv.number_digits,
               military: !_.isUndefined(_.find(militaryCpvList, { code: rawCpv.code })),

@@ -7,7 +7,7 @@ const indicatorExtractor = require('./indicator');
 
 function extractBidder(bidderAttrs, tenderAttrs = {}) {
   return {
-    id: bidderAttrs.id,
+    id: _.get(bidderAttrs, 'metaData.cleanObjectPersistentId') || bidderAttrs.id,
     name: bidderAttrs.name,
     normalizedName: helpers.removeDiacritics(bidderAttrs.name),
     address: bidderAttrs.address,

@@ -39,7 +39,7 @@ test.serial('getTenderYears filters years by cpvs', async (t) => {
   t.plan(2);
   const expectedYear = 2018;
   const alternativeYear = 2016;
-  const cpv = await fixtures.build('rawCpv');
+  const cpv = await fixtures.build('rawCpv', { code: '09132100' });
   await fixtures.build('rawLotWithBid', {
     awardDecisionDate: `${expectedYear}-01-17`,
   }).then((lot) => fixtures.build('rawFullTender', {

@@ -67,3 +67,5 @@ typings/
 config/runtime.yaml
 
 .idea/
+
+.vscode
