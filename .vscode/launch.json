@@ -4,13 +4,14 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/scripts/import_data.js",
+            "program": "${workspaceFolder}/scripts/import_manual_data.js",
             "cwd": "${workspaceFolder}",
-            "args": ["/home/g/Documents/digiwhist_data/files/data/exported_by_country/CZ_data.json"]
+            "args": ["/Users/g/Elvis/rawdata/irl_clean.csv"]
         }
     ]
 }

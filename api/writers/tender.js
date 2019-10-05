@@ -275,7 +275,7 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
         out: (existingTenderID || null),
       }).one();
     const edgeName = `${tenderName}has${cpvName}`;
-    if (_.includes(_.flatMap(transaction._state.bcommon, (arr) => arr[0]), edgeName) === false) {
+    if (_.includes(_.map(transaction._state.bcommon, (arr) => arr[0]), edgeName) === false) {
       if (_.isUndefined(existingRel)) {
         transaction.let(edgeName, (t) => {
           t.create('edge', 'HasCPV')
