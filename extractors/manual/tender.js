@@ -8,14 +8,14 @@ const priceExtractor = require('./price');
 function extractTender(tenderAttrs) {
   const valueAttrs = _.pick(tenderAttrs, ['currency', 'value_clean', 'value_eur', 'value_approx'])
   return {
-    id: uuidv4(),
+    id: tenderAttrs.id,
     title: _.capitalize(tenderAttrs.subject),
     titleEnglish: _.capitalize(tenderAttrs.subject),
     country: tenderAttrs.country,
     finalPrice: priceExtractor.extractPrice(valueAttrs),
     year: helpers.parseNumber(tenderAttrs.year_clean),
     xYearApproximated: (tenderAttrs.year_approx === "1"),
-    sources: [tenderAttrs.source],
+    sources: tenderAttrs.source.split('\n'),
   };
 }
 

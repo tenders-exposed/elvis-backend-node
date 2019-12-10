@@ -219,7 +219,7 @@ async function upsertBidder(transaction, rawBidder, bidName, rawTender = {}) {
     .where({ id: bidder.id }).one();
   if (_.isUndefined(existingBidder)) {
     // See issue #35
-    const transactedRecords = _.flatMap(transaction._state.bcommon, (arr) => arr[0]);
+    const transactedRecords = _.map(transaction._state.bcommon, (arr) => arr[0]);
     if (_.includes(transactedRecords, bidderName) === false) {
       transaction.let(bidderName, (t) => {
         t.create('vertex', 'Bidder')
@@ -252,7 +252,7 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
     const existingCpv = await config.db.select().from('CPV')
       .where({ xOriginalCode: cpv.xOriginalCode }).one();
     const existingCpvID = (existingCpv || {})['@rid'];
-    if (_.includes(_.flatMap(transaction._state.bcommon, (arr) => arr[0]), cpvName) === false) {
+    if (_.includes(_.map(transaction._state.bcommon, (arr) => arr[0]), cpvName) === false) {
       if (_.isUndefined(existingCpv)) {
         transaction.let(cpvName, (t) => {
           t.create('vertex', 'CPV')

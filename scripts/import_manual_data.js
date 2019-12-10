@@ -35,7 +35,7 @@ program.parse(process.argv);
 // TODO: Test this
 function importFileData(filePath, concurrency, retries) {
   return new Promise((resolve, reject) => {
-    const instream = fs.createReadStream(filePath).pipe(csv({ separator: ';' }))
+    const instream = fs.createReadStream(filePath).pipe(csv({ separator: ',' }))
     const queue = new PQueue({ concurrency });
 
     instream.on('data', (line) => {
