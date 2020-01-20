@@ -9,6 +9,7 @@ schemes:
   - https
 consumes:
   - application/json
+  - application/octet-stream
 produces:
   - application/json
 securityDefinitions :

@@ -40,7 +40,8 @@
     "passport-local": "^1.0.0",
     "passport-twitter": "^1.0.4",
     "session": "^0.1.0",
-    "swagger-express-mw": "^0.7.0",
+    "swagger-express-mw1": "0.8.0",
+    "swagger-node-runner1": "0.8.0",
     "swagger-ui-express": "^2.0.11",
     "uuid": "^3.1.0",
     "yamljs": "^0.3.0"
