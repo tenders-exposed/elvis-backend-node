@@ -1562,6 +1562,12 @@ definitions:
       isSubcontracted:
         type: boolean
         description: Did the winner subcontract another company for this bid?
+      xYearApproximated:
+        type: boolean
+        description: Is the bid year approximated (for manually collected data)
+      xAmountApproximated:
+        type: boolean
+        description: Is the bid value approximated
       bidders:
         type: array
         items:
@@ -1647,6 +1653,12 @@ definitions:
       isDirective:
         type: boolean
         description: Is the tender part of Directive 2009/81/EC
+      xYearApproximated:
+        type: boolean
+        description: Is the tender year approximated (for manually collected data)
+      xAmountApproximated:
+        type: boolean
+        description: Is the tender value approximated
   CpvIndexResponse:
     type: object
     properties:
