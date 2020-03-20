@@ -8,6 +8,7 @@ function extractLot(tenderAttrs) {
   return {
     id: uuidv4(),
     title: tenderAttrs.title,
+    bidsCount: 1,
   };
 }
 
