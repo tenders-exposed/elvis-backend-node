@@ -15,7 +15,7 @@ const lotSerializer = require('./lot');
 const actorSerializer = require('./actor');
 
 tenderSerializer.formatTender = function (tender) {
-  const formattedTender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description',
+  const formattedTender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description', 'sources',
     'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year', 'country', 'isDirective', 'xYearApproximated']);
   formattedTender.isEUFunded = tender.xIsEuFunded;
   formattedTender.TEDCNID = tender.xTEDCNID;

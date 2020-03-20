@@ -1623,6 +1623,12 @@ definitions:
       year:
         type: integer
         description: Year when the contract notice or contract award notice was published
+      sources:
+        type: array
+        description: Array of tender sources
+        items:
+          type: string
+          description: URL to tender source
       TEDCNID:
         type: string
         description: ID of the Contract Notice on ted.europa.eu
