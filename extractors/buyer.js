@@ -6,7 +6,7 @@ const indicatorExtractor = require('./indicator');
 
 function extractBuyer(buyerAttrs, tenderAttrs = {}) {
   return {
-    id: _.get(buyerAttrs, 'metaData.cleanObjectPersistentId') || buyerAttrs.id,
+    id: buyerAttrs.id,
     name: buyerAttrs.name,
     normalizedName: helpers.removeDiacritics(buyerAttrs.name),
     address: buyerAttrs.address,
