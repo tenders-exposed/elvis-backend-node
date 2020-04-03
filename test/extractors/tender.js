@@ -6,23 +6,6 @@ const test = require('ava');
 const tenderExtractor = require('./../../extractors/tender');
 const fixtures = require('./../fixtures');
 
-test('extractTender extracts contract notice id from publications', async (t) => {
-  const publication = await fixtures.build('rawContractNotice');
-  const rawTender = await fixtures.build('rawTender');
-  t.is(
-    tenderExtractor.extractTender(rawTender, [], [publication]).xTEDCNID,
-    publication.sourceId,
-  );
-});
-
-test('extractTender returns null if there is no publication', async (t) => {
-  const rawTender = await fixtures.build('rawTender');
-  t.is(
-    tenderExtractor.extractTender(rawTender, [], []).xTEDCNID,
-    undefined,
-  );
-});
-
 test('extractTender extracts sources from contract notice publications', async (t) => {
   const publication = await fixtures.build('rawContractNotice');
   const rawTender = await fixtures.build('rawTender');

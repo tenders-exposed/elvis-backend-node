@@ -1556,9 +1556,6 @@ definitions:
       isWinning:
         type: boolean
         description: Did this bid won the lot?
-      TEDCANID:
-        type: string
-        description: ID of the Contract Award Notice on ted.europa.eu
       isSubcontracted:
         type: boolean
         description: Did the winner subcontract another company for this bid?
@@ -1629,9 +1626,6 @@ definitions:
         items:
           type: string
           description: URL to tender source
-      TEDCNID:
-        type: string
-        description: ID of the Contract Notice on ted.europa.eu
       title:
         type: string
         description: Title of the tender

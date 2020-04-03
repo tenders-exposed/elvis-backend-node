@@ -19,12 +19,6 @@ function extractBid(bidAttrs, tenderAttrs, lotAttrs) {
     robustPrice: priceExtractor.extractPrice(bidAttrs.robustPrice),
     xCountry: _.get(tenderAttrs, 'ot.country') || tenderAttrs.country,
     xYear: extractYear(lotAttrs.awardDecisionDate),
-    xTEDCANID: _
-      .chain((tenderAttrs.publications || []))
-      .filter({ formType: 'CONTRACT_AWARD' })
-      .head()
-      .get('sourceId')
-      .value(),
     sources: extractSources(tenderAttrs.publications),
   };
 }

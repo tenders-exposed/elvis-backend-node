@@ -23,10 +23,6 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
     indicators: _
       .filter(indicators, { relatedEntityId: tenderAttrs.id })
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
-    xTEDCNID: _.get(
-      _.head(_.filter(publications, { formType: 'CONTRACT_NOTICE' })),
-      'sourceId',
-    ),
     year: extractYear(publications),
     sources: extractSources(publications),
   };

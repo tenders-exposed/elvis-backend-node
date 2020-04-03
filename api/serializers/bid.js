@@ -16,7 +16,6 @@ const lotSerializer = require('./lot');
 
 bidSerializer.formatBid = function (bid) {
   const formattedBid = _.pick(bid, ['isWinning', 'isSubcontracted', 'xYearApproximated']);
-  formattedBid.TEDCANID = bid.xTEDCANID;
   formattedBid.value = _.get(bid, 'price.netAmountEur') || undefined;
   formattedBid.xAmountApproximated = _.get(bid, 'price.xAmountApproximated');
   return formattedBid;

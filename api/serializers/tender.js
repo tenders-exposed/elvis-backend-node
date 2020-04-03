@@ -18,7 +18,6 @@ tenderSerializer.formatTender = function (tender) {
   const formattedTender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description', 'sources',
     'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year', 'country', 'isDirective', 'xYearApproximated']);
   formattedTender.isEUFunded = tender.xIsEuFunded;
-  formattedTender.TEDCNID = tender.xTEDCNID;
   formattedTender.isDirective = tender.xIsDirective;
   formattedTender.finalValue = _.get(tender, 'finalPrice.netAmountEur') || undefined;
   formattedTender.xAmountApproximated = _.get(tender, 'finalPrice.xAmountApproximated');
