@@ -19,7 +19,7 @@ function recordName(id, className) {
 
 // Returns true
 // Raises OrientDBError if the writing failed
-async function writeTender(fullTenderRecord, skipMilitaryFilters = false) {
+async function writeTender(fullTenderRecord, skipMilitaryFilters = true) {
   const awardedLots = _.filter(fullTenderRecord.lots, { status: 'AWARDED' });
 
   // If there are no awarded lots don't even process the tender
@@ -60,6 +60,19 @@ async function writeTender(fullTenderRecord, skipMilitaryFilters = false) {
     }
   });
 
+
+  // The tender already exists. We're deleting the existing CPV, Buyer, Bidder edges
+  // We also delete the existing Lots and Bids before creating new ones
+  if (_.isUndefined(existingTender) === false) {
+    await deleteHasCPV(transaction, tenderName, existingTenderID)
+    await deleteCreates(transaction, tenderName, existingTenderID)
+    const existingLotRel = await config.db.select("out('Comprises')").from('Tender')
+      .where({ '@rid': existingTenderID }).one();
+    const existingLotRIDs = existingLotRel.out;
+    await Promise.map(existingLotRIDs, (existingLotRID) =>
+      deleteLot(transaction, existingLotRID));
+  }
+
   const processedCpvs = await Promise.map((fullTenderRecord.cpvs || []), (rawCpv) =>
     upsertCpv(transaction, rawCpv, existingTenderID, tenderName));
   // Only process further valid cpvs
@@ -70,14 +83,6 @@ async function writeTender(fullTenderRecord, skipMilitaryFilters = false) {
     _.filter(fullTenderRecord.buyers, (rawBuyer) => rawBuyer.id),
     (rawBuyer) => upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, fullTenderRecord), // eslint-disable-line max-len
   );
-
-  if (_.isUndefined(existingTender) === false) {
-    const existingLotRel = await config.db.select("out('Comprises')").from('Tender')
-      .where({ '@rid': existingTenderID }).one();
-    const existingLotRIDs = existingLotRel.out;
-    await Promise.map(existingLotRIDs, (existingLotRID) =>
-      deleteLot(transaction, existingLotRID));
-  }
 
   await Promise.map((awardedLots || []), (rawLot) => {
     const rawBids = (rawLot.bids || []);
@@ -92,6 +97,24 @@ async function writeTender(fullTenderRecord, skipMilitaryFilters = false) {
       console.log(err);
       throw err;
     });
+}
+
+async function deleteHasCPV(transaction, tenderName, existingTenderID) {
+  const operationName = `deleteHasCPV${tenderName}`;
+
+  transaction.let(operationName, (t) => 
+    t.delete('edge', 'HasCPV')
+      .where({ out: existingTenderID}));
+  return operationName;
+}
+
+async function deleteCreates(transaction, tenderName, existingTenderID){
+  const operationName = `deleteCreates${tenderName}`;
+
+  transaction.let(operationName, (t) => 
+    t.delete('edge', 'Creates')
+      .where({ in: existingTenderID}));
+  return operationName;
 }
 
 async function deleteLot(transaction, lotRID) {
@@ -190,24 +213,11 @@ async function upsertBuyer(transaction, rawBuyer, existingTenderID, tenderName, 
     });
   }
 
-  const existingRel = await config.db.select().from('Creates')
-    .where({
-      in: (existingTenderID || null),
-      out: (existingBuyerID || null),
-    }).one();
-  transaction.let(`${buyerName}creates${tenderName}`, (t) => {
-    if (_.isUndefined(existingRel)) {
-      t.create('edge', 'Creates')
-        .from(`$${buyerName}`)
-        .to(`$${tenderName}`)
-        .set(buyerExtractor.extractCreates(rawBuyer));
-    } else {
-      t.update('Creates')
-        .set(buyerExtractor.extractCreates(rawBuyer))
-        .where({ '@rid': existingRel['@rid'] })
-        .return('AFTER');
-    }
-  });
+  transaction.let(`${buyerName}creates${tenderName}`, (t) =>
+    t.create('edge', 'Creates')
+      .from(`$${buyerName}`)
+      .to(`$${tenderName}`)
+      .set(buyerExtractor.extractCreates(rawBuyer)));
   return buyerName;
 }
 
@@ -268,29 +278,13 @@ async function upsertCpv(transaction, rawCpv, existingTenderID, tenderName) {
       }
     }
 
-    const existingRel = await config.db.select().from('HasCPV')
-      .where({
-        // This is needed because undefined confuses OrientDB
-        in: (existingCpvID || null),
-        out: (existingTenderID || null),
-      }).one();
     const edgeName = `${tenderName}has${cpvName}`;
     if (_.includes(_.map(transaction._state.bcommon, (arr) => arr[0]), edgeName) === false) {
-      if (_.isUndefined(existingRel)) {
-        transaction.let(edgeName, (t) => {
-          t.create('edge', 'HasCPV')
-            .from(`$${tenderName}`)
-            .to(`$${cpvName}`)
-            .set(cpvExtractor.extractHasCpv(rawCpv));
-        });
-      } else {
-        transaction.let(edgeName, (t) => {
-          t.update('HasCPV')
-            .set(cpvExtractor.extractHasCpv(rawCpv))
-            .where({ '@rid': existingRel['@rid'] })
-            .return('AFTER');
-        });
-      }
+      transaction.let(edgeName, (t) =>
+        t.create('edge', 'HasCPV')
+          .from(`$${tenderName}`)
+          .to(`$${cpvName}`)
+          .set(cpvExtractor.extractHasCpv(rawCpv)));
     }
     return cpvName;
   }
