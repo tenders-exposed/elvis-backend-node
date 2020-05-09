@@ -352,10 +352,6 @@ function deleteNetworkActors(transaction, existingNetwork) {
     }));
 }
 
-function retrieveNetworkClusters(networkID) {
-
-}
-
 module.exports = {
   createNetwork,
   createBidderNodes,
