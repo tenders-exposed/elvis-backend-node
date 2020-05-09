@@ -51,7 +51,7 @@ async function deleteRemovedActor(actor, actorClass) {
     const networkActorName = recordName(networkActorID, 'NetworkActor');
     transaction.let(networkActorName, (t) => 
       t.delete('vertex', 'NetworkActor')
-      .where({ 'id': networkActorID }));
+        .where({ 'id': networkActorID }));
   })
   return transaction.commit(2).return(`$${actorName}`).one()
     .catch((err) => {
