@@ -24,7 +24,7 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
       .filter(indicators, { relatedEntityId: tenderAttrs.id })
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
     year: extractYear(publications),
-    sources: extractSources(publications),
+    sources: [extractSource(tenderAttrs)],
   };
 }
 
@@ -57,10 +57,10 @@ function extractYear(publications) {
   return year;
 }
 
-function extractSources(publications) {
-  const contractNotices = _.filter(publications, { formType: 'CONTRACT_NOTICE' });
-  const sourceURLs = _.map(contractNotices, 'humanReadableUrl');
-  return sourceURLs;
+function extractSource(tenderAttrs) {
+  const fomattedCountry = _.lowerCase(tenderAttrs.country);
+  const opentenderLink = `https://opentender.eu/${fomattedCountry}/tender/${tenderAttrs.id}`;
+  return opentenderLink;
 }
 
 module.exports = {
