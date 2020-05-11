@@ -19,7 +19,7 @@ async function createCluster(networkID, clusterParams) {
     label: clusterParams.label,
     type: clusterParams.type,
     active: true,
-    countries: _.uniq(calcuatedAttrs.countries),
+    countries: _.compact(_.uniq(calcuatedAttrs.countries)),
     value: calcuatedAttrs[network.settings.nodeSize],
     medianCompetition: calcuatedAttrs.medianCompetition,
   };

@@ -189,7 +189,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'bidder';
       nodeAttrs.active = true;
-      nodeAttrs.countries = [node.country];
+      nodeAttrs.countries = _.compact([node.country]);
       nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.bidderRID, networkName);
       bidderActorMapping[node.bidderRID] = partnerName;
@@ -224,7 +224,7 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'buyer';
       nodeAttrs.active = true;
-      nodeAttrs.countries = [node.country];
+      nodeAttrs.countries = _.compact([node.country]);
       nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.buyerRID, networkName);
       buyerActorMapping[node.buyerRID] = partnerName;
