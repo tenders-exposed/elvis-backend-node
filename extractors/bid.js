@@ -19,13 +19,7 @@ function extractBid(bidAttrs, tenderAttrs, lotAttrs) {
     robustPrice: priceExtractor.extractPrice(bidAttrs.robustPrice),
     xCountry: _.get(tenderAttrs, 'ot.country') || tenderAttrs.country,
     xYear: extractYear(lotAttrs.awardDecisionDate),
-    xTEDCANID: _
-      .chain((tenderAttrs.publications || []))
-      .filter({ formType: 'CONTRACT_AWARD' })
-      .head()
-      .get('sourceId')
-      .value(),
-    sources: extractSources(tenderAttrs.publications),
+    sources: [extractSource(tenderAttrs)],
   };
 }
 
@@ -37,10 +31,10 @@ function extractYear(awardDecisionDate) {
   return year;
 }
 
-function extractSources(publications) {
-  const awardNotices = _.filter(publications, { formType: 'CONTRACT_AWARD' });
-  const sourceURLs = _.map(awardNotices, 'humanReadableUrl');
-  return sourceURLs;
+function extractSource(tenderAttrs) {
+  const fomattedCountry = _.lowerCase(tenderAttrs.country);
+  const opentenderLink = `https://opentender.eu/${fomattedCountry}/tender/${tenderAttrs.id}`;
+  return opentenderLink;
 }
 
 module.exports = {

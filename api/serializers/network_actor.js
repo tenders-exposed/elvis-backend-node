@@ -9,7 +9,7 @@ const bidSerializer = require('./bid');
 function formatNetworkActor(networkActor) {
   const formattedActor = _.pick(
     networkActor,
-    ['id', 'label', 'type', 'medianCompetition', 'value', 'country'],
+    ['id', 'label', 'type', 'medianCompetition', 'value'],
   );
   formattedActor.flags = {};
   formattedActor.hidden = !networkActor.active;
@@ -17,7 +17,7 @@ function formatNetworkActor(networkActor) {
 }
 
 function formatActorWithDetails(network, networkActor, nodeIDs) {
-  const node = _.pick(networkActor, ['label', 'id', 'type', 'medianCompetition', 'value']);
+  const node = _.pick(networkActor, ['label', 'id', 'type', 'medianCompetition', 'value', 'countries']);
   node.flags = {};
   node.hidden = !networkActor.active;
   const edgeToBidClass = networkActor.type === 'buyer' ? 'Awards' : 'Participates';

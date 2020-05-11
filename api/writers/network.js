@@ -47,6 +47,83 @@ async function createNetwork(networkParams, user) {
   return transaction.commit(2).return(`$${networkName}`).one();
 }
 
+async function updateNetwork(networkParams, existingNetwork) {
+  const clusterWriters = require('./actor_cluster');
+  const newNetworkQuery = _.get(networkParams, 'query', undefined);
+  let networkQuery = {};
+
+  if (_.isUndefined(newNetworkQuery) === true) {
+    networkQuery = existingNetwork.query;
+  } else {
+    networkQuery = _.pickBy(newNetworkQuery, (val) => !(_.isUndefined(val)));
+  }
+  if (_.isEmpty(networkQuery) === true) {
+    throw new codes.BadRequestError('Network "query" can\'t be empty.');
+  }
+
+  // We have to retrieve the clusters here before we delete the actor nodes
+  const clusterQuery = `SELECT *,
+    out('Includes').in('ActingAs').id as originalActorIDs
+    FROM  ActorCluster
+    WHERE out('PartOf').id=:networkID`;
+  const existingClusters = await config.db.query(
+    clusterQuery,
+    { params: { networkID: existingNetwork.id } }
+  );
+
+  const networkName = recordName(existingNetwork.id, 'Network');
+  const newNetworkAttrs = Object.assign({}, {
+    name: _.get(networkParams, 'name', existingNetwork.name),
+    settings: _.get(networkParams, 'settings', existingNetwork.settings),
+    synopsis: _.get(networkParams, 'synopsis', existingNetwork.synopsis),
+    query: networkQuery,
+    created: existingNetwork.created,
+    updated: moment().format('YYYY-MM-DD HH:mm:ss'),
+  });
+
+  const transaction = config.db.let(networkName, (t) => {
+    t.update('Network')
+      .set(newNetworkAttrs)
+      .where({ '@rid': existingNetwork['@rid'] })
+      .return('AFTER');
+  });
+
+  await deleteNetworkActors(transaction, existingNetwork);
+
+  const networkActorsMapping = await Promise.join(
+    createBuyerNodes(transaction, newNetworkAttrs.settings, networkQuery, networkName),
+    createBidderNodes(transaction, newNetworkAttrs.settings, networkQuery, networkName),
+    (buyerActorsMapping, bidderActorsMapping) =>
+      Object.assign(buyerActorsMapping, bidderActorsMapping),
+  );
+  await Promise.all([
+    createContractsEdges(transaction, newNetworkAttrs.settings, networkQuery, networkActorsMapping),
+    createPartnersEdges(transaction, 'Awards', networkQuery, networkActorsMapping),
+    createPartnersEdges(transaction, 'Participates', networkQuery, networkActorsMapping),
+  ]);
+
+  return transaction.commit(2).return(`$${networkName}`).one()
+    .then((updatedNetwork) =>
+      Promise.map(existingClusters, (existingCluster) => {
+          const clusterActorsQuery = `SELECT * FROM NetworkActor
+            WHERE out('PartOf').id=:networkID
+            AND in('ActingAs').id in :actorIDs
+          `
+          return config.db.query(
+            clusterActorsQuery,
+            { params: { networkID: updatedNetwork.id, actorIDs: existingCluster.originalActorIDs}},
+          ).then((newClusterActors) => {
+            const newNodeIDs = _.map(newClusterActors, 'id');
+            return clusterWriters.updateCluster(
+              updatedNetwork.id,
+              existingCluster.id,
+              { nodes: newNodeIDs }
+            );
+          })
+      })
+    );
+}
+
 function queryToBidFilters(networkQuery) {
   const filters = [];
   const actorFilters = [];
@@ -91,6 +168,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
     bidder[@rid] as bidderRID,
     count(*) as numberOfWinningBids,
     sum(price.netAmountEur) as amountOfMoneyExchanged,
+    bidder.address.country as country,
     median(out('AppliedTo').bidsCount) as medianCompetition
     FROM (
       SELECT *, in('Participates') as bidder
@@ -111,6 +189,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'bidder';
       nodeAttrs.active = true;
+      nodeAttrs.countries = [node.country];
       nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.bidderRID, networkName);
       bidderActorMapping[node.bidderRID] = partnerName;
@@ -140,11 +219,12 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
     .then((buyerNodes) => Promise.map(buyerNodes, (node) => {
       const nodeAttrs = _.pick(
         node,
-        ['label', 'medianCompetition', 'country'],
+        ['label', 'medianCompetition'],
       );
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'buyer';
       nodeAttrs.active = true;
+      nodeAttrs.countries = [node.country];
       nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.buyerRID, networkName);
       buyerActorMapping[node.buyerRID] = partnerName;
@@ -259,6 +339,22 @@ function createNetworkEdge(transaction, edgeClass, edgeAttrs, fromName, toName) 
   return edgeName;
 }
 
+function deleteNetworkActors(transaction, existingNetwork) {
+  return config.db.select().from('NetworkActor')
+    .where({
+      "out('PartOf').id": existingNetwork.id,
+      "@class": 'NetworkActor',
+    })
+    .all()
+    .then((networkActors) => Promise.map(networkActors, (networkActor) => {
+      const deleteActorName = recordName(networkActor.id, 'delete');
+
+      transaction.let(deleteActorName, (t) =>
+        t.delete('vertex', 'NetworkActor')
+          .where({ '@rid': networkActor['@rid'] }));
+    }));
+}
+
 module.exports = {
   createNetwork,
   createBidderNodes,
@@ -270,4 +366,5 @@ module.exports = {
   createNetworkEdge,
   queryToBidFilters,
   recordName,
+  updateNetwork,
 };
