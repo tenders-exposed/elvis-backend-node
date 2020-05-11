@@ -19,6 +19,7 @@ async function createCluster(networkID, clusterParams) {
     label: clusterParams.label,
     type: clusterParams.type,
     active: true,
+    countries: _.uniq(calcuatedAttrs.countries),
     value: calcuatedAttrs[network.settings.nodeSize],
     medianCompetition: calcuatedAttrs.medianCompetition,
   };
@@ -114,7 +115,8 @@ function calculateCluster(edgeToBidClass, network, actorIDs) {
   const clusterQuery = `SELECT
     count(*) as numberOfWinningBids,
     sum(price.netAmountEur) as amountOfMoneyExchanged,
-    median(out('AppliedTo').bidsCount) as medianCompetition
+    median(out('AppliedTo').bidsCount) as medianCompetition,
+    unionall(in('${edgeToBidClass}').address.country) as countries
     FROM Bid
     WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
     AND in('${edgeToBidClass}').id in :actorIDs

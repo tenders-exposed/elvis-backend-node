@@ -1346,9 +1346,12 @@ definitions:
         enum:
           - bidder
           - buyer
-      country:
-        type: string
-        description: ISO 3166-1 alpha-2 country code
+      countries:
+        type: array
+        description: Array of bidder/buyer country codes
+        items:
+          type: string
+          description: ISO 3166-1 alpha-2 country code of bidder/buyer
       medianCompetition:
         type: number
         format: double
@@ -1738,9 +1741,12 @@ definitions:
         enum:
           - bidder
           - buyer
-      country:
-        type: string
-        description: Actor country
+      countries:
+        type: array
+        description: Array of bidder/buyer country codes
+        items:
+          type: string
+          description: ISO 3166-1 alpha-2 country code of bidder/buyer
   Address:
     type: object
     properties:

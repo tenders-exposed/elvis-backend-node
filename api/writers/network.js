@@ -168,6 +168,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
     bidder[@rid] as bidderRID,
     count(*) as numberOfWinningBids,
     sum(price.netAmountEur) as amountOfMoneyExchanged,
+    bidder.address.country as country,
     median(out('AppliedTo').bidsCount) as medianCompetition
     FROM (
       SELECT *, in('Participates') as bidder
@@ -188,6 +189,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'bidder';
       nodeAttrs.active = true;
+      nodeAttrs.countries = [node.country];
       nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.bidderRID, networkName);
       bidderActorMapping[node.bidderRID] = partnerName;
@@ -217,11 +219,12 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
     .then((buyerNodes) => Promise.map(buyerNodes, (node) => {
       const nodeAttrs = _.pick(
         node,
-        ['label', 'medianCompetition', 'country'],
+        ['label', 'medianCompetition'],
       );
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'buyer';
       nodeAttrs.active = true;
+      nodeAttrs.countries = [node.country];
       nodeAttrs.value = node[networkSettings.nodeSize];
       const partnerName = createNetworkActor(transaction, nodeAttrs, node.buyerRID, networkName);
       buyerActorMapping[node.buyerRID] = partnerName;
