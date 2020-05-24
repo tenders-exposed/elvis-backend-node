@@ -19,7 +19,7 @@ function recordName(id, className) {
 
 // Returns true
 // Raises OrientDBError if the writing failed
-async function writeTender(fullTenderRecord, skipMilitaryFilters = true) {
+async function writeTender(fullTenderRecord, skipMilitaryFilters = false) {
   const awardedLots = _.filter(fullTenderRecord.lots, { status: 'AWARDED' });
 
   // If there are no awarded lots don't even process the tender
