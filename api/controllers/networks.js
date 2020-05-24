@@ -56,19 +56,27 @@ function updateNetwork(req, res) {
         .where({ id: networkID })
         .one()
         .then((network) => {
+          const ownerID = network.userIDS[0];
           if (_.isUndefined(network) === true) {
             throw new codes.NotFoundError('Network not found.');
           }
-          if (network.userIDS[0] !== req.user.id) {
+          if (_.isUndefined(ownerID) == false && ownerID !== req.user.id) {
             throw new codes.UnauthorizedError('Network does not belong to this user');
           }
-          networkParams.updated = moment().format('YYYY-MM-DD HH:mm:ss');
-          return config.db.update('Network')
-            .set(networkParams)
-            .where({ id: network.id })
-            .return('AFTER')
-            .commit()
-            .one();
+          const newNetworkQuery = _.get(networkParams, 'query', undefined);
+          const newNetworkSettings = _.get(networkParams, 'settings', undefined);
+          // No point recalculating the network if only the name and synopsis are changed
+          if (_.isUndefined(newNetworkQuery) === true && _.isUndefined(newNetworkSettings) === true) {
+            networkParams.updated = moment().format('YYYY-MM-DD HH:mm:ss');
+            return config.db.update('Network')
+              .set(networkParams)
+              .where({ id: network.id })
+              .return('AFTER')
+              .commit()
+              .one();
+          } else {
+            return writers.updateNetwork(networkParams, network);
+          }
         })
         .then((network) => networkSerializer.formatNetworkWithRelated(network))
         .then((network) => res.status(codes.SUCCESS).json({

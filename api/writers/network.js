@@ -121,6 +121,7 @@ async function updateNetwork(networkParams, existingNetwork) {
             );
           })
       })
+      .then(() => updatedNetwork)
     );
 }
 
