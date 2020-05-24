@@ -1237,6 +1237,9 @@ definitions:
         type: string
         format: date-time
         description: When the network was last updated
+      xUpdateNeeded:
+        type: boolean
+        description: Networks are marked for updating after new data has been imported
       count:
         type: object
         properties:

@@ -10,7 +10,7 @@ const networkEdgeSerializer = require('./network_edge');
 const actorClusterSerializer = require('./actor_cluster');
 
 function formatNetwork(network) {
-  const prettyNetwork = _.pick(network, ['id', 'name', 'synopsis']);
+  const prettyNetwork = _.pick(network, ['id', 'name', 'synopsis', 'xUpdateNeeded']);
   prettyNetwork.created = moment(network.created).format();
   prettyNetwork.updated = moment(network.updated).format();
   prettyNetwork.settings = _.pick(network.settings, ['nodeSize', 'edgeSize']);
