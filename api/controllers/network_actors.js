@@ -21,6 +21,9 @@ function getNetworkActor(req, res) {
       if (_.isUndefined(networkActor) === true) {
         throw new codes.NotFoundError('Network actor not found.');
       }
+      if (network.xUpdateNeeded === true) {
+        throw new codes.BadRequestError('Actor details unavailable until you update the network.');
+      }
       return networkActorSerializer.formatActorWithDetails(network, networkActor);
     },
   )
