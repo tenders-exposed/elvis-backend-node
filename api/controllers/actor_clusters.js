@@ -62,8 +62,12 @@ function getCluster(req, res) {
   return Promise.join(
     clusterWriters.retrieveNetwork(networkID),
     clusterWriters.retrieveCluster(networkID, clusterID),
-    (network, networkCluster) =>
-      clusterSerializer.formatClusterWithDetails(network, networkCluster),
+    (network, networkCluster) => {
+      if (network.xUpdateNeeded === true) {
+        throw new codes.BadRequestError('Cluster details unavailable until you update the network.');
+      }
+      return clusterSerializer.formatClusterWithDetails(network, networkCluster)
+    }
   )
     .then((cluster) => res.status(codes.SUCCESS).json({
       cluster,
