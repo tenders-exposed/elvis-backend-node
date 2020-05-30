@@ -113,12 +113,21 @@ async function updateNetwork(networkParams, existingNetwork) {
             clusterActorsQuery,
             { params: { networkID: updatedNetwork.id, actorIDs: existingCluster.originalActorIDs}},
           ).then((newClusterActors) => {
-            const newNodeIDs = _.map(newClusterActors, 'id');
-            return clusterWriters.updateCluster(
-              updatedNetwork.id,
-              existingCluster.id,
-              { nodes: newNodeIDs }
-            );
+            if (_.isEmpty(newClusterActors) === true) {
+              // If all the nodes in the cluster have been removed, remove the cluster too
+              return clusterWriters.deleteCluster(
+                updatedNetwork.id,
+                existingCluster.id
+              )
+            } else {
+              // Otherwise update the cluster
+              const newNodeIDs = _.map(newClusterActors, 'id');
+              return clusterWriters.updateCluster(
+                updatedNetwork.id,
+                existingCluster.id,
+                { nodes: newNodeIDs }
+              );
+            }
           })
       })
       .then(() => updatedNetwork)
