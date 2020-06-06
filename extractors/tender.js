@@ -23,7 +23,7 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
     indicators: _
       .filter(indicators, { relatedEntityId: tenderAttrs.id })
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
-    year: extractYear(publications),
+    year: extractYear(tenderAttrs, publications),
     sources: [extractSource(tenderAttrs)],
   };
 }
@@ -38,8 +38,7 @@ function assertIsEuFunded(tenderAttrs) {
   return isEuFunded;
 }
 
-function extractYear(publications) {
-  let year;
+function extractYear(tenderAttrs, publications) {
   const noticePubDate = _.get(
     _.head(_.filter(publications, { formType: 'CONTRACT_NOTICE' })),
     'publicationDate',
@@ -48,10 +47,11 @@ function extractYear(publications) {
     _.head(_.filter(publications, { formType: 'CONTRACT_AWARD' })),
     'publicationDate',
   );
-  if (_.isUndefined(awardPubDate) === false) {
+  let year = moment(tenderAttrs.awardDecisionDate).year();
+  if (_.isUndefined(year) === true) {
     year = moment(awardPubDate).year();
   }
-  if (_.isUndefined(noticePubDate) === false) {
+  if (_.isUndefined(year) === true) {
     year = moment(noticePubDate).year();
   }
   return year;
@@ -65,4 +65,5 @@ function extractSource(tenderAttrs) {
 
 module.exports = {
   extractTender,
+  extractYear
 };

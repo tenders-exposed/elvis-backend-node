@@ -4,8 +4,9 @@ const _ = require('lodash');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 const priceExtractor = require('./price');
+const tenderExtractor = require('./tender');
 
-function extractBid(bidAttrs, tenderAttrs, lotAttrs) {
+function extractBid(bidAttrs, tenderAttrs) {
   if (_.isUndefined(bidAttrs.id) === false) {
     console.log('Bid with id found', bidAttrs); // eslint-disable-line no-console
   }
@@ -18,17 +19,12 @@ function extractBid(bidAttrs, tenderAttrs, lotAttrs) {
     price: priceExtractor.extractPrice(bidAttrs.price),
     robustPrice: priceExtractor.extractPrice(bidAttrs.robustPrice),
     xCountry: _.get(tenderAttrs, 'ot.country') || tenderAttrs.country,
-    xYear: extractYear(lotAttrs.awardDecisionDate),
+    xYear: tenderExtractor.extractYear(
+      tenderAttrs,
+      (tenderAttrs.publications || [])
+    ),
     sources: [extractSource(tenderAttrs)],
   };
-}
-
-function extractYear(awardDecisionDate) {
-  let year;
-  if (_.isNil(awardDecisionDate) === false) {
-    year = moment(awardDecisionDate).year();
-  }
-  return year;
 }
 
 function extractSource(tenderAttrs) {

@@ -89,7 +89,7 @@ async function writeTender(fullTenderRecord, skipMilitaryFilters = false) {
     return createLot(transaction, rawLot, tenderName, fullTenderRecord)
       .then((lotName) =>
         Promise.map(rawBids, (rawBid) =>
-          createBid(transaction, rawBid, lotName, buyerNames, cpvNames, fullTenderRecord, rawLot)));
+          createBid(transaction, rawBid, lotName, buyerNames, cpvNames, fullTenderRecord)));
   });
 
   return transaction.commit(2).return(`$${tenderName}`).one()
@@ -157,8 +157,8 @@ async function createLot(transaction, rawLot, tenderName, rawTender) {
   return lotName;
 }
 
-async function createBid(transaction, rawBid, lotName, buyerNames, cpvNames, rawTender, rawLot) { // eslint-disable-line max-len
-  const bid = bidExtractor.extractBid(rawBid, rawTender, rawLot);
+async function createBid(transaction, rawBid, lotName, buyerNames, cpvNames, rawTender) { // eslint-disable-line max-len
+  const bid = bidExtractor.extractBid(rawBid, rawTender);
   const bidName = recordName(uuidv4(), 'Bid');
 
   transaction.let(bidName, (t) => {
