@@ -13,12 +13,14 @@ const Promise = require('bluebird');
 const config = require('../../config/default');
 const lotSerializer = require('./lot');
 const actorSerializer = require('./actor');
+const indicator = require('../../extractors/indicator');
 
 tenderSerializer.formatTender = function (tender) {
   const formattedTender = _.pick(tender, ['id', 'title', 'titleEnglish', 'description', 'sources',
     'isCoveredByGpa', 'isFrameworkAgreement', 'procedureType', 'year', 'country', 'isDirective', 'xYearApproximated']);
   formattedTender.isEUFunded = tender.xIsEuFunded;
   formattedTender.isDirective = tender.xIsDirective;
+  formattedTender.indicators = _.map(tender.indicators, (indicator) => _.pick(indicator, ['id', 'type', 'value']));
   formattedTender.finalValue = _.get(tender, 'finalPrice.netAmountEur') || undefined;
   formattedTender.xAmountApproximated = _.get(tender, 'finalPrice.xAmountApproximated');
   return formattedTender;

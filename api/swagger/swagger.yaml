@@ -1665,6 +1665,24 @@ definitions:
       xAmountApproximated:
         type: boolean
         description: Is the tender value approximated
+      indicators:
+        type: array
+        $ref: "#/definitions/Indicator"
+  Indicator:
+    required:
+      - id
+      - type
+      - value
+    properties:
+      id:
+        type: string
+        description: ID of the indicator
+      type:
+        type: string
+        description: Type of indicator
+      value:
+        type: integer
+        description: Value of the indicator
   CpvIndexResponse:
     type: object
     properties:
