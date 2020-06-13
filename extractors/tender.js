@@ -5,6 +5,7 @@ const moment = require('moment');
 const helpers = require('./helpers');
 const priceExtractor = require('./price');
 const indicatorExtractor = require('./indicator');
+const INDICATORS = ['INTEGRITY_TAX_HAVEN', 'INTEGRITY_PROCEDURE_TYPE', 'INTEGRITY_CALL_FOR_TENDER_PUBLICATION']
 
 function extractTender(tenderAttrs, indicators = [], publications = []) {
   return {
@@ -21,7 +22,7 @@ function extractTender(tenderAttrs, indicators = [], publications = []) {
     xIsEuFunded: assertIsEuFunded(tenderAttrs),
     xDigiwhistLastModified: helpers.formatTimestamp(tenderAttrs.modified),
     indicators: _
-      .filter(indicators, { relatedEntityId: tenderAttrs.id })
+      .filter(indicators, (indicator) => _.includes(INDICATORS, indicator.type))
       .map((indicatorAttrs) => indicatorExtractor.extractIndicator(indicatorAttrs)),
     year: extractYear(tenderAttrs, publications),
     sources: [extractSource(tenderAttrs)],
