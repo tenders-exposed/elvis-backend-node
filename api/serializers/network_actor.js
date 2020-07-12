@@ -66,13 +66,14 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
     });
 }
 
-function formatActorBids(network, networkActor, limit = 10, page = 1) {
+function formatActorBids(network, networkActor, limit = 10, page = 1, nodeIDs) {
   const edgeToBidClass = networkActor.type === 'buyer' ? 'Awards' : 'Participates';
+  const networkActorIDs = nodeIDs || [networkActor.id];
   const actorIDsQuery = `SELECT expand(in('ActingAs'))
     FROM NetworkActor
-    WHERE id in :networkActorID;`;
+    WHERE id in :networkActorIDs;`;
   const skip = (page - 1) * limit;
-  return config.db.query(actorIDsQuery, { params: { networkActorID: networkActor.id } })
+  return config.db.query(actorIDsQuery, { params: { networkActorIDs: networkActorIDs } })
     .then((actors) => _.map(actors, 'id'))
     .then((actorIDs) => {
       const actorBidsQuery = `SELECT *

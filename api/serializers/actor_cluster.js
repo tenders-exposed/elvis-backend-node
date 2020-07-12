@@ -33,7 +33,17 @@ function formatClusterWithDetails(network, networkCluster) {
         }));
 }
 
+function formatClusterBids(network, networkCluster, limit, page) {
+  return config.db.select("expand(out('Includes'))")
+  .from('NetworkActor')
+  .where({ id: networkCluster.id })
+  .all()
+  .then((nodes) => _.map(nodes, 'id'))
+  .then((nodeIDs) => networkActorSerializer.formatActorBids(network, networkCluster, limit, page, nodeIDs));
+}
+
 module.exports = {
   formatCluster,
   formatClusterWithDetails,
+  formatClusterBids,
 };

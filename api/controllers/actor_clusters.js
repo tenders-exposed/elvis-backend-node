@@ -75,9 +75,29 @@ function getCluster(req, res) {
     .catch((err) => formatError(err, req, res));
 }
 
+function getClusterBids(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  const clusterID = req.swagger.params.clusterID.value;
+  const limit = req.swagger.params.limit.value || 10;
+  const page = req.swagger.params.page.value || 1;
+  return Promise.join(
+    clusterWriters.retrieveNetwork(networkID),
+    clusterWriters.retrieveCluster(networkID, clusterID),
+    (network, networkCluster) => {
+      if (network.xUpdateNeeded === true) {
+        throw new codes.BadRequestError('Cluster bids unavailable until you update the network.');
+      }
+      return clusterSerializer.formatClusterBids(network, networkCluster, limit, page)
+    }
+  )
+    .then((networkClusterBids) => res.status(codes.SUCCESS).json(networkClusterBids))
+    .catch((err) => formatError(err, req, res));
+}
+
 module.exports = {
   createCluster,
   updateCluster,
   deleteCluster,
   getCluster,
+  getClusterBids,
 };
