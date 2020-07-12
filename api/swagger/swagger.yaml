@@ -1543,22 +1543,6 @@ definitions:
           type: number
           format: double
           description: What percent of this actor's bids have the value undisclosed
-        winningBids:
-          type: array
-          description: The winning bids of this actor
-          items:
-            allOf:
-            - $ref: "#/definitions/Bid"
-            - type: object
-              properties:
-                lot:
-                  description: The lot for which this bid was applied
-                  allOf:
-                  - $ref: "#/definitions/Lot"
-                  - type: object
-                    properties:
-                      tender:
-                        $ref: "#/definitions/Tender"
   NetworkCluster:
     allOf:
     - $ref: "#/definitions/NetworkNode"
@@ -1657,22 +1641,6 @@ definitions:
           type: number
           format: double
           description: What percent of the bids between these two actors have the value undisclosed
-        winningBids:
-          type: array
-          description: The bids awarded by this buyer to this bidder
-          items:
-            allOf:
-            - $ref: "#/definitions/Bid"
-            - type: object
-              properties:
-                lot:
-                  description: The the lot for which this bid was applied
-                  allOf:
-                  - $ref: "#/definitions/Lot"
-                  - type: object
-                    properties:
-                      tender:
-                        $ref: "#/definitions/Tender"
   NetworkTender:
     allOf:
     - $ref: "#/definitions/Tender"

@@ -53,15 +53,6 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
       node.percentValuesMissing = 100 - (
         (_.get(details, 'numberOfAvailablePrices', 0) * 100) / details.numberOfWinningBids
       );
-      return Promise.map(details.bidIDs, (bidID) =>
-        config.db.select()
-          .from('Bid')
-          .where({ id: bidID })
-          .one()
-          .then((bid) => bidSerializer.formatBidWithRelated(network, bid)));
-    })
-    .then((bids) => {
-      node.winningBids = bids;
       return node;
     });
 }
