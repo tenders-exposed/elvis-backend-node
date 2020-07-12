@@ -67,12 +67,12 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
 }
 
 function formatActorBids(network, networkActor, limit = 10, page = 1, nodeIDs) {
+  const skip = (page - 1) * limit;
   const edgeToBidClass = networkActor.type === 'buyer' ? 'Awards' : 'Participates';
   const networkActorIDs = nodeIDs || [networkActor.id];
   const actorIDsQuery = `SELECT expand(in('ActingAs'))
     FROM NetworkActor
     WHERE id in :networkActorIDs;`;
-  const skip = (page - 1) * limit;
   return config.db.query(actorIDsQuery, { params: { networkActorIDs: networkActorIDs } })
     .then((actors) => _.map(actors, 'id'))
     .then((actorIDs) => {
@@ -83,19 +83,14 @@ function formatActorBids(network, networkActor, limit = 10, page = 1, nodeIDs) {
         AND isWinning=true
         LIMIT :limit
         SKIP :skip;`;
-      const queryParams = Object.assign({}, network.query, { 
+      const params = Object.assign({}, network.query, {
           actorIDs,
           limit,
           skip,
         });
-      return config.db.query(
-        actorBidsQuery,
-        { params: queryParams },
-      );
+      return config.db.query(actorBidsQuery, { params });
     })
-    .then((bids) => {
-      return Promise.map(bids, (bid) => bidSerializer.formatBidWithRelated(network, bid));
-    });
+    .then((bids) => Promise.map(bids, (bid) => bidSerializer.formatBidWithRelated(network, bid)));
 }
 
 module.exports = {

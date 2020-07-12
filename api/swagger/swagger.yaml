@@ -915,7 +915,7 @@ paths:
         - name: networkID
           type: string
           in: path
-          description: ID of the network the node is part of
+          description: ID of the network the cluster is part of
           required: true
         - name: clusterID
           type: string
@@ -940,7 +940,7 @@ paths:
           schema:
             $ref: "#/definitions/ActorBids"
         "404":
-          description: Network/node not found
+          description: Network/cluster not found
           schema:
             $ref: "#/definitions/ErrorResponse"
         "400":
@@ -1082,6 +1082,57 @@ paths:
             $ref: "#/definitions/ErrorResponse"
         "501":
           description: Not implemented if an edge of type "partners" is requested
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /networks/{networkID}/edges/{edgeID}/bids:
+    x-swagger-router-controller: network_edges
+    get:
+      tags:
+        - network edge bids
+      description: Get bids exhanged between two actors
+      operationId: getNetworkEdgeBids
+      parameters:
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network the edge is part of
+          required: true
+        - name: edgeID
+          type: string
+          in: path
+          description: ID of the edge for which to retrieve the bids
+          required: true
+        - name: limit
+          type: integer
+          in: query
+          description: Limit number of bids returned per page
+          required: false
+          default: 10
+        - name: page
+          type: integer
+          in: query
+          description: Get next set of results
+          required: false
+          default: 1
+      responses:
+        "200":
+          description: Edge bids returned
+          schema:
+            $ref: "#/definitions/ActorBids"
+        "404":
+          description: Network/edge not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "400":
+          description: Bad request
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
           schema:
             $ref: "#/definitions/ErrorResponse"
         default:

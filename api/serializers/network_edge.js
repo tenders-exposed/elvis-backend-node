@@ -68,7 +68,42 @@ function formatContractsEdgeWithDetails(network, networkEdge) {
     });
 }
 
+function formatContractsEdgeBids(network, networkEdge, limit, page) {
+  const skip = (page - 1) * limit;
+  const actorIDsQuery = `SELECT out.in('ActingAs').id as edgeBuyerIDs,
+    in.in('ActingAs').id as edgeBidderIDs
+    FROM NetworkEdge
+    WHERE uuid=:edgeUUID;`;
+  return config.db.query(
+    actorIDsQuery,
+    { params: { edgeUUID: networkEdge.uuid } },
+  )
+    .then((result) => {
+      const edgeBidsQuery = `SELECT *
+        FROM Bid
+        WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
+        AND in('Awards').id in :edgeBuyerIDs
+        AND in('Participates').id in :edgeBidderIDs
+        AND isWinning=true
+        LIMIT :limit
+        SKIP :skip;`;
+      const params = Object.assign(
+        {
+          edgeBuyerIDs: result[0].edgeBuyerIDs,
+          edgeBidderIDs: result[0].edgeBidderIDs,
+          limit,
+          skip,
+        },
+        network.query,
+      );
+      return config.db.query( edgeBidsQuery, { params });
+    })
+    .then((bids) => Promise.map(bids, (bid) => bidSerializer.formatBidWithRelated(network, bid)));
+}
+
+
 module.exports = {
   formatEdge,
   formatContractsEdgeWithDetails,
+  formatContractsEdgeBids,
 };

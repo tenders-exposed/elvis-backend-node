@@ -37,6 +37,35 @@ function getNetworkEdge(req, res) {
     .catch((err) => formatError(err, req, res));
 }
 
+function getNetworkEdgeBids(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  const edgeUUID = req.swagger.params.edgeID.value;
+  const limit = req.swagger.params.limit.value || 10;
+  const page = req.swagger.params.page.value || 1;
+  return Promise.join(
+    clusterWriters.retrieveNetwork(networkID),
+    config.db.select(`*,
+      out.id as \`from\`,
+      in.id as to,
+      @class.toLowerCase() as type`)
+      .from('NetworkEdge')
+      .where({ uuid: edgeUUID })
+      .one(),
+    (network, networkEdge) => {
+      if (_.isUndefined(networkEdge) === true) {
+        throw new codes.NotFoundError('Network edge not found.');
+      }
+      if (networkEdge.type === 'partners') {
+        throw new codes.NotImplementedError('No details available for an edge of type "partners".');
+      }
+      return edgeSerializer.formatContractsEdgeBids(network, networkEdge, limit, page);
+    },
+  )
+    .then((networkEdgeBids) => res.status(codes.SUCCESS).json(networkEdgeBids))
+    .catch((err) => formatError(err, req, res));
+}
+
 module.exports = {
   getNetworkEdge,
+  getNetworkEdgeBids,
 };
