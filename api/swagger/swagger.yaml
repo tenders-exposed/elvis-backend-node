@@ -943,6 +943,57 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /networks/{networkID}/nodes/{nodeID}/bids:
+    x-swagger-router-controller: network_actors
+    get:
+      tags:
+        - network node bids
+      description: Get node bids
+      operationId: getNetworkActorBids
+      parameters:
+        - name: networkID
+          type: string
+          in: path
+          description: ID of the network the node is part of
+          required: true
+        - name: nodeID
+          type: string
+          in: path
+          description: ID of the node for which to retrieve the bids
+          required: true
+        - name: limit
+          type: integer
+          in: query
+          description: Limit number of bids returned per page
+          required: false
+          default: 10
+        - name: page
+          type: integer
+          in: query
+          description: Get next set of results
+          required: false
+          default: 1
+      responses:
+        "200":
+          description: Node details returned
+          schema:
+            $ref: "#/definitions/ActorBids"
+        "404":
+          description: Network/node not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "400":
+          description: Bad request
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /networks/{networkID}/edges/{edgeID}:
     x-swagger-router-controller: network_edges
     get:
@@ -997,7 +1048,7 @@ paths:
         - name: networkID
           type: string
           in: path
-          description: ID of the network the node is part of
+          description: ID of the network the tender is part of
           required: true
         - name: tenderID
           type: string
@@ -1006,7 +1057,7 @@ paths:
           required: true
       responses:
         "200":
-          description: Node details returned
+          description: Network tender returned
           schema:
             $ref: "#/definitions/NetworkTenderResponse"
         "404":
@@ -1399,7 +1450,7 @@ definitions:
             - type: object
               properties:
                 lot:
-                  description: The the lot for which this bid was applied
+                  description: The lot for which this bid was applied
                   allOf:
                   - $ref: "#/definitions/Lot"
                   - type: object
@@ -1472,6 +1523,22 @@ definitions:
         hidden:
           type: boolean
           description: If the edge is attached to an inactive node it is inactive
+  ActorBids:
+    type: array
+    description: The bids exchanged by an actor
+    items:
+      allOf:
+      - $ref: "#/definitions/Bid"
+      - type: object
+        properties:
+          lot:
+            description: The the lot for which this bid was applied
+            allOf:
+            - $ref: "#/definitions/Lot"
+            - type: object
+              properties:
+                tender:
+                  $ref: "#/definitions/Tender"
   EdgeDetails:
     allOf:
     - $ref: "#/definitions/BaseEdge"

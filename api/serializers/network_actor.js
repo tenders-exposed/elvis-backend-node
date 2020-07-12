@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const config = require('../../config/default');
 const networkWriters = require('../writers/network');
 const bidSerializer = require('./bid');
+const actor = require('./actor');
 
 function formatNetworkActor(networkActor) {
   const formattedActor = _.pick(
@@ -65,7 +66,39 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
     });
 }
 
+function formatActorBids(network, networkActor, limit = 10, page = 1) {
+  const edgeToBidClass = networkActor.type === 'buyer' ? 'Awards' : 'Participates';
+  const actorIDsQuery = `SELECT expand(in('ActingAs'))
+    FROM NetworkActor
+    WHERE id in :networkActorID;`;
+  const skip = (page - 1) * limit;
+  return config.db.query(actorIDsQuery, { params: { networkActorID: networkActor.id } })
+    .then((actors) => _.map(actors, 'id'))
+    .then((actorIDs) => {
+      const actorBidsQuery = `SELECT *
+        FROM Bid
+        WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
+        AND in('${edgeToBidClass}').id in :actorIDs
+        AND isWinning=true
+        LIMIT :limit
+        SKIP :skip;`;
+      const queryParams = Object.assign({}, network.query, { 
+          actorIDs,
+          limit,
+          skip,
+        });
+      return config.db.query(
+        actorBidsQuery,
+        { params: queryParams },
+      );
+    })
+    .then((bids) => {
+      return Promise.map(bids, (bid) => bidSerializer.formatBidWithRelated(network, bid));
+    });
+}
+
 module.exports = {
   formatNetworkActor,
   formatActorWithDetails,
+  formatActorBids,
 };

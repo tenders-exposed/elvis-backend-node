@@ -33,6 +33,32 @@ function getNetworkActor(req, res) {
     .catch((err) => formatError(err, req, res));
 }
 
+function getNetworkActorBids(req, res) {
+  const networkID = req.swagger.params.networkID.value;
+  const nodeID = req.swagger.params.nodeID.value;
+  const limit = req.swagger.params.limit.value || 10;
+  const page = req.swagger.params.page.value || 1;
+  return Promise.join(
+    clusterWriters.retrieveNetwork(networkID),
+    config.db.select()
+      .from('NetworkActor')
+      .where({ id: nodeID })
+      .one(),
+    (network, networkActor) => {
+      if (_.isUndefined(networkActor) === true) {
+        throw new codes.NotFoundError('Network actor not found.');
+      }
+      if (network.xUpdateNeeded === true) {
+        throw new codes.BadRequestError('Actor bids unavailable until you update the network.');
+      }
+      return networkActorSerializer.formatActorBids(network, networkActor, limit, page);
+    },
+  )
+    .then((networkActorBids) => res.status(codes.SUCCESS).json(networkActorBids))
+    .catch((err) => formatError(err, req, res));
+}
+
 module.exports = {
   getNetworkActor,
+  getNetworkActorBids,
 };
