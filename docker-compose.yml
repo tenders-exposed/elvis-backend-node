@@ -14,7 +14,7 @@ services:
         max-size: "200k"
         max-file: "3"
   orientdb:
-    image: orientdb:3.0.4
+    image: orientdb:3.0.7
     restart: always
     environment:
       - ORIENTDB_ROOT_PASSWORD=$ORIENTDB_ROOT_PASSWORD
