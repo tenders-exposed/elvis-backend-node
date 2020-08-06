@@ -88,6 +88,15 @@ function getClusterBids(req, res) {
         throw new codes.BadRequestError('Cluster bids unavailable until you update the network.');
       }
       return clusterSerializer.formatClusterBids(network, networkCluster, limit, page)
+      .then((formattedClusterBids) => {
+        const formattedResponse = {
+          page: page,
+          resultsPerPage: limit,
+          totalResults: networkCluster.numberOfWinningBids,
+          bids: formattedClusterBids,
+        }
+        return formattedResponse;
+      });
     }
   )
     .then((networkClusterBids) => res.status(codes.SUCCESS).json(networkClusterBids))

@@ -1610,21 +1610,37 @@ definitions:
           type: boolean
           description: If the edge is attached to an inactive node it is inactive
   ActorBids:
-    type: array
-    description: The bids exchanged by an actor
-    items:
-      allOf:
-      - $ref: "#/definitions/Bid"
-      - type: object
-        properties:
-          lot:
-            description: The the lot for which this bid was applied
-            allOf:
-            - $ref: "#/definitions/Lot"
-            - type: object
-              properties:
-                tender:
-                  $ref: "#/definitions/Tender"
+    type: object
+    description: The bids that belong to this actor, paginated
+    properties:
+      page:
+        type: number
+        format: double
+        description: Number of the currently returned page
+      resultsPerPage:
+        type: number
+        format: double
+        description: Number of results returned per page
+      totalResults:
+        type: number
+        format: double
+        description: Total number of results
+      bids:
+        type: array
+        description: The bids exchanged by an actor
+        items:
+          allOf:
+          - $ref: "#/definitions/Bid"
+          - type: object
+            properties:
+              lot:
+                description: The the lot for which this bid was applied
+                allOf:
+                - $ref: "#/definitions/Lot"
+                - type: object
+                  properties:
+                    tender:
+                      $ref: "#/definitions/Tender"
   EdgeDetails:
     allOf:
     - $ref: "#/definitions/BaseEdge"

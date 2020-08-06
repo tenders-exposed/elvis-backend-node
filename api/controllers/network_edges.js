@@ -58,7 +58,16 @@ function getNetworkEdgeBids(req, res) {
       if (networkEdge.type === 'partners') {
         throw new codes.NotImplementedError('No details available for an edge of type "partners".');
       }
-      return edgeSerializer.formatContractsEdgeBids(network, networkEdge, limit, page);
+      return edgeSerializer.formatContractsEdgeBids(network, networkEdge, limit, page)
+      .then((formattedEdgeBids) => {
+        const formattedResponse = {
+          page: page,
+          resultsPerPage: limit,
+          totalResults: networkEdge.numberOfWinningBids,
+          bids: formattedEdgeBids,
+        }
+        return formattedResponse;
+      });
     },
   )
     .then((networkEdgeBids) => res.status(codes.SUCCESS).json(networkEdgeBids))

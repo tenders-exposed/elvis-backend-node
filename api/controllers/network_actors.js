@@ -51,7 +51,16 @@ function getNetworkActorBids(req, res) {
       if (network.xUpdateNeeded === true) {
         throw new codes.BadRequestError('Actor bids unavailable until you update the network.');
       }
-      return networkActorSerializer.formatActorBids(network, networkActor, limit, page);
+      return networkActorSerializer.formatActorBids(network, networkActor, limit, page)
+      .then((formattedActorBids) => {
+        const formattedResponse = {
+          page: page,
+          resultsPerPage: limit,
+          totalResults: networkActor.numberOfWinningBids,
+          bids: formattedActorBids,
+        }
+        return formattedResponse;
+      });
     },
   )
     .then((networkActorBids) => res.status(codes.SUCCESS).json(networkActorBids))
