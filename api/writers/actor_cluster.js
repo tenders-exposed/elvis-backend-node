@@ -22,6 +22,8 @@ async function createCluster(networkID, clusterParams) {
     countries: _.compact(_.uniq(calcuatedAttrs.countries)),
     value: calcuatedAttrs[network.settings.nodeSize],
     medianCompetition: calcuatedAttrs.medianCompetition,
+    amountOfMoneyExchanged: calcuatedAttrs.amountOfMoneyExchanged,
+    numberOfWinningBids: calcuatedAttrs.amountOfMoneyExchanged,
   };
   const clusterName = networkWriters.recordName(clusterAttrs.id, 'ActorCluster');
   const transaction = config.db.let(clusterName, (t) => {
@@ -66,6 +68,8 @@ async function updateCluster(networkID, clusterID, clusterParams) {
     Object.assign(clusterAttrs, {
       value: calcuatedAttrs[network.settings.nodeSize],
       medianCompetition: calcuatedAttrs.medianCompetition,
+      amountOfMoneyExchanged: calcuatedAttrs.amountOfMoneyExchanged,
+      numberOfWinningBids: calcuatedAttrs.amountOfMoneyExchanged,
     });
   }
 

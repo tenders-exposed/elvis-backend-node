@@ -194,7 +194,7 @@ function createBidderNodes(transaction, networkSettings, networkQuery, networkNa
     .then((bidderNodes) => Promise.map(bidderNodes, (node) => {
       const nodeAttrs = _.pick(
         node,
-        ['label', 'medianCompetition'],
+        ['label', 'medianCompetition', 'amountOfMoneyExchanged', 'numberOfWinningBids'],
       );
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'bidder';
@@ -229,7 +229,7 @@ function createBuyerNodes(transaction, networkSettings, networkQuery, networkNam
     .then((buyerNodes) => Promise.map(buyerNodes, (node) => {
       const nodeAttrs = _.pick(
         node,
-        ['label', 'medianCompetition'],
+        ['label', 'medianCompetition', 'amountOfMoneyExchanged', 'numberOfWinningBids'],
       );
       nodeAttrs.id = uuidv4();
       nodeAttrs.type = 'buyer';
@@ -292,6 +292,8 @@ function createContractsEdges(transaction, networkSettings, networkQuery, networ
       const edgeAttrs = {
         uuid: uuidv4(),
         value: edge[networkSettings.edgeSize],
+        numberOfWinningBids: edge.numberOfWinningBids,
+        amountOfMoneyExchanged: edge.amountOfMoneyExchanged,
         active: true,
       };
       const fromName = networkActorsMapping[edge.buyerRID];
