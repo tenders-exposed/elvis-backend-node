@@ -1625,6 +1625,10 @@ definitions:
         type: number
         format: double
         description: Total number of results
+      totalPages:
+        type: number
+        format: double
+        description: Total number of pages with results
       bids:
         type: array
         description: The bids exchanged by an actor

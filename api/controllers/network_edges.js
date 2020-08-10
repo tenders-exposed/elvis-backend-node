@@ -64,6 +64,7 @@ function getNetworkEdgeBids(req, res) {
           page: page,
           resultsPerPage: limit,
           totalResults: networkEdge.numberOfWinningBids,
+          totalPages: Math.ceil(networkEdge.numberOfWinningBids/limit),
           bids: formattedEdgeBids,
         }
         return formattedResponse;

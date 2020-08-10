@@ -93,6 +93,7 @@ function getClusterBids(req, res) {
           page: page,
           resultsPerPage: limit,
           totalResults: networkCluster.numberOfWinningBids,
+          totalPages: Math.ceil(networkCluster.numberOfWinningBids/limit),
           bids: formattedClusterBids,
         }
         return formattedResponse;

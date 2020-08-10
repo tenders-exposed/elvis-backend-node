@@ -57,6 +57,7 @@ function getNetworkActorBids(req, res) {
           page: page,
           resultsPerPage: limit,
           totalResults: networkActor.numberOfWinningBids,
+          totalPages: Math.ceil(networkActor.numberOfWinningBids/limit),
           bids: formattedActorBids,
         }
         return formattedResponse;
