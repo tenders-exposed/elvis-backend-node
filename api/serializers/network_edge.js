@@ -26,20 +26,12 @@ function formatContractsEdgeWithDetails(network, networkEdge) {
     { params: { edgeUUID: networkEdge.uuid } },
   )
     .then((result) => {
-      const detailsQuery = `SELECT bidIDs,
-        bidIDs.size() as numberOfWinningBids,
-        bidSum as amountOfMoneyExchanged,
-        priceList.size() as numberOfAvailablePrices
-        FROM (
-          SELECT set(id) as bidIDs,
-          sum(price.netAmountEur) as bidSum,
-          list(price.netAmountEur) as priceList
+      const detailsQuery = `SELECT list(price.netAmountEur) as priceList
           FROM Bid
           WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
           AND in('Awards').id in :edgeBuyerIDs
           AND in('Participates').id in :edgeBidderIDs
-          AND isWinning=true
-        );`;
+          AND isWinning=true;`;
       const params = Object.assign(
         {
           edgeBuyerIDs: result[0].edgeBuyerIDs,
@@ -50,11 +42,9 @@ function formatContractsEdgeWithDetails(network, networkEdge) {
       return config.db.query(detailsQuery, { params });
     })
     .then((result) => {
-      const details = result[0];
-      Object.assign(edge, _.pick(details, ['numberOfWinningBids', 'amountOfMoneyExchanged']));
-      edge.percentValuesMissing = 100 - (
-        (_.get(details, 'numberOfAvailablePrices', 0) * 100) / details.numberOfWinningBids
-      );
+      const priceList = _.get(result[0], 'priceList', []);
+      const numberOfAvailablePrices = priceList.length;
+      edge.percentValuesMissing = 100 - ((numberOfAvailablePrices * 100) / networkEdge.numberOfWinningBids);
       return edge;
     });
 }
