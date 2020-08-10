@@ -29,30 +29,20 @@ function formatActorWithDetails(network, networkActor, nodeIDs) {
   return config.db.query(actorIDsQuery, { params: { networkActorIDs } })
     .then((actors) => _.map(actors, 'id'))
     .then((actorIDs) => {
-      const detailsQuery = `SELECT bidIDs,
-      bidIDs.size() as numberOfWinningBids,
-      bidSum as amountOfMoneyExchanged,
-      priceList.size() as numberOfAvailablePrices
-      FROM (
-        SELECT set(id) as bidIDs,
-        sum(price.netAmountEur) as bidSum,
-        list(price.netAmountEur) as priceList
+      const priceListQuery = `SELECT list(price.netAmountEur) as priceList
           FROM Bid
           WHERE ${_.join(networkWriters.queryToBidFilters(network.query), ' AND ')}
           AND in('${edgeToBidClass}').id in :actorIDs
-          AND isWinning=true
-        );`;
+          AND isWinning=true;`;
       return config.db.query(
-        detailsQuery,
+        priceListQuery,
         { params: Object.assign({}, network.query, { actorIDs }) },
       );
     })
     .then((result) => {
-      const details = result[0];
-      Object.assign(node, _.pick(details, ['numberOfWinningBids', 'amountOfMoneyExchanged']));
-      node.percentValuesMissing = 100 - (
-        (_.get(details, 'numberOfAvailablePrices', 0) * 100) / details.numberOfWinningBids
-      );
+      const priceList = _.get(result[0], 'priceList', []);
+      const numberOfAvailablePrices = priceList.length;
+      node.percentValuesMissing = 100 - ((numberOfAvailablePrices * 100) / networkActor.numberOfWinningBids);
       return node;
     });
 }
