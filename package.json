@@ -29,7 +29,7 @@
     "jsonwebtoken": "^8.1.0",
     "lodash": "^4.17.15",
     "mailgun-js": "^0.22.0",
-    "moment": "^2.19.1",
+    "moment": "^2.29.4",
     "morgan": "^1.9.1",
     "orientjs": "^3.0.4",
     "p-queue": "^2.3.0",
